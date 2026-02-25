@@ -21,7 +21,7 @@ BraceWrapping:
 # Espacios
 SpacesInParentheses: false      # No espacios extras en llamadas de función
 SpaceBeforeParens: ControlStatements # while (1), if (x), for (...)
-SpaceAroundOperators: true      # Espacios alrededor de operadores binarios
+#SpaceAroundOperators: true      # Espacios alrededor de operadores binarios
 
 # Otras reglas de estilo útiles
 AllowShortIfStatementsOnASingleLine: false

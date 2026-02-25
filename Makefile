@@ -11,7 +11,7 @@ SRCS = $(shell find . -name "*.c")
 OBJS = $(SRCS:.c=.o)
 
 # Flags comunes a todos los modos
-COMMON_FLAGS = -pthread -std=c2x
+COMMON_FLAGS = -pthread -std=c2x -lm
 
 # Flags específicos
 CFLAGS_DEBUG = -O0 -g3 -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 \
