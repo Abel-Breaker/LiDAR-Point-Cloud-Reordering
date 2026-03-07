@@ -56,8 +56,5 @@ dkms.conf
 # Scripts
 #*.sh
 
-# lastools
-lastools/*
-
 # Cloud points
 cloud_points/*
