@@ -54,4 +54,10 @@ dkms.conf
 *.dwo
 
 # Scripts
-*.sh
+#*.sh
+
+# lastools
+lastools/*
+
+# Cloud points
+cloud_points/*
