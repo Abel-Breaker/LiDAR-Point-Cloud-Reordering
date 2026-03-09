@@ -1,0 +1,13 @@
+name: Sanitizers
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get install -y gcc cmake
+      - name: Build debug
+        run: make MODE=debug
+      - name: Build debug_threads
+        run: make MODE=debug_threads
