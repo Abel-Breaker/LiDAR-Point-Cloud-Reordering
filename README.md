@@ -1,7 +1,7 @@
 # LiDAR Point Cloud Reordering
 
 ![Build](https://github.com/Abel-Breaker/LiDAR-Point-Cloud-Reordering/actions/workflows/build.yml/badge.svg)
-![clang-tidy](https://github.com/Abel-Breaker/LiDAR-Point-Cloud-Reordering/actions/workflows/tidy.yml/badge.svg)
+![Clang-Tidy](https://github.com/Abel-Breaker/LiDAR-Point-Cloud-Reordering/actions/workflows/tidy.yml/badge.svg)
 ![Valgrind](https://github.com/Abel-Breaker/LiDAR-Point-Cloud-Reordering/actions/workflows/valgrind.yml/badge.svg)
 ![C](https://img.shields.io/badge/C-C2x-blue)
 
