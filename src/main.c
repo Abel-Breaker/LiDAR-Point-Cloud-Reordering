@@ -5,7 +5,7 @@
 
 int main(int argc, char **argv)
 {
-	Args args;
+	Args args = {};
 
 	parse_args(argc, argv, &args);
 

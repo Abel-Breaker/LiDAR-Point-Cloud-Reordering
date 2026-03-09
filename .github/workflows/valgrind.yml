@@ -1,0 +1,17 @@
+name: Valgrind
+on: [push, pull_request]
+jobs:
+  valgrind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get install -y gcc cmake valgrind
+      - name: Build
+        run: make MODE=release
+      - name: Run Valgrind
+        run: valgrind --error-exitcode=1 \
+                      --leak-check=full \
+                      --show-leak-kinds=all \
+                      --track-origins=yes \
+                      ./program

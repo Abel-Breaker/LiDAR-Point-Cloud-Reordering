@@ -10,4 +10,9 @@ typedef struct{
     size_t num_points;
 } Points;
 
+
+void reserve_memory_points(Points *points, size_t number_of_points);
+
+
+
 void destroy_points(Points *points);

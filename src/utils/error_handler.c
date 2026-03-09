@@ -1,7 +1,6 @@
 #include "error_handler.h"
 #include <stdio.h>
-#include <errno.h>
-#include <string.h>
+//#include <errno.h>
 #include <stdlib.h>
 
 #define ANSI_COLOR_RED     "\x1b[31;1m"

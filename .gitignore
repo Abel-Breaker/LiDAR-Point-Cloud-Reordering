@@ -54,7 +54,13 @@ dkms.conf
 *.dwo
 
 # Scripts
-#*.sh
+*.sh
 
 # Cloud points
 cloud_points/*
+
+# VScode
+.vscode/
+
+# To do list
+TODO
