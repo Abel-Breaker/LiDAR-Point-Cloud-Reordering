@@ -58,9 +58,12 @@ dkms.conf
 
 # Cloud points
 cloud_points/*
+# Exception
+!cloud_points/cloud_point_test.laz
 
 # VScode
 .vscode/
 
 # To do list
 TODO
+

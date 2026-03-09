@@ -23,6 +23,8 @@ CODE/
 │    ├── buil.yml
 │    ├── tidy.yml
 │    └── valgrind.yml
+├── cloud_points/
+│ └── cloud_point_test.laz
 ├── src/
 │ ├── LAStools/
 │ ├── types/
@@ -36,6 +38,7 @@ CODE/
 
 Brief explanation:
 - **.github/workflows/** → GitHub Actions Tests (CI) for compilation, clang-tidy, and valgrind
+- **cloud_points/cloud_point_test.laz** → Little example of a 1K points - LiDAR point cloud for test and debug.
 - **src/** → Main folder with all the code
 - **src/utils/** → Various utilities and functionalities
 - **src/LAStools/** → Minimal external dependency for reading LiDAR point cloud files
