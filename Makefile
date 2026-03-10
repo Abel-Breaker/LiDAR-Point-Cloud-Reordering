@@ -10,11 +10,11 @@ LASLIB     = third_party/LAStools/LASlib/lib/libLASlib.a
 LASPARSE   = src/utils/libparse_lidar_points.a
 
 # Busca todos los archivos .c en el proyecto (incluyendo subcarpetas)
-C_SRCS = $(shell find ./src -name "*.c" ! -path "./src/LAStools/*")
+C_SRCS = $(shell find ./src -name "*.c")
 C_OBJS = $(C_SRCS:.c=.o)
 
 # Busca todos los archivos .a en el proyecto
-STATIC_LIBRARIES = $(shell find . -name "*.a")
+STATIC_LIBRARIES = $(LASPARSE) $(LASLIB)
 
 # Todos los objetos combinados
 OBJS = $(C_OBJS) $(STATIC_LIBRARIES)
