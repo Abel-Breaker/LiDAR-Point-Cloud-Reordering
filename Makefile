@@ -7,7 +7,7 @@ TARGET = program
 
 # Rutas de librerías estáticas opcionales
 LASLIB     = third_party/LAStools/LASlib/lib/libLASlib.a
-LASPARSE   = src/utils/libparse_lidar_points.a
+LASPARSE   = src/utils/parse_lidar_points.a
 
 # Busca todos los archivos .c en el proyecto (incluyendo subcarpetas)
 C_SRCS = $(shell find ./src -name "*.c")

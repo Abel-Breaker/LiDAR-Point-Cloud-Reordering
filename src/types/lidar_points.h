@@ -11,8 +11,8 @@ typedef struct{
 } Points;
 
 
-void reserve_memory_points(Points *points, size_t number_of_points);
+bool reserve_memory_points(Points *points, size_t number_of_points);
 
-
+void add_point(Points *points, size_t index, double x, double y, double z);
 
 void destroy_points(Points *points);

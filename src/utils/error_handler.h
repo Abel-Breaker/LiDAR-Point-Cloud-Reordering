@@ -6,7 +6,8 @@ typedef enum {
 } ErrorSeverity;
 
 typedef enum {
-    ERROR_PARSE_ARG
+    ERROR_PARSE_ARG,
+    ERROR_PARSE_POINTS
 } ErrorCode;
 
 /**

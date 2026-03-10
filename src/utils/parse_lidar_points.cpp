@@ -1,20 +1,20 @@
+extern "C" {
 #include "parse_lidar_points.h"
+}
 #include "../../third_party/LAStools/LASlib/inc/lasreader.hpp" // Para leer puntos
 #include <cstdlib>
 
-extern "C" {
-
-int read_las_points(const char *filename, Points *pts)
+bool read_las_points(const char *filename, Points *pts)
 {
 	if (!filename || !pts)
-		return -1;
+		return false;
 
 	// Crear el lector de LAS
 	LASreadOpener lasReadOpener;
 	lasReadOpener.set_file_name(filename);
 	LASreader *lasReader = lasReadOpener.open();
 	if (!lasReader)
-		return -2; // Error al abrir el archivo
+		return false; // Error al abrir el archivo
 
 	// Obtener el número de puntos desde el header
 	size_t point_count = static_cast<size_t>(lasReader->header.number_of_point_records);
@@ -27,32 +27,24 @@ int read_las_points(const char *filename, Points *pts)
 	lasReadOpener.set_file_name(filename);
 	lasReader = lasReadOpener.open();
 	if (!lasReader)
-		return -3;
+		return false;
 
 	// Reservar memoria para los puntos
-	pts->num_points = point_count;
-	pts->x = static_cast<double *>(malloc(point_count * sizeof(*(pts->x))));
-	pts->y = static_cast<double *>(malloc(point_count * sizeof(*(pts->y))));
-	pts->z = static_cast<double *>(malloc(point_count * sizeof(*(pts->z))));
-	if (!pts->x || !pts->y || !pts->z) {
+	if (!reserve_memory_points(pts, point_count)) {
 		lasReader->close();
 		delete lasReader;
-		return -4; // Error de memoria
+		return false;
 	}
 
 	// Leer y copiar puntos
 	size_t idx = 0;
 	while (lasReader->read_point()) {
-		pts->x[idx] = lasReader->point.get_x();
-		pts->y[idx] = lasReader->point.get_y();
-		pts->z[idx] = lasReader->point.get_z();
+		add_point(pts, idx, lasReader->point.get_x(), lasReader->point.get_y(), lasReader->point.get_z());
 		idx++;
 	}
 
 	lasReader->close();
 	delete lasReader;
 
-	return 0; // Éxito
+	return true; // Éxito
 }
-
-} // extern "C"

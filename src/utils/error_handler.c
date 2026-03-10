@@ -11,6 +11,7 @@ static const char* get_error_message(ErrorCode err)
     switch(err) 
     {
 		case ERROR_PARSE_ARG: return "Error parsing args: ";
+		case ERROR_PARSE_POINTS: return "Error parsing points: ";
         default: return "Unkown error";
     }
 }

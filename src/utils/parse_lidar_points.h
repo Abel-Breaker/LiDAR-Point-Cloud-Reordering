@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-int read_las_points(const char *filename, Points *pts);
+bool read_las_points(const char *filename, Points *pts);
 
 #ifdef __cplusplus
 }

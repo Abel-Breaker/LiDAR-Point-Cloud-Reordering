@@ -2,20 +2,23 @@
 #include <stdlib.h>
 #include <stddef.h>
 
-/*
-void reserve_memory_points(Points *points, size_t number_of_points){
+bool reserve_memory_points(Points *points, size_t number_of_points){
     points->x = malloc(number_of_points * sizeof(*(points->x)));
 	points->y = malloc(number_of_points * sizeof(*(points->y)));
 	points->z = malloc(number_of_points * sizeof(*(points->z)));
 	if (!points->x || !points->y || !points->z) {
-		return;
+		return false;
 	}
     points->num_points = number_of_points;
-}*/
 
-/*void add_point(Points *points){
-    return;
-}*/
+    return true;
+}
+
+void add_point(Points *points, size_t index, double x, double y, double z){
+    points->x[index] = x;
+    points->y[index] = y;
+    points->z[index] = z;
+}
 
 void destroy_points(Points *points){
     free(points->x);

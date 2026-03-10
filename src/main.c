@@ -1,6 +1,7 @@
 #include "utils/parse_args.h"
 #include "types/lidar_points.h"
 #include "utils/parse_lidar_points.h"
+#include "utils/error_handler.h"
 #include <stdio.h>
 
 int main(int argc, char **argv)
@@ -13,7 +14,9 @@ int main(int argc, char **argv)
 
 	Points points = {};
 
-	printf("%d\n", read_las_points(args.cloud_points_file_name, &points));
+	if(read_las_points(args.cloud_points_file_name, &points) == false){
+		handle_error(ERROR_PARSE_POINTS, ERR_FATAL, nullptr);
+	}
 
 	printf("%f\n", points.x[0]);
 	
