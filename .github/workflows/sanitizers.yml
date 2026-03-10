@@ -7,7 +7,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: sudo apt-get install -y gcc cmake
+      - name: Build debug_threads
+        run: make MODE=debug_threadss
       - name: Build debug
         run: make MODE=debug
-      - name: Build debug_threads
-        run: make MODE=debug_threads
+      - name: Run
+        run: ./program -f cloud_points/cloud_point_test.laz

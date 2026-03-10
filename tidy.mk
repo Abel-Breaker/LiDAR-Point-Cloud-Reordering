@@ -1,4 +1,4 @@
-TIDY_SRCS = $(shell find ./src -name "*.c")
+TIDY_SRCS = $(shell find ./src -name "*.c" -o -name "*.h")
 
 TIDY_CHECKS = \
     performance-*,\

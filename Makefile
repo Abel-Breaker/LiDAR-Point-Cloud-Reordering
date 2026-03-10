@@ -6,7 +6,7 @@ Q ?= @
 TARGET = program
 
 # Rutas de librerías estáticas opcionales
-LASLIB     = src/LAStools/LASlib/lib/libLASlib.a
+LASLIB     = third_party/LAStools/LASlib/lib/libLASlib.a
 LASPARSE   = src/utils/libparse_lidar_points.a
 
 # Busca todos los archivos .c en el proyecto (incluyendo subcarpetas)

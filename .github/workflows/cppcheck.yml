@@ -11,4 +11,4 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y cppcheck
 
       - name: Run cppcheck
-        run: --enable=all --suppress=missingIncludeSystem --suppress=checkersReport --inconclusive  --suppress=*:third_party/* --std=c23 --force -I src src
+        run: cppcheck --enable=all --suppress=missingIncludeSystem --suppress=checkersReport --inconclusive  --suppress=*:third_party/* --std=c23 --force -I src src
