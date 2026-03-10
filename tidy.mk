@@ -1,4 +1,5 @@
-TIDY_SRCS = $(shell find ./src -name "*.c" ! -path "./src/LAStools/*")
+TIDY_SRCS = $(shell find ./src -name "*.c")
+
 TIDY_CHECKS = \
     performance-*,\
     misc-*,\
@@ -23,5 +24,4 @@ tidy:
 	$(Q)clang-tidy $(TIDY_SRCS) \
 		--quiet \
 		-checks="$(TIDY_CHECKS)" \
-		-header-filter='^./src/(?!LAStools).*\.(h|hpp)$$' \
 		-- -std=c2x

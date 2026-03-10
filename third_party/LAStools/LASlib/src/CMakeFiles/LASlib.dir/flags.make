@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -DHAVE_UNORDERED_MAP -DNDEBUG -DUNORDERED
 
-CXX_INCLUDES = -I/home/abel/Universidad/4/TFG/Code/src/LAStools/LASlib/inc -I/home/abel/Universidad/4/TFG/Code/src/LAStools/LASzip/src -I/home/abel/Universidad/4/TFG/Code/src/LAStools/LASzip/include/laszip
+CXX_INCLUDES = -I/home/abel/Universidad/4/TFG/Code/third_party/LAStools/LASlib/inc -I/home/abel/Universidad/4/TFG/Code/third_party/LAStools/LASzip/src -I/home/abel/Universidad/4/TFG/Code/third_party/LAStools/LASzip/include/laszip
 
 CXX_FLAGS = -std=gnu++17 -fPIC -O3 -Wall -Wno-strict-aliasing -Wno-unknown-pragmas
 

@@ -5,6 +5,7 @@
 ![Clang-Tidy](https://github.com/Abel-Breaker/LiDAR-Point-Cloud-Reordering/actions/workflows/tidy.yml/badge.svg)
 ![Valgrind](https://github.com/Abel-Breaker/LiDAR-Point-Cloud-Reordering/actions/workflows/valgrind.yml/badge.svg)
 ![CodeQL](https://github.com/Abel-Breaker/LiDAR-Point-Cloud-Reordering/actions/workflows/codeql.yml/badge.svg)
+![cppcheck](https://github.com/Abel-Breaker/LiDAR-Point-Cloud-Reordering/actions/workflows/cppcheck.yml/badge.svg)
 ![C](https://img.shields.io/badge/C-C2x-blue)
 
 ## Description

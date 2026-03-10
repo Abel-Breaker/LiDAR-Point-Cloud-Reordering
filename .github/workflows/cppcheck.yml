@@ -1,0 +1,14 @@
+name: CppCheck
+on: [push, pull_request]
+jobs:
+  cppcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: sudo apt-get update && sudo apt-get install -y cppcheck
+
+      - name: Run cppcheck
+        run: --enable=all --suppress=missingIncludeSystem --suppress=checkersReport --inconclusive  --suppress=*:third_party/* --std=c23 --force -I src src

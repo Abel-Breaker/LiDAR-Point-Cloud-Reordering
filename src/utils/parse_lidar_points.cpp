@@ -1,5 +1,5 @@
 #include "parse_lidar_points.h"
-#include "../LAStools/LASlib/inc/lasreader.hpp" // Para leer puntos
+#include "../../third_party/LAStools/LASlib/inc/lasreader.hpp" // Para leer puntos
 #include <cstdlib>
 
 extern "C" {
@@ -31,9 +31,9 @@ int read_las_points(const char *filename, Points *pts)
 
 	// Reservar memoria para los puntos
 	pts->num_points = point_count;
-	pts->x = (double *)malloc(point_count * sizeof(*(pts->x)));
-	pts->y = (double *)malloc(point_count * sizeof(*(pts->y)));
-	pts->z = (double *)malloc(point_count * sizeof(*(pts->z)));
+	pts->x = static_cast<double *>(malloc(point_count * sizeof(*(pts->x))));
+	pts->y = static_cast<double *>(malloc(point_count * sizeof(*(pts->y))));
+	pts->z = static_cast<double *>(malloc(point_count * sizeof(*(pts->z))));
 	if (!pts->x || !pts->y || !pts->z) {
 		lasReader->close();
 		delete lasReader;

@@ -60,20 +60,20 @@ all: $(LASLIB) $(LASPARSE) $(TARGET)
 # ── LAStools: compilar solo si no existe la librería ──────────────────────────
 $(LASLIB):
 	@echo "[LAStools] Building libLASlib.a..."
-	$(Q)cd src/LAStools && cmake . --log-level=ERROR && $(MAKE)
-	$(Q)rm -rf src/LAStools/CMakeFiles \
-	           src/LAStools/cmake_install.cmake \
-	           src/LAStools/CMakeCache.txt \
-	           src/LAStools/Makefile
+	$(Q)cd third_party/LAStools && cmake . --log-level=ERROR && $(MAKE)
+	$(Q)rm -rf third_party/LAStools/CMakeFiles \
+	           third_party/LAStools/cmake_install.cmake \
+	           third_party/LAStools/CMakeCache.txt \
+	           third_party/LAStools/Makefile
 
 # ── Wrapper parse_lidar_points: compilar solo si no existe la librería ────────
 $(LASPARSE):
 	@echo "[LASparse] Building libparse_lidar_points.a..."
 	$(Q)$(CXX) -std=c++23 -O0 \
-		-I./src/LAStools/LASlib/inc \
+		-I./third_party/LAStools/LASlib/inc \
 		-I./src/types \
-		-I./src/LAStools/LASzip/src \
-		-I./src/LAStools/LASzip/include/laszip \
+		-I./third_party/LAStools/LASzip/src \
+		-I./third_party/LAStools/LASzip/include/laszip \
 		-c ./src/utils/parse_lidar_points.cpp \
 		-o ./src/utils/parse_lidar_points.o
 	$(Q)ar rcs $(LASPARSE) ./src/utils/parse_lidar_points.o
@@ -93,10 +93,10 @@ clean:
 
 # Limpieza total incluyendo las librerías estáticas generadas
 distclean: clean
-	$(Q)rm -rf src/LAStools/CMakeFiles \
-	           src/LAStools/cmake_install.cmake \
-	           src/LAStools/CMakeCache.txt \
-	           src/LAStools/Makefile
+	$(Q)rm -rf third_party/LAStools/CMakeFiles \
+	           third_party/LAStools/cmake_install.cmake \
+	           third_party/LAStools/CMakeCache.txt \
+	           third_party/LAStools/Makefile
 			   
 include tidy.mk
 
