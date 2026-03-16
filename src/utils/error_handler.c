@@ -12,6 +12,7 @@ static const char* get_error_message(ErrorCode err)
     {
 		case ERROR_PARSE_ARG: return "Error parsing args: ";
 		case ERROR_PARSE_POINTS: return "Error parsing points: ";
+		case ERROR_TREE_NOT_INITIALIZED: return "Error ERROR_TREE_NOT_INITIALIZED: ";
         default: return "Unkown error";
     }
 }

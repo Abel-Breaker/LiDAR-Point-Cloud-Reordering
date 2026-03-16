@@ -18,7 +18,8 @@ TIDY_CHECKS = \
     bugprone-branch-clone,\
     -clang-analyzer-security.insecureAPI.*,\
     -misc-no-recursion,\
-	-misc-include-cleaner
+	-misc-include-cleaner,\
+    -android-cloexec-fopen
 
 tidy:
 	$(Q)clang-tidy $(TIDY_SRCS) \
