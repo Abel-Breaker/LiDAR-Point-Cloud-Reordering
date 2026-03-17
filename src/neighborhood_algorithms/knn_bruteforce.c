@@ -7,12 +7,12 @@ static inline double euclidian_distance_3d(double x2, double y2, double z2, doub
     return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
 }
 
-void find_point_neighbors(Points *points, size_t point_index, size_t neighbours_index[K]){
+void find_point_neighbors(Points *points, size_t point_index, size_t neighbours_index[K], double neighbours_distances[K]){
 
     double x = points->x[point_index];
     double y = points->y[point_index];
     double z = points->z[point_index];
-    double neighbours_distances[K];
+    //double neighbours_distances[K];
 
     for(size_t i=0; i<K; ++i){
         neighbours_distances[i] = INFINITY;

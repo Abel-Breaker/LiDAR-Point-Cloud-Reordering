@@ -75,11 +75,15 @@ static inline KDNode *update_to_next_node(const KDNode *node, const Points *poin
 // TODO: Comprobar que actualnode no es null
 static void kdtree_knearest(KDTree *tree, const KDNode *actual_node, int deepth, size_t point_index, size_t neighbours_index[K], double neighbours_distances[K])
 {
+	if(actual_node == nullptr){
+		return;
+	}
+
 	double x = tree->pts->x[point_index];
 	double y = tree->pts->y[point_index];
 	double z = tree->pts->z[point_index];
 
-    // Update best neighbourg
+    // Check this node and update best neighbourg
 	double distance = euclidian_distance_3d(tree->pts->x[actual_node->point_index], tree->pts->y[actual_node->point_index], tree->pts->z[actual_node->point_index], x, y, z);
 	for (size_t j = 0; j < K; ++j) {
 		if (neighbours_distances[j] > distance) {
@@ -93,18 +97,11 @@ static void kdtree_knearest(KDTree *tree, const KDNode *actual_node, int deepth,
 		}
 	}
 
-    
-
-    // TODO: Lia un poco que trabaje sobre actual_node todo el rato, podria crearse otra variable next node
+	// Check next neighbourg
 	KDNode *next_node = update_to_next_node(actual_node, tree->pts, point_index, deepth);
-	if (next_node == nullptr) {
-		return;
-	}
-
-    
     kdtree_knearest(tree, next_node, deepth+1, point_index, neighbours_index, neighbours_distances);
 
-    //TODO: Check other planes
+	// Check if necessary other branch
     double split_value, plane_distance;
 
     int axis = deepth % DIMENSIONS;
@@ -129,15 +126,13 @@ static void kdtree_knearest(KDTree *tree, const KDNode *actual_node, int deepth,
     // TODO: neighbours_distances[K-1] es INFINITY al principio
     if(plane_distance <= neighbours_distances[K-1]){ // Compare with the last best distance
         next_node = update_to_oposite_next_node(actual_node, tree->pts, point_index, deepth);
-        if(next_node != nullptr){
-            kdtree_knearest(tree, next_node, deepth+1, point_index, neighbours_index, neighbours_distances);
-        }
+		kdtree_knearest(tree, next_node, deepth+1, point_index, neighbours_index, neighbours_distances);
     }
 }
 
-void start_kdtree_knearest(KDTree *tree, size_t point_index, size_t neighbours_index[K]){
+void start_kdtree_knearest(KDTree *tree, size_t point_index, size_t neighbours_index[K], double neighbours_distances[K]){
 
-	double neighbours_distances[K];
+	//double neighbours_distances[K];
 
 	for (size_t i = 0; i < K; ++i) {
 		neighbours_distances[i] = INFINITY;

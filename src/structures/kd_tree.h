@@ -1,12 +1,26 @@
 #pragma once
 #include "../types/lidar_points.h"
-/*
-typedef struct KDNode KDNode;
+#define DIMENSIONS 3
 
-void create_kd_tree(struct KDNode **root, size_t point_index);
+enum axis { X = 0, Y = 1, Z = 2 };
 
-void insert_point(struct KDNode **root, Points *points, size_t index);
+typedef struct KDNode {
+	size_t point_index;
+	struct KDNode *left;
+	struct KDNode *right;
+} KDNode;
 
-void print_kd_tree(struct KDNode *root, Points *points);
+typedef struct KDTree {
+	KDNode *nodes;	 /* pool contiguo de nodos               */
+	size_t *indices; /* array de índices a ordenar            */
+    KDNode  *root;  
+	const Points *pts;
+} KDTree;
 
-void destroy_kd_tree(struct KDNode *node);*/
+void create_kd_tree(struct KDTree *tree, const Points *pts);
+
+void destroy_kd_tree(struct KDTree *tree);
+
+int verify_kd_node(KDTree *tree, size_t start, size_t end, int depth);
+
+void check_number_of_nodes(KDTree *tree);
