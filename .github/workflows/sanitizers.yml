@@ -8,7 +8,9 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y gcc cmake
       - name: Build debug_threads
-        run: make MODE=debug_threadss
+        run: make MODE=debug_threads
+      - name: Clean
+        run: make clean
       - name: Build debug
         run: make MODE=debug
       - name: Run

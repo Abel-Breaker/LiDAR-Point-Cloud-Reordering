@@ -98,7 +98,7 @@ static void kdtree_knearest(KDTree *tree, const KDNode *actual_node, int deepth,
 	}
 
 	// Check next neighbourg
-	KDNode *next_node = update_to_next_node(actual_node, tree->pts, point_index, deepth);
+	const KDNode *next_node = update_to_next_node(actual_node, tree->pts, point_index, deepth);
     kdtree_knearest(tree, next_node, deepth+1, point_index, neighbours_index, neighbours_distances);
 
 	// Check if necessary other branch

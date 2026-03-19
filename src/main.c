@@ -1,13 +1,13 @@
-#include "neighborhood_algorithms/knn_kd_tree.h"
 #include "neighborhood_algorithms/knn_bruteforce.h"
+#include "neighborhood_algorithms/knn_kd_tree.h"
 #include "structures/kd_tree.h"
 #include "types/lidar_points.h"
 #include "utils/error_handler.h"
 #include "utils/parse_args.h"
 #include "utils/parse_lidar_points.h"
-#include <stdio.h>
-#include <math.h>
 #include <assert.h>
+#include <math.h>
+#include <stdio.h>
 
 int main(int argc, char **argv)
 {
@@ -24,7 +24,6 @@ int main(int argc, char **argv)
 	}
 
 	printf("%zu\n", points.num_points);
-	points.num_points = 1000000;
 
 	KDTree tree = {};
 	create_kd_tree(&tree, &points);
@@ -49,9 +48,8 @@ int main(int argc, char **argv)
 
 	check_number_of_nodes(&tree);
 
-
 	// Test neighborhood
-	for(size_t i=0; i<20; ++i){
+	for (size_t i = 0; i < 10; ++i) {
 		size_t neighbours[K];
 		double neighbours_distances[K];
 		size_t neighbours_2[K];
@@ -59,12 +57,10 @@ int main(int argc, char **argv)
 
 		start_kdtree_knearest(&tree, i, neighbours, neighbours_distances);
 		find_point_neighbors(&points, i, neighbours_2, neighbours_distances_2);
-		for (size_t j = 0; j < K; j++){
+		for (size_t j = 0; j < K; j++) {
 			assert(neighbours[j] == neighbours_2[j]);
 		}
-
 	}
-
 
 	destroy_kd_tree(&tree);
 	destroy_points(&points);
