@@ -2,6 +2,11 @@
 #include <math.h>
 #include <stddef.h>
 
+#define DIMENSIONS 3
+
+/**
+ * Computes the Euclidean distance between two points in 3D space.
+ */
 static inline double euclidian_distance_3d(double x2, double y2, double z2,
                                            double x1, double y1, double z1)
 {
@@ -12,14 +17,30 @@ typedef struct{
     double *x;
     double *y;
     double *z;
-    //uint16_t *intensity;
-    //uint8_t *classification;
     size_t num_points;
 } Points;
 
-
+/**
+ * Allocates memory for a set of points.
+ *
+ * @param[out] points Pointer to the Points structure to allocate.
+ * @param[in] number_of_points Number of points to reserve space for.
+ * @return true if memory allocation was successful, false otherwise.
+ */
 bool reserve_memory_points(Points *points, size_t number_of_points);
 
+/**
+ * Adds a point to a set of points at a specified index.
+ *
+ * @param[in,out] points Pointer to the Points structure.
+ * @param[in] index Index at which the point will be added.
+ * @param[in] x, y, z Coordinates of the point to add.
+ */
 void add_point(Points *points, size_t index, double x, double y, double z);
 
+/**
+ * Frees the memory allocated for a set of points.
+ *
+ * @param[in,out] points Pointer to the Points structure to destroy.
+ */
 void destroy_points(Points *points);

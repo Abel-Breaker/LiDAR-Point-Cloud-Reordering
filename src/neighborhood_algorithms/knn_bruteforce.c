@@ -2,12 +2,11 @@
 #include <string.h>
 #include <stdio.h>
 
-void find_point_neighbors(Points *points, size_t point_index, size_t neighbours_index[K], double neighbours_distances[K]){
+void find_point_neighbors(const Points *points, size_t point_index, size_t neighbours_index[K], double neighbours_distances[K]){
 
     double x = points->x[point_index];
     double y = points->y[point_index];
     double z = points->z[point_index];
-    //double neighbours_distances[K];
 
     for(size_t i=0; i<K; ++i){
         neighbours_distances[i] = INFINITY;

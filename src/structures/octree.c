@@ -4,10 +4,9 @@
 #include <string.h>
 #include <float.h>
 
-
-/* ── Helpers privados ─────────────────────────────────────────────────────── */
-
-/* Calcula el bounding box que engloba todos los puntos */
+/** 
+ * Calculate the bounding box that encompasses all the points
+*/
 static AABB compute_global_aabb(const Points *pts)
 {
 	AABB bb = {
@@ -27,13 +26,14 @@ static AABB compute_global_aabb(const Points *pts)
 	return bb;
 }
 
-/* Determina en qué octante cae un punto respecto al centro del AABB.
- *
- * Octante codificado en bits:
- *   bit 0 → X (0 = izquierda, 1 = derecha)
- *   bit 1 → Y (0 = abajo,     1 = arriba)
- *   bit 2 → Z (0 = atrás,     1 = delante)
- */
+/**
+ * Determines the octant in which a point falls relative to the center of the AABB.
+ * 
+ * Octant encoded in bits:
+ * 	bit 0 → X (0 = left, 1 = right)
+ * 	bit 1 → Y (0 = down, 1 = up)
+ * 	bit 2 → Z (0 = back, 1 = front)
+*/
 static int get_octant(const Points *pts, size_t idx, const double center[3])
 {
 	int octant = 0;
@@ -43,7 +43,9 @@ static int get_octant(const Points *pts, size_t idx, const double center[3])
 	return octant;
 }
 
-/* Calcula el AABB del hijo dado el AABB del padre y el octante */
+/**
+ * Calculate the AABB of the son given the AABB of the father and the octant
+*/
 static AABB child_bounds(const AABB *parent, int octant)
 {
 	double cx = (parent->min[0] + parent->max[0]) / 2;
@@ -61,7 +63,9 @@ static AABB child_bounds(const AABB *parent, int octant)
 	return child;
 }
 
-/* Crea un nodo hoja con los índices proporcionados */
+/**
+ * Create a leaf node with the provided indices
+*/
 static Octant *create_leaf(const AABB *bounds, const size_t *indices, size_t n)
 {
 	Octant *octant = malloc(sizeof(*octant));
@@ -81,7 +85,9 @@ static Octant *create_leaf(const AABB *bounds, const size_t *indices, size_t n)
 	return octant;
 }
 
-/* Crea un nodo interno (sin puntos propios) */
+/**
+ * Create an internal node (without its own points)
+*/
 static Octant *create_internal(const AABB *bounds)
 {
 	Octant *octant = malloc(sizeof(*octant));
@@ -95,7 +101,9 @@ static Octant *create_internal(const AABB *bounds)
 	return octant;
 }
 
-/* Construcción recursiva del octree */
+/**
+ * Recursive construction of the octree
+*/
 static Octant *octree_build(const Points *pts,
                                 const AABB *bounds,
                                 const size_t *indices,
@@ -104,12 +112,12 @@ static Octant *octree_build(const Points *pts,
 {
 	if (num_points == 0) return NULL;
 
-	/* Condición de hoja: pocos puntos o profundidad máxima alcanzada */
+	// Leaf condition: few points or maximum depth reached
 	if (num_points <= OCTREE_BUCKET_SIZE || depth >= OCTREE_MAX_DEPTH) {
 		return create_leaf(bounds, indices, num_points);
 	}
 
-	/* Nodo interno: subdividir en 8 octantes */
+	// Internal node: subdivide into 8 octants
 	Octant *octant = create_internal(bounds);
 	if (!octant) return NULL;
 
@@ -119,21 +127,21 @@ static Octant *octree_build(const Points *pts,
 		(bounds->min[2] + bounds->max[2]) / 2
 	};
 
-	/* Contar puntos por octante para evitar reallocs */
+	// Count points per octant to avoid reallocs
 	size_t counts[8] = {0};
 	for (size_t i = 0; i < num_points; i++) {
 		int oct = get_octant(pts, indices[i], center);
 		counts[oct]++;
 	}
 
-	/* Reservar arrays temporales para distribuir índices */
+	// Reserve temporary arrays to distribute indices
 	size_t *buckets[8] = {NULL};
 	size_t offsets[8]  = {0};
 	for (int c = 0; c < 8; c++) {
 		if (counts[c] > 0) {
 			buckets[c] = calloc(counts[c], sizeof(*buckets[c]));
 			if (!buckets[c]) {
-				/* Limpieza parcial en caso de fallo */
+				// Partial cleaning in case of failure
 				for (int j = 0; j < c; j++) free(buckets[j]);
 				free(octant);
 				return NULL;
@@ -141,13 +149,13 @@ static Octant *octree_build(const Points *pts,
 		}
 	}
 
-	/* Distribuir índices en los buckets correspondientes */
+	// Distribute indices to the corresponding buckets
 	for (size_t i = 0; i < num_points; i++) {
 		int oct = get_octant(pts, indices[i], center);
 		buckets[oct][offsets[oct]++] = indices[i];
 	}
 
-	/* Construir recursivamente cada hijo */
+	// Recursively build each child
 	for (int c = 0; c < 8; c++) {
 		if (counts[c] > 0) {
 			AABB cb = child_bounds(bounds, c);
@@ -166,7 +174,7 @@ void create_octree(Octree *octree, const Points *pts)
 
 	AABB global_bb = compute_global_aabb(pts);
 
-	/* Array con todos los índices [0, num_points) */
+	// Array with all indices [0, num_points)
 	size_t *all_indices = malloc(pts->num_points * sizeof(*all_indices));
 	if (!all_indices) {
 		octree->root = NULL;
@@ -181,7 +189,9 @@ void create_octree(Octree *octree, const Points *pts)
 	free(all_indices);
 }
 
-/* Liberación recursiva de nodos */
+/**
+ * Recursive node release
+ */
 static void octree_free_octant(Octant *octant)
 {
 	if (!octant) return;
@@ -195,14 +205,16 @@ static void octree_free_octant(Octant *octant)
 
 void destroy_octree(Octree *octree)
 {
+	if(!octree) return;
 	octree_free_octant(octree->root);
 	octree->root = NULL;
 	octree->pts  = NULL;
 }
 
-// === Estadísticas === //
-// ==================== //
 
+/**
+ * Get stadistics
+ */
 static void collect_stats(const Octant *octant, int depth,
                           size_t *internal_count, size_t *leaf_count,
                           size_t *total_points, int *max_depth,
@@ -210,7 +222,7 @@ static void collect_stats(const Octant *octant, int depth,
 {
 	if (!octant) return;
 
-	/* Un nodo es hoja si tiene point_indices (o no tiene hijos) */
+	// A node is a leaf node if it has point_indices (or no children)
 	bool is_leaf = (octant->point_indices != NULL);
 
 	if (is_leaf) {
@@ -232,6 +244,8 @@ static void collect_stats(const Octant *octant, int depth,
 
 void octree_print_stats(const Octree *octree)
 {
+	if(!octree) return;
+	
 	if (!octree->root) {
 		printf("Octree vacío\n");
 		return;

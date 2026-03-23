@@ -16,6 +16,7 @@ typedef enum {
  *
  * @param[in] error      ErrorCode
  * @param[in] severity   Severity of the error
+ * @param[in] message    Personalizated message
  *
  */
 void handle_error(ErrorCode error, ErrorSeverity severity, const char *message);

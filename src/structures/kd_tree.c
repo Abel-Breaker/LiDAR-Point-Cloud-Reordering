@@ -98,7 +98,8 @@ void create_kd_tree(struct KDTree *tree, const Points *pts)
 
 void destroy_kd_tree(struct KDTree *tree)
 {
-	free(tree->indices);
+    if (!tree) return;
+    free(tree->indices);
     free(tree->nodes);
 }
 

@@ -2,24 +2,24 @@
 #include "../types/lidar_points.h"
 #include <stddef.h>
 
-/* Número máximo de puntos por hoja antes de subdividir */
+// Maximum number of points per sheet before subdividing
 #define OCTREE_BUCKET_SIZE 128
 
-/* Profundidad máxima del árbol (evita recursión infinita con puntos coincidentes) */
+// Maximum tree depth (avoids infinite recursion with coincident points)
 #define OCTREE_MAX_DEPTH 32
 
 
-/* Bounding box alineada con los ejes */
+// Bounding box aligned with the axes
 typedef struct {
 	// x y z
-	double min[3]; 
-	double max[3];
+	double min[DIMENSIONS]; 
+	double max[DIMENSIONS];
 } AABB;
 
 typedef struct Octant {
-	struct Octant *children[8];     // NULL en hojas        
-	size_t *point_indices;          // índices (solo hojas) 
-	size_t num_points;              // puntos en esta hoja  
+	struct Octant *children[8];     // NULL in leafs        
+	size_t *point_indices;          // Indices (only leafs) 
+	size_t num_points;              // Points on this leaf 
 	AABB bounds;
 } Octant;
 
@@ -28,6 +28,26 @@ typedef struct Octree {
 	const Points *pts;
 } Octree;
 
+/**
+ * Creates an octree from a given collection of points.
+ *
+ * @param[out] octree Pointer to the Octree structure to initialize.
+ * @param[in] pts Pointer to the Points structure used to build the octree.
+ *
+ * @note The point collection `pts` must be initialized before calling this function.
+ */
 void create_octree(Octree *octree, const Points *pts);
+
+/**
+ * Destroys an octree, releasing all associated resources.
+ *
+ * @param[in,out] octree Pointer to the Octree structure to destroy.
+ */
 void destroy_octree(Octree *octree);
+
+/**
+ * Prints statistical information about the octree.
+ *
+ * @param[in] octree Pointer to the Octree structure.
+ */
 void octree_print_stats(const Octree *octree);
