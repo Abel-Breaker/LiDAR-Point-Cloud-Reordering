@@ -47,6 +47,33 @@ int main(int argc, char **argv)
 	printf("Arbol valido: %s\n", valid ? "SI" : "NO");
 
 	check_number_of_nodes(&tree);
+/*
+	FILE *fd;
+	fd = fopen("adjacency_matrix.txt", "w");
+
+	for (size_t i = 0; i < points.num_points; ++i) {
+		size_t neighbours[K];
+		double neighbours_distances[K];
+
+		start_kdtree_knearest(&tree, i, neighbours, neighbours_distances);
+
+		for (size_t j = 0; j < points.num_points; ++j) {
+			int is_neighbour = 0;
+			for (size_t k = 0; k < K; ++k) {
+				if (neighbours[k] == j) {
+					is_neighbour = 1;
+					break;
+				}
+			}
+			if (j < points.num_points - 1)
+				fprintf(fd, "%d ", is_neighbour);
+			else
+				fprintf(fd, "%d", is_neighbour);
+		}
+		fprintf(fd, "\n");
+	}
+
+	fclose(fd);*/
 
 	// Test neighborhood
 	for (size_t i = 0; i < 10; ++i) {

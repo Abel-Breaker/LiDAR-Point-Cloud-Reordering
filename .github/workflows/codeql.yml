@@ -16,6 +16,8 @@ jobs:
         with:
           languages: cpp
           queries: security-and-quality
+          paths: |
+            src/**
 
       - name: Build
         run: make
