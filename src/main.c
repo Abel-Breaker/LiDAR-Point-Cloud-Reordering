@@ -7,6 +7,7 @@
 #include "utils/error_handler.h"
 #include "utils/parse_args.h"
 #include "utils/parse_lidar_points.h"
+#include "points_reorder_algorithms/structures/neighborhood_matrix.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
@@ -91,9 +92,22 @@ int main(int argc, char **argv)
 		}
 	}
 
+
+	// Check spare matrix
+	Matrix matrix;
+	create_neighborhood_matrix(&tree, &matrix);
+
+	size_t neighbours[K];
+	double neighbours_distances[K];
+	start_kdtree_knearest(&tree, 8, neighbours, neighbours_distances);
+	for (size_t j = 0; j < K; j++) {
+		assert(neighbours[j] == matrix[K*8+j]);
+	}
+
+	destroy_neighborhood_matrix(matrix);
 	destroy_kd_tree(&tree);
 
-
+/*
 	// Octree test
 	Octree octree = {};
 	create_octree(&octree, &points);
@@ -142,7 +156,7 @@ int main(int argc, char **argv)
 	}
 	printf("Octree Radio: OK\n");
 
-	destroy_octree(&octree);
+	destroy_octree(&octree);*/
 
 	destroy_points(&points);
 

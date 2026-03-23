@@ -8,7 +8,8 @@ typedef enum {
 typedef enum {
     ERROR_PARSE_ARG,
     ERROR_PARSE_POINTS,
-    ERROR_TREE_NOT_INITIALIZED
+    ERROR_TREE_NOT_INITIALIZED,
+    ERROR_POINT_CLOUD_TOO_BIG
 } ErrorCode;
 
 /**
