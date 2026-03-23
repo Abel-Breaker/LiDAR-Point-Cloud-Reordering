@@ -1,6 +1,8 @@
 #include "neighborhood_algorithms/knn_bruteforce.h"
 #include "neighborhood_algorithms/knn_kd_tree.h"
+#include "neighborhood_algorithms/search_octree.h"
 #include "structures/kd_tree.h"
+#include "structures/octree.h"
 #include "types/lidar_points.h"
 #include "utils/error_handler.h"
 #include "utils/parse_args.h"
@@ -90,7 +92,61 @@ int main(int argc, char **argv)
 	}
 
 	destroy_kd_tree(&tree);
+
+
+	// Octree test
+	Octree octree = {};
+	create_octree(&octree, &points);
+	octree_print_stats(&octree);
+
+	// Validación: los K vecinos del octree deben coincidir con fuerza bruta
+	for (size_t i = 0; i < 10; ++i) {
+		size_t neighbours_oct[K];
+		double neighbours_distances_oct[K];
+		size_t neighbours_bf[K];
+		double neighbours_distances_bf[K];
+
+		start_octree_knearest(&octree, i, neighbours_oct, neighbours_distances_oct);
+		find_point_neighbors(&points, i, neighbours_bf, neighbours_distances_bf);
+		for (size_t j = 0; j < K; j++) {
+			assert(neighbours_oct[j] == neighbours_bf[j]);
+		}
+	}
+	printf("Octree KNN: OK\n");
+
+	// Validación búsqueda por radio fijo: comparar con fuerza bruta
+	// Usamos como radio la distancia al K-ésimo vecino del punto 0
+	{
+		size_t nbr0[K];
+		double dist0[K];
+		start_octree_knearest(&octree, 0, nbr0, dist0);
+		double test_radius = dist0[K - 1];
+
+		for (size_t i = 0; i < 10; ++i) {
+			double px = points.x[i], py = points.y[i], pz = points.z[i];
+
+			// Fuerza bruta
+			size_t bf_count = 0;
+			for (size_t j = 0; j < points.num_points; ++j) {
+				double d = euclidian_distance_3d(points.x[j], points.y[j], points.z[j],
+				                                 px, py, pz);
+				if (d <= test_radius) bf_count++;
+			}
+
+			// Octree
+			RadiusResult res = {};
+			octree_radius_search(&octree, i, test_radius, &res);
+			assert(res.count == bf_count);
+			radius_result_destroy(&res);
+		}
+	}
+	printf("Octree Radio: OK\n");
+
+	destroy_octree(&octree);
+
 	destroy_points(&points);
+
+
 
 	return 0;
 }

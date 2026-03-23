@@ -1,11 +1,6 @@
 #include "knn_bruteforce.h"
-#include <math.h>
 #include <string.h>
 #include <stdio.h>
-
-static inline double euclidian_distance_3d(double x2, double y2, double z2, double x1, double y1, double z1){
-    return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
-}
 
 void find_point_neighbors(Points *points, size_t point_index, size_t neighbours_index[K], double neighbours_distances[K]){
 
