@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+// TODO: It can be optimized to the half part of the memory (It is symetric)
 bool create_neighborhood_matrix(const KDTree *tree, Matrix *matrix)
 {
 
@@ -19,7 +20,7 @@ bool create_neighborhood_matrix(const KDTree *tree, Matrix *matrix)
 		return false;
 	}
 
-	*matrix = malloc(((tree->pts->num_points * K)) * sizeof(**matrix)); // /2 because it is symetric
+	*matrix = malloc(((tree->pts->num_points * K)) * sizeof(**matrix));
 
 	for (unsigned int i = 0; i < tree->pts->num_points; ++i) {
 		size_t neighbours[K];

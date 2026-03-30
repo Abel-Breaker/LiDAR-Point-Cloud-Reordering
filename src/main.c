@@ -8,9 +8,41 @@
 #include "utils/parse_args.h"
 #include "utils/parse_lidar_points.h"
 #include "points_reorder_algorithms/structures/neighborhood_matrix.h"
+#include "points_reorder_algorithms/cuthill-mckee.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+
+typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index,
+			     double *neighbours_distances);
+
+void save_neighborhood_matrix_on_file(Points *points, NeighborFunc neighbor_func, const void *structure, const char *filename)
+{
+	FILE *fd;
+	fd = fopen(filename, "w");
+
+	for (size_t i = 0; i < points->num_points; ++i) {
+		size_t neighbours[K];
+		double neighbours_distances[K];
+
+
+		neighbor_func(structure, i, neighbours, neighbours_distances);
+
+		for (size_t j = 0; j < points->num_points; ++j) {
+			int is_neighbour = 0;
+			for (size_t k = 0; k < K; ++k) {
+				if (neighbours[k] == j) {
+					is_neighbour = 1;
+					break;
+				}
+			}
+			fprintf(fd, "%d ", is_neighbour);
+		}
+		fprintf(fd, "\n");
+	}
+
+	fclose(fd);
+}
 
 int main(int argc, char **argv)
 {
@@ -25,6 +57,7 @@ int main(int argc, char **argv)
 	if (read_las_points(args.cloud_points_file_name, &points) == false) {
 		handle_error(ERROR_PARSE_POINTS, ERR_FATAL, nullptr);
 	}
+	points.num_points = 1000;
 
 	printf("%zu\n", points.num_points);
 
@@ -50,38 +83,13 @@ int main(int argc, char **argv)
 	printf("Arbol valido: %s\n", valid ? "SI" : "NO");
 
 	check_number_of_nodes(&tree);
-/*
-	FILE *fd;
-	fd = fopen("adjacency_matrix.txt", "w");
 
-	for (size_t i = 0; i < points.num_points; ++i) {
-		size_t neighbours[K];
-		double neighbours_distances[K];
 
-		start_kdtree_knearest(&tree, i, neighbours, neighbours_distances);
-
-		for (size_t j = 0; j < points.num_points; ++j) {
-			int is_neighbour = 0;
-			for (size_t k = 0; k < K; ++k) {
-				if (neighbours[k] == j) {
-					is_neighbour = 1;
-					break;
-				}
-			}
-			if (j < points.num_points - 1)
-				fprintf(fd, "%d ", is_neighbour);
-			else
-				fprintf(fd, "%d", is_neighbour);
-		}
-		fprintf(fd, "\n");
-	}
-
-	fclose(fd);*/
+	size_t neighbours[K];
+	double neighbours_distances[K];
 
 	// Test neighborhood
-	for (size_t i = 0; i < 10; ++i) {
-		size_t neighbours[K];
-		double neighbours_distances[K];
+	for (size_t i = 0; i < 100; ++i) {
 		size_t neighbours_2[K];
 		double neighbours_distances_2[K];
 
@@ -93,21 +101,32 @@ int main(int argc, char **argv)
 	}
 
 
-	// Check spare matrix
-	Matrix matrix;
-	create_neighborhood_matrix(&tree, &matrix);
+	//save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &tree, "before.txt");
+	// Check cuthill-mckee
+	reorder_points_cuthill_mckee(&tree, &points);
+	printf("Reordenado\n");
+	KDTree tree_2 = {};
+	create_kd_tree(&tree_2, &points);
+	//save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &tree_2, "after.txt");
+	
 
-	size_t neighbours[K];
-	double neighbours_distances[K];
-	start_kdtree_knearest(&tree, 8, neighbours, neighbours_distances);
-	for (size_t j = 0; j < K; j++) {
-		assert(neighbours[j] == matrix[K*8+j]);
+	// Test neighborhood
+	for (size_t i = 0; i < 10; ++i) {
+		size_t neighbours_2[K];
+		double neighbours_distances_2[K];
+
+		start_kdtree_knearest(&tree_2, i, neighbours, neighbours_distances);
+		find_point_neighbors(&points, i, neighbours_2, neighbours_distances_2);
+		for (size_t j = 0; j < K; j++) {
+			//printf("%ld - %ld\n", neighbours[j], neighbours_2[j]);
+			//printf("%f - %f\n", neighbours_distances[j], neighbours_distances_2[j]);
+			assert(neighbours[j] == neighbours_2[j]);
+		}
 	}
 
-	destroy_neighborhood_matrix(matrix);
 	destroy_kd_tree(&tree);
+	destroy_kd_tree(&tree_2);
 
-/*
 	// Octree test
 	Octree octree = {};
 	create_octree(&octree, &points);
@@ -156,7 +175,7 @@ int main(int argc, char **argv)
 	}
 	printf("Octree Radio: OK\n");
 
-	destroy_octree(&octree);*/
+	destroy_octree(&octree);
 
 	destroy_points(&points);
 

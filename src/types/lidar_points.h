@@ -38,6 +38,8 @@ bool reserve_memory_points(Points *points, size_t number_of_points);
  */
 void add_point(Points *points, size_t index, double x, double y, double z);
 
+void swap_points(Points *points, const unsigned int *permutations);
+
 /**
  * Frees the memory allocated for a set of points.
  *
