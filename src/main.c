@@ -49,7 +49,7 @@ void check_neighborhoods_calculation(const Points *points, NeighborFunc neighbor
 	double neighbours_distances[K];
 
 	// Test neighborhood
-	for (size_t i = 0; i < 100; ++i) {
+	for (size_t i = 0; i < 500; ++i) {
 		size_t neighbours_2[K];
 		double neighbours_distances_2[K];
 
@@ -58,7 +58,11 @@ void check_neighborhoods_calculation(const Points *points, NeighborFunc neighbor
 		for (size_t j = 0; j < K; j++) {
 			//printf("%ld - %ld\n", neighbours[j], neighbours_2[j]);
 			//printf("%f - %f\n", neighbours_distances[j], neighbours_distances_2[j]);
-			assert(neighbours[j] == neighbours_2[j]);
+			//assert(neighbours[j] == neighbours_2[j]);
+			// Check distances because there are indices that are at the same distance and can colide
+			double diff = fabs(neighbours_distances[j] - neighbours_distances_2[j]);
+            const double epsilon = 1e-6f;  // tolerancia para errores numéricos
+            assert(diff < epsilon);
 		}
 	}
 }
@@ -75,7 +79,7 @@ int main(int argc, char **argv)
 	if (read_las_points(args.cloud_points_file_name, &points) == false) {
 		handle_error(ERROR_PARSE_POINTS, ERR_FATAL, nullptr);
 	}
-	//points.num_points = 1000;
+	//points.num_points = 10000;
 	printf("%zu\n", points.num_points);
 
 	// Create kdtree and check
@@ -83,23 +87,66 @@ int main(int argc, char **argv)
 	create_kd_tree(&tree, &points);
 	check_kd_tree(&tree);
 	check_neighborhoods_calculation(&points, (const void *)start_kdtree_knearest, &tree);
-	save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &tree, "../R/before.txt");
+	//save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &tree, "../R/before.txt");
 
-	// CUTHILL-MCKEE
+	// BFS SORT BY DISTANCE
 	{
+		printf("BFS SORT BY DISTANCE\n");
 		// Reorder points
-		reorder_points_cuthill_mckee(&tree, &points);
+		Points points_reordered = {};
+		reorder_bfs_sort_by_distance(&tree, &points, &points_reordered);
 		printf("Reordenado\n");
 
 		// Create and check new kd_tree
 		KDTree tree_2 = {};
-		create_kd_tree(&tree_2, &points);
+		create_kd_tree(&tree_2, &points_reordered);
 		check_kd_tree(&tree_2);
-		check_neighborhoods_calculation(&points, (const void *)start_kdtree_knearest, &tree_2);
+		check_neighborhoods_calculation(&points_reordered, (const void *)start_kdtree_knearest, &tree_2);
 
-		save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &tree_2, "../R/after.txt");
+		//save_neighborhood_matrix_on_file(&points_reordered, (const void *)start_kdtree_knearest, &tree_2, "../R/after_DISTANCE.txt");
 
 		destroy_kd_tree(&tree_2);
+		destroy_points(&points_reordered);
+	}
+
+	// BFS SORT BY INDEX
+	{
+		printf("BFS SORT BY INDEX\n");
+		// Reorder points
+		Points points_reordered = {};
+		reorder_bfs_sort_by_index(&tree, &points, &points_reordered);
+		printf("Reordenado\n");
+
+		// Create and check new kd_tree
+		KDTree tree_2 = {};
+		create_kd_tree(&tree_2, &points_reordered);
+		check_kd_tree(&tree_2);
+		check_neighborhoods_calculation(&points_reordered, (const void *)start_kdtree_knearest, &tree_2);
+
+		//save_neighborhood_matrix_on_file(&points_reordered, (const void *)start_kdtree_knearest, &tree_2, "../R/after_INDEX.txt");
+
+		destroy_kd_tree(&tree_2);
+		destroy_points(&points_reordered);
+	}
+
+	// BFS SORT BY DISTANCE REVERSE
+	{
+		printf("BFS SORT BY DISTANCE REVERSE\n");
+		// Reorder points
+		Points points_reordered = {};
+		reorder_bfs_sort_by_distance_reverse(&tree, &points, &points_reordered);
+		printf("Reordenado\n");
+
+		// Create and check new kd_tree
+		KDTree tree_2 = {};
+		create_kd_tree(&tree_2, &points_reordered);
+		check_kd_tree(&tree_2);
+		check_neighborhoods_calculation(&points_reordered, (const void *)start_kdtree_knearest, &tree_2);
+
+		//save_neighborhood_matrix_on_file(&points_reordered, (const void *)start_kdtree_knearest, &tree_2, "../R/after_DISTANCE_REV.txt");
+
+		destroy_kd_tree(&tree_2);
+		destroy_points(&points_reordered);
 	}
 
 	destroy_kd_tree(&tree);

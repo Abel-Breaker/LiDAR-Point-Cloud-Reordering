@@ -22,8 +22,8 @@ OBJS = $(C_OBJS) $(STATIC_LIBRARIES)
 # Flags comunes a todos los modos
 COMMON_FLAGS = -std=c2x -lstdc++ -lm -fopt-info-vec
 
-# Base de flags de debug (sin sanitizers)
-CFLAGS_DEBUG_BASE = -O0 -g3 -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 \
+# Base de flags de debug (sin sanitizers) -Wpedantic
+CFLAGS_DEBUG_BASE = -O0 -g3 -Wall -Wextra  -Wshadow -Wformat=2 \
 -Wconversion -Wsign-conversion -Wuninitialized -Wlogical-op -Wduplicated-cond \
 -Wunused -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wstrict-overflow=5 \
 -Wnull-dereference -Wdouble-promotion -Wstack-protector -Wstrict-aliasing=3 \

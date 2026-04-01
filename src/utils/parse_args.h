@@ -2,7 +2,7 @@
 
 #include <getopt.h>
 
-#define K 20
+#define K 50
 
 typedef struct {
     char *cloud_points_file_name;

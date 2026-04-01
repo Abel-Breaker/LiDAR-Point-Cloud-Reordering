@@ -10,7 +10,7 @@ struct Queue{
 
 // Crear cola
 Queue *createQueue(unsigned int size) {
-    Queue* q = calloc(1, sizeof(*q));
+    Queue* q = calloc(1, sizeof(*q)); // Set head and tail to 0
     if(!q){
         handle_error(ERROR_MALLOC, ERR_FATAL, "Can not allocate memory for queue");
         return NULL; // Only to avoid warning, never reached
