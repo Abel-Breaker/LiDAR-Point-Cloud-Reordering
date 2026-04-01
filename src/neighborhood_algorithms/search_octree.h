@@ -1,5 +1,5 @@
 #pragma once
-#include "../structures/octree.h"
+#include "../points_structures/octree.h"
 #include "../utils/parse_args.h"
 #include <stddef.h>
 

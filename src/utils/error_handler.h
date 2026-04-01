@@ -6,6 +6,7 @@ typedef enum {
 } ErrorSeverity;
 
 typedef enum {
+    ERROR_MALLOC,
     ERROR_PARSE_ARG,
     ERROR_PARSE_POINTS,
     ERROR_TREE_NOT_INITIALIZED,

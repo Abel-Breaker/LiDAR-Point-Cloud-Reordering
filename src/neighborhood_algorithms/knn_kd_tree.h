@@ -1,5 +1,5 @@
 #pragma once
-#include "../structures/kd_tree.h"
+#include "../points_structures/kd_tree.h"
 #include "../utils/parse_args.h"
 
 /**
