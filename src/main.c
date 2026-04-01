@@ -7,7 +7,6 @@
 #include "utils/error_handler.h"
 #include "utils/parse_args.h"
 #include "utils/parse_lidar_points.h"
-#include "points_reorder_algorithms/structures/neighborhood_matrix.h"
 #include "points_reorder_algorithms/cuthill-mckee.h"
 #include <assert.h>
 #include <math.h>
@@ -16,7 +15,7 @@
 typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index,
 			     double *neighbours_distances);
 
-void save_neighborhood_matrix_on_file(Points *points, NeighborFunc neighbor_func, const void *structure, const char *filename)
+void save_neighborhood_matrix_on_file(const Points *points, NeighborFunc neighbor_func, const void *structure, const char *filename)
 {
 	FILE *fd;
 	fd = fopen(filename, "w");
@@ -44,46 +43,7 @@ void save_neighborhood_matrix_on_file(Points *points, NeighborFunc neighbor_func
 	fclose(fd);
 }
 
-int main(int argc, char **argv)
-{
-	Args args = {};
-
-	parse_args(argc, argv, &args);
-
-	printf("filename: %s\n", args.cloud_points_file_name);
-
-	Points points = {};
-
-	if (read_las_points(args.cloud_points_file_name, &points) == false) {
-		handle_error(ERROR_PARSE_POINTS, ERR_FATAL, nullptr);
-	}
-	points.num_points = 1000;
-
-	printf("%zu\n", points.num_points);
-
-	KDTree tree = {};
-	create_kd_tree(&tree, &points);
-
-	// Verifica que el mediano está bien colocado en el eje X
-	size_t mid = points.num_points / 2;
-	printf("Indice de la mediana: %zu - Indice root: %zu\n", tree.indices[mid], tree.root->point_index);
-
-	// Comprueba que todos los de la izquierda son <= mediano
-	double mid_val = points.x[tree.indices[mid]];
-	int ok = 1;
-	for (size_t i = 0; i < mid; i++) {
-		if (points.x[tree.indices[i]] > mid_val) {
-			ok = 0;
-			break;
-		}
-	}
-	printf("Particion correcta: %s\n", ok ? "SI" : "NO");
-
-	int valid = verify_kd_node(&tree, 0, points.num_points, 0);
-	printf("Arbol valido: %s\n", valid ? "SI" : "NO");
-
-	check_number_of_nodes(&tree);
-
+void check_neighborhoods_calculation(const Points *points, NeighborFunc neighbor_func, const void *structure){
 
 	size_t neighbours[K];
 	double neighbours_distances[K];
@@ -93,59 +53,76 @@ int main(int argc, char **argv)
 		size_t neighbours_2[K];
 		double neighbours_distances_2[K];
 
-		start_kdtree_knearest(&tree, i, neighbours, neighbours_distances);
-		find_point_neighbors(&points, i, neighbours_2, neighbours_distances_2);
-		for (size_t j = 0; j < K; j++) {
-			assert(neighbours[j] == neighbours_2[j]);
-		}
-	}
-
-
-	//save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &tree, "before.txt");
-	// Check cuthill-mckee
-	reorder_points_cuthill_mckee(&tree, &points);
-	printf("Reordenado\n");
-	KDTree tree_2 = {};
-	create_kd_tree(&tree_2, &points);
-	//save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &tree_2, "after.txt");
-	
-
-	// Test neighborhood
-	for (size_t i = 0; i < 10; ++i) {
-		size_t neighbours_2[K];
-		double neighbours_distances_2[K];
-
-		start_kdtree_knearest(&tree_2, i, neighbours, neighbours_distances);
-		find_point_neighbors(&points, i, neighbours_2, neighbours_distances_2);
+		neighbor_func(structure, i, neighbours, neighbours_distances);
+		find_point_neighbors(points, i, neighbours_2, neighbours_distances_2);
 		for (size_t j = 0; j < K; j++) {
 			//printf("%ld - %ld\n", neighbours[j], neighbours_2[j]);
 			//printf("%f - %f\n", neighbours_distances[j], neighbours_distances_2[j]);
 			assert(neighbours[j] == neighbours_2[j]);
 		}
 	}
+}
+
+int main(int argc, char **argv)
+{
+	// Arguments parse
+	Args args = {};
+	parse_args(argc, argv, &args);
+	printf("filename: %s\n", args.cloud_points_file_name);
+
+	// Read and save points
+	Points points = {};
+	if (read_las_points(args.cloud_points_file_name, &points) == false) {
+		handle_error(ERROR_PARSE_POINTS, ERR_FATAL, nullptr);
+	}
+	//points.num_points = 1000;
+	printf("%zu\n", points.num_points);
+
+	// Create kdtree and check
+	KDTree tree = {};
+	create_kd_tree(&tree, &points);
+	check_kd_tree(&tree);
+	check_neighborhoods_calculation(&points, (const void *)start_kdtree_knearest, &tree);
+	save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &tree, "../R/before.txt");
+
+	// CUTHILL-MCKEE
+	{
+		// Reorder points
+		reorder_points_cuthill_mckee(&tree, &points);
+		printf("Reordenado\n");
+
+		// Create and check new kd_tree
+		KDTree tree_2 = {};
+		create_kd_tree(&tree_2, &points);
+		check_kd_tree(&tree_2);
+		check_neighborhoods_calculation(&points, (const void *)start_kdtree_knearest, &tree_2);
+
+		save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &tree_2, "../R/after.txt");
+
+		destroy_kd_tree(&tree_2);
+	}
 
 	destroy_kd_tree(&tree);
-	destroy_kd_tree(&tree_2);
 
-	// Octree test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// Octree creation and check
 	Octree octree = {};
 	create_octree(&octree, &points);
-	octree_print_stats(&octree);
-
-	// Validación: los K vecinos del octree deben coincidir con fuerza bruta
-	for (size_t i = 0; i < 10; ++i) {
-		size_t neighbours_oct[K];
-		double neighbours_distances_oct[K];
-		size_t neighbours_bf[K];
-		double neighbours_distances_bf[K];
-
-		start_octree_knearest(&octree, i, neighbours_oct, neighbours_distances_oct);
-		find_point_neighbors(&points, i, neighbours_bf, neighbours_distances_bf);
-		for (size_t j = 0; j < K; j++) {
-			assert(neighbours_oct[j] == neighbours_bf[j]);
-		}
-	}
-	printf("Octree KNN: OK\n");
+	//octree_print_stats(&octree);
+	check_neighborhoods_calculation(&points, (const void *)start_octree_knearest, &octree);
 
 	// Validación búsqueda por radio fijo: comparar con fuerza bruta
 	// Usamos como radio la distancia al K-ésimo vecino del punto 0
@@ -173,13 +150,11 @@ int main(int argc, char **argv)
 			radius_result_destroy(&res);
 		}
 	}
-	printf("Octree Radio: OK\n");
-
 	destroy_octree(&octree);
 
 	destroy_points(&points);
 
-
+	printf("Ok!\n");
 
 	return 0;
 }

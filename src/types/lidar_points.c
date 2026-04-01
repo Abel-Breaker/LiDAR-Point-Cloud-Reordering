@@ -47,9 +47,9 @@ void destroy_points(Points *points)
 {
     if(!points) return;
     
-	if (points->x) free(points->x);
-    if (points->y) free(points->y);
-    if (points->z) free(points->z);
+	free(points->x);
+    free(points->y);
+    free(points->z);
 	
 	points->x = points->y = points->z = NULL;
 	points->num_points = 0;

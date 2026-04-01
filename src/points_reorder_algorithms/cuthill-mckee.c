@@ -1,5 +1,4 @@
 #include "cuthill-mckee.h"
-#include "structures/neighborhood_matrix.h"
 #include "../utils/parse_args.h"
 #include "../neighborhood_algorithms/knn_kd_tree.h"
 #include <stdlib.h>

@@ -34,6 +34,4 @@ void create_kd_tree(struct KDTree *tree, const Points *pts);
  */
 void destroy_kd_tree(struct KDTree *tree);
 
-int verify_kd_node(KDTree *tree, size_t start, size_t end, int depth);
-
-void check_number_of_nodes(KDTree *tree);
+void check_kd_tree(KDTree *tree);

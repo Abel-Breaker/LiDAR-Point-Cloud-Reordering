@@ -103,7 +103,7 @@ void destroy_kd_tree(struct KDTree *tree)
     free(tree->nodes);
 }
 
-int verify_kd_node(KDTree *tree, size_t start, size_t end, int depth)
+static int verify_kd_node(KDTree *tree, size_t start, size_t end, int depth)
 {
     if (end - start <= 1) return 1;
 
@@ -126,14 +126,32 @@ int verify_kd_node(KDTree *tree, size_t start, size_t end, int depth)
         && verify_kd_node(tree, mid + 1, end, depth + 1);
 }
 
-static int count_nodes(KDNode *node)
+static size_t count_nodes(KDNode *node)
 {
     if (node == NULL) return 0;
     return 1 + count_nodes(node->left) + count_nodes(node->right);
 }
 
-void check_number_of_nodes(KDTree *tree)
-{
-    int count = count_nodes(tree->root);
-    printf("Número de nodos en el árbol: %d\n", count);
+void check_kd_tree(KDTree *tree){
+    size_t count = count_nodes(tree->root);
+    if(count != tree->pts->num_points){
+        handle_error(ERROR_TREE_INTEGRITY, ERR_FATAL, "The tree has not the same number of nodes as points");
+    }
+
+    size_t mid = tree->pts->num_points / 2;
+	if(tree->indices[mid] != tree->root->point_index){
+        handle_error(ERROR_TREE_INTEGRITY, ERR_FATAL, "Median bad allocate");
+    }
+
+    double mid_val = tree->pts->x[tree->indices[mid]];
+	for (size_t i = 0; i < mid; i++) {
+		if (tree->pts->x[tree->indices[i]] > mid_val) {
+            handle_error(ERROR_TREE_INTEGRITY, ERR_FATAL, "There are values on the left of the tree bigger than the root");
+		}
+	}
+
+    int valid = verify_kd_node(tree, 0, tree->pts->num_points, 0);
+    if(valid == 0){
+        handle_error(ERROR_TREE_INTEGRITY, ERR_FATAL, "Verify kd node");
+    }
 }
