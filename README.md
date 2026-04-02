@@ -23,16 +23,20 @@ Although this project is **developed and compiled in C**, LAStools (written in C
 CODE/
 ├── .github/
 │ └── workflows/
-│    ├── buil.yml
-│    ├── tidy.yml
-│    └── valgrind.yml
 ├── cloud_points/
 │ └── cloud_point_test.laz
 ├── src/
-│ ├── LAStools/
+│ ├── benchmarks/
+│ ├── neighborhood_algorithms/
+│ ├── points_reorder_algorithms/
+│ ├── points_structures/
+│ ├── tests/
 │ ├── types/
 │ ├── utils/
+│ │ └── auxiliar_structres/
 │ └── main.c
+├── third_party/
+│ └── LAStools/
 ├── .clang-format
 ├── Makefile
 ├── README.md
@@ -40,14 +44,21 @@ CODE/
 ```
 
 Brief explanation:
-- **.github/workflows/** → GitHub Actions Tests (CI) for compilation, clang-tidy, and valgrind
-- **cloud_points/cloud_point_test.laz** → Little example of a 1K points - LiDAR point cloud for test and debug.
-- **src/** → Main folder with all the code
-- **src/utils/** → Various utilities and functionalities
-- **src/LAStools/** → Minimal external dependency for reading LiDAR point cloud files
-- **Makefile** → Build system
-- **tidy.mk** → Script for checking code cleanliness and formatting
-- **.clang-format** → Code formatting configuration
+- **.github/workflows/** → GitHub Actions Tests (CI) for compilation, clang-tidy, and valgrind.
+- **cloud_points/cloud_point_test.laz** → Little example of a random 1K points - LiDAR point cloud for test and debug.
+- **src/** → Main folder with all the code.
+- **src/utils/** → Various utilities and functionalities.
+- **src/utils/auxiliar_structres/** → TAD structures.
+- **src/benchmarks/** → All functions related with benchmarking.
+- **src/neighborhood_algorithms/** → Algorithms to search neighbors over differents points_structures.
+- **src/points_reorder_algorithms/** → Algorithms for reorganize cloud points (for better cache-locality)
+- **src/points_structures/** → Structures for points storage.
+- **src/tests/** → All functions related with testing.
+- **src/types/** → Primarily the data type for storing lidar points.
+- **src/third_party/LAStools/** → Minimal external dependency for reading LiDAR point cloud files.
+- **Makefile** → Build system.
+- **tidy.mk** → Script for checking code cleanliness and formatting.
+- **.clang-format** → Code formatting configuration.
 
 
 ## Compilation
@@ -75,7 +86,7 @@ For more information on using the program:
 ```
 
 ## Minimum Dependencies
-- **gcc**
+- **gcc** (recommended gcc 14)
 - **g++**
 - **Make**
 - **LAStools** (included in the project)
