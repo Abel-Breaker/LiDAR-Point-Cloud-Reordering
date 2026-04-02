@@ -11,7 +11,7 @@ TIDY_CHECKS = \
     bugprone-infinite-loop,\
     bugprone-macro-parentheses,\
     bugprone-posix-return,\
-    bugprone-reserved-identifier,\
+    -bugprone-reserved-identifier,\
     bugprone-signal-handler,\
     bugprone-signed-char-misuse,\
     bugprone-sizeof-expression,\

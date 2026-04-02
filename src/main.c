@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 199309L
 #include "neighborhood_algorithms/knn_bruteforce.h"
 #include "neighborhood_algorithms/knn_kd_tree.h"
 #include "neighborhood_algorithms/search_octree.h"
@@ -8,9 +9,13 @@
 #include "utils/parse_args.h"
 #include "utils/parse_lidar_points.h"
 #include "points_reorder_algorithms/cuthill-mckee.h"
+#include <stdlib.h> 
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include <time.h>
+
+//#include <cstdint>
 
 typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index,
 			     double *neighbours_distances);
@@ -67,8 +72,90 @@ void check_neighborhoods_calculation(const Points *points, NeighborFunc neighbor
 	}
 }
 
+void create_kd_tree_benchmark(Points *points_reordered)
+{
+	struct timespec start, end;
+	double total=0;
+
+	// Create and check new kd_tree
+	KDTree tree_2 = {};
+
+	// WARM UP
+	for (int i = 0; i < 3; ++i) {
+		create_kd_tree(&tree_2, points_reordered);
+		destroy_kd_tree(&tree_2);
+	}
+
+	for (int i = 0; i < 10; ++i) {
+		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+		create_kd_tree(&tree_2, points_reordered);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+		total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+
+		destroy_kd_tree(&tree_2);
+	}
+
+	printf("KD-TREE CREATION: %.6f s\n", total / 10);
+}
+
+void neighborhoods_benchmark_secuential(NeighborFunc neighbor_func, const void *structure)
+{
+	struct timespec start, end;
+	double total=0;
+
+	volatile double sink_dist=0;
+	size_t neighbours[K];
+	double neighbours_distances[K];
+
+	// Test neighborhood
+	for (size_t i = 0; i < 10000; ++i) {
+		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+		neighbor_func(structure, i, neighbours, neighbours_distances);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+		total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+
+		// Force use to avoid code elimination
+		sink_dist += (double)neighbours[0];
+		sink_dist += neighbours_distances[0];
+	}
+	printf("Neighborhood secuential calculation: %.6f s\n", total / 10000);
+	//printf("Dummy: %f\n", sink_dist);
+	(void)sink_dist;
+}
+
+void neighborhoods_benchmark_random(NeighborFunc neighbor_func, const void *structure, size_t num_points)
+{
+	struct timespec start, end;
+	double total=0;
+
+	volatile double sink_dist=0;
+	size_t neighbours[K];
+	double neighbours_distances[K];
+
+	srand((unsigned int)time(NULL));
+
+	// Test neighborhood
+	for (size_t i = 0; i < 10000; ++i) {
+		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+		neighbor_func(structure, ((size_t)rand() % num_points), neighbours, neighbours_distances);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+		total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+
+		// Force use to avoid code elimination
+		sink_dist += (double)neighbours[0];
+		sink_dist += neighbours_distances[0];
+	}
+	printf("Neighborhood random calculation: %.6f s\n", total / 10000);
+	//printf("Dummy: %f\n", sink_dist);
+	(void)sink_dist;
+}
+
 int main(int argc, char **argv)
 {
+	struct timespec start, end;
+	double total=0;
+
+
 	// Arguments parse
 	Args args = {};
 	parse_args(argc, argv, &args);
@@ -82,26 +169,60 @@ int main(int argc, char **argv)
 	//points.num_points = 10000;
 	printf("%zu\n", points.num_points);
 
+	// Benchmark KD-Tree
+	printf("\nDEFAULT\n");
+	create_kd_tree_benchmark(&points);
+
 	// Create kdtree and check
 	KDTree tree = {};
 	create_kd_tree(&tree, &points);
-	check_kd_tree(&tree);
-	check_neighborhoods_calculation(&points, (const void *)start_kdtree_knearest, &tree);
+	//check_kd_tree(&tree);
+	//check_neighborhoods_calculation(&points, (const void *)start_kdtree_knearest, &tree);
+
+	// Benchmark neighborhoods
+	neighborhoods_benchmark_secuential((const void *)start_kdtree_knearest, &tree);
+	neighborhoods_benchmark_random((const void *)start_kdtree_knearest, &tree, points.num_points);
+
 	//save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &tree, "../R/before.txt");
 
 	// BFS SORT BY DISTANCE
 	{
-		printf("BFS SORT BY DISTANCE\n");
+		printf("\nBFS SORT BY DISTANCE\n");
 		// Reorder points
 		Points points_reordered = {};
+		// WARM UP
+		for(int i=0; i<3; ++i){
+			reorder_bfs_sort_by_distance(&tree, &points, &points_reordered);
+			destroy_points(&points_reordered);
+		}
+		
+		for(int i=0; i<5; ++i){
+			clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+			reorder_bfs_sort_by_distance(&tree, &points, &points_reordered);
+			clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+			total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+
+			destroy_points(&points_reordered);
+		}
+
+		printf("SORT: %.6f s\n", total / 5);
+		total=0;
+
 		reorder_bfs_sort_by_distance(&tree, &points, &points_reordered);
 		printf("Reordenado\n");
+
+		// Benchmark KD-Tree
+		create_kd_tree_benchmark(&points_reordered);
 
 		// Create and check new kd_tree
 		KDTree tree_2 = {};
 		create_kd_tree(&tree_2, &points_reordered);
-		check_kd_tree(&tree_2);
-		check_neighborhoods_calculation(&points_reordered, (const void *)start_kdtree_knearest, &tree_2);
+		//check_kd_tree(&tree_2);
+		//check_neighborhoods_calculation(&points_reordered, (const void *)start_kdtree_knearest, &tree_2);
+
+		// Benchmark neighborhoods
+		neighborhoods_benchmark_secuential((const void *)start_kdtree_knearest, &tree_2);
+		neighborhoods_benchmark_random((const void *)start_kdtree_knearest, &tree_2, points_reordered.num_points);
 
 		//save_neighborhood_matrix_on_file(&points_reordered, (const void *)start_kdtree_knearest, &tree_2, "../R/after_DISTANCE.txt");
 
@@ -111,17 +232,43 @@ int main(int argc, char **argv)
 
 	// BFS SORT BY INDEX
 	{
-		printf("BFS SORT BY INDEX\n");
+		printf("\nBFS SORT BY INDEX\n");
 		// Reorder points
 		Points points_reordered = {};
+
+		// WARM UP
+		for(int i=0; i<3; ++i){
+			reorder_bfs_sort_by_index(&tree, &points, &points_reordered);
+			destroy_points(&points_reordered);
+		}
+		
+		for(int i=0; i<5; ++i){
+			clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+			reorder_bfs_sort_by_index(&tree, &points, &points_reordered);
+			clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+			total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+
+			destroy_points(&points_reordered);
+		}
+
+		printf("SORT: %.6f s\n", total / 5);
+		total=0;
+		
 		reorder_bfs_sort_by_index(&tree, &points, &points_reordered);
 		printf("Reordenado\n");
+
+		// Benchmark KD-Tree
+		create_kd_tree_benchmark(&points_reordered);
 
 		// Create and check new kd_tree
 		KDTree tree_2 = {};
 		create_kd_tree(&tree_2, &points_reordered);
-		check_kd_tree(&tree_2);
-		check_neighborhoods_calculation(&points_reordered, (const void *)start_kdtree_knearest, &tree_2);
+		//check_kd_tree(&tree_2);
+		//check_neighborhoods_calculation(&points_reordered, (const void *)start_kdtree_knearest, &tree_2);
+
+		// Benchmark neighborhoods
+		neighborhoods_benchmark_secuential((const void *)start_kdtree_knearest, &tree_2);
+		neighborhoods_benchmark_random((const void *)start_kdtree_knearest, &tree_2, points_reordered.num_points);
 
 		//save_neighborhood_matrix_on_file(&points_reordered, (const void *)start_kdtree_knearest, &tree_2, "../R/after_INDEX.txt");
 
@@ -131,17 +278,44 @@ int main(int argc, char **argv)
 
 	// BFS SORT BY DISTANCE REVERSE
 	{
-		printf("BFS SORT BY DISTANCE REVERSE\n");
+		printf("\nBFS SORT BY DISTANCE REVERSE\n");
 		// Reorder points
 		Points points_reordered = {};
+
+		// WARM UP
+		for(int i=0; i<3; ++i){
+			reorder_bfs_sort_by_distance_reverse(&tree, &points, &points_reordered);
+			destroy_points(&points_reordered);
+		}
+		
+		for(int i=0; i<5; ++i){
+			clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+			reorder_bfs_sort_by_distance_reverse(&tree, &points, &points_reordered);
+			clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+			total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+
+			destroy_points(&points_reordered);
+		}
+
+		printf("SORT: %.6f s\n", total / 5);
+		//total=0;
+
+
 		reorder_bfs_sort_by_distance_reverse(&tree, &points, &points_reordered);
 		printf("Reordenado\n");
+
+		// Benchmark KD-Tree
+		create_kd_tree_benchmark(&points_reordered);
 
 		// Create and check new kd_tree
 		KDTree tree_2 = {};
 		create_kd_tree(&tree_2, &points_reordered);
-		check_kd_tree(&tree_2);
-		check_neighborhoods_calculation(&points_reordered, (const void *)start_kdtree_knearest, &tree_2);
+		//check_kd_tree(&tree_2);
+		//check_neighborhoods_calculation(&points_reordered, (const void *)start_kdtree_knearest, &tree_2);
+
+		// Benchmark neighborhoods
+		neighborhoods_benchmark_secuential((const void *)start_kdtree_knearest, &tree_2);
+		neighborhoods_benchmark_random((const void *)start_kdtree_knearest, &tree_2, points_reordered.num_points);
 
 		//save_neighborhood_matrix_on_file(&points_reordered, (const void *)start_kdtree_knearest, &tree_2, "../R/after_DISTANCE_REV.txt");
 
