@@ -1,5 +1,4 @@
 #include "bench.h"
-#define _POSIX_C_SOURCE 199309L
 #include "../neighborhood_algorithms/knn_kd_tree.h"
 #include "../neighborhood_algorithms/search_octree.h"
 #include "../points_structures/kd_tree.h"
@@ -7,8 +6,6 @@
 #include "../utils/parse_args.h"
 #include "neighborhood_bench.h"
 #include "points_structures_bench.h"
-#include <stdlib.h>
-#include <time.h>
 
 void bench(const Points *points)
 {

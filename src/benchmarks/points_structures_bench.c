@@ -11,7 +11,7 @@
 #include <time.h>
 
 #define ITER_WARM_UP 3
-#define ITER 7
+#define ITER 5
 
 void kd_tree_benchmark(const Points *points)
 {

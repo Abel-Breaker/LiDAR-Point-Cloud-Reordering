@@ -97,10 +97,10 @@ int main(int argc, char **argv)
 		printf("SORT: %.6f s\n", total);
 
 		if (args.do_benchmark){
-			bench(&points);
+			bench(&points_reordered);
 		}
 		if (args.do_test){
-			test(&points);
+			test(&points_reordered);
 		}
 
 		destroy_points(&points_reordered);
@@ -119,10 +119,10 @@ int main(int argc, char **argv)
 		printf("SORT: %.6f s\n", total);
 
 		if (args.do_benchmark){
-			bench(&points);
+			bench(&points_reordered);
 		}
 		if (args.do_test){
-			test(&points);
+			test(&points_reordered);
 		}
 
 		destroy_points(&points_reordered);
@@ -141,10 +141,10 @@ int main(int argc, char **argv)
 		printf("SORT: %.6f s\n", total);
 
 		if (args.do_benchmark){
-			bench(&points);
+			bench(&points_reordered);
 		}
 		if (args.do_test){
-			test(&points);
+			test(&points_reordered);
 		}
 
 		destroy_points(&points_reordered);
