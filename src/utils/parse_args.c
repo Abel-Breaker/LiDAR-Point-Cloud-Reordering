@@ -8,19 +8,27 @@
 
 static struct option long_options[] = {
     {"filename", required_argument, NULL, 'f'}, 
+    {"benchmark", no_argument, NULL, 'b'}, 
+    {"test", no_argument, NULL, 't'}, 
     {"help", no_argument, NULL, 'h'}, 
     {NULL, 0, NULL, 0}};
 
 void parse_args(int argc, char **argv, Args *args)
 {
-    memset(args, 0, sizeof(*args)); // Inicialization
+    memset(args, 0, sizeof(*args)); // Inicialization default
 
 	int option;
-	while ((option = getopt_long(argc, argv, "f:h", long_options, NULL)) != -1) {
+	while ((option = getopt_long(argc, argv, "f:bth", long_options, NULL)) != -1) {
 		switch (option) {
 		case 'f':
 			args->cloud_points_file_name = optarg;
 			break;
+        case 'b':
+            args->do_benchmark = true;
+            break;
+        case 't':
+            args->do_test = true;
+            break;
         case 'h':
             printf("Use: %s --filename archivo.laz\n", argv[0]);
             exit(EXIT_SUCCESS);
