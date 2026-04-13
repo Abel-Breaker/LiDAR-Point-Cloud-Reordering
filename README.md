@@ -76,7 +76,7 @@ The project includes a Makefile that allows compilation in different modes:
 Once the program is compiled, it can be run as follows:
 
 ```bash
-./program -f cloud_points.laz
+./program -f cloud_points/cloud_point_test.laz -b -t
 ```
 
 For more information on using the program:

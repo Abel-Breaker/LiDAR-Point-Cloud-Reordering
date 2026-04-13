@@ -4,6 +4,7 @@
 #include "neighborhood_algorithms/knn_kd_tree.h"
 #include "neighborhood_algorithms/search_octree.h"
 #include "points_reorder_algorithms/cuthill-mckee.h"
+#include "points_reorder_algorithms/random.h"
 #include "points_structures/kd_tree.h"
 #include "points_structures/octree.h"
 #include "tests/test.h"
@@ -78,10 +79,33 @@ int main(int argc, char **argv)
 		printf("\n### DEFAULT ###\n");
 		if (args.do_benchmark){
 			bench(&points);
+			bench_prune(&points);
 		}
 		if (args.do_test){
 			test(&points);
 		}
+	}
+
+	// RANDOM REORDER
+	{
+		printf("\n### RANDOM REORDER ###\n");
+
+		// Reorder points
+		Points points_reordered = {};
+		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+		reorder_random(&points, &points_reordered);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+		total = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+		printf("SORT: %.6f s\n", total);
+
+		if (args.do_benchmark){
+			bench(&points_reordered);
+		}
+		if (args.do_test){
+			test(&points_reordered);
+		}
+
+		destroy_points(&points_reordered);
 	}
 
 	// BFS SORT BY DISTANCE
@@ -106,6 +130,7 @@ int main(int argc, char **argv)
 		destroy_points(&points_reordered);
 	}
 
+	/*
 	// BFS SORT BY INDEX
 	{
 		printf("\n### BFS SORT BY INDEX ###\n");
@@ -148,7 +173,7 @@ int main(int argc, char **argv)
 		}
 
 		destroy_points(&points_reordered);
-	}
+	}*/
 
 	destroy_kd_tree(&tree);
 	destroy_points(&points);

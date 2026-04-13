@@ -6,10 +6,8 @@
 
 typedef struct Queue Queue;
 
-// Crear cola
 Queue *createQueue(unsigned int size);
 
-// Encolar (push)
 void enqueue(Queue *q, unsigned int index);
 
 unsigned int dequeue(Queue *q);

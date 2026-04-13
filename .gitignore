@@ -69,3 +69,6 @@ TODO
 
 # txt
 *.txt
+
+# Make
+#*.make

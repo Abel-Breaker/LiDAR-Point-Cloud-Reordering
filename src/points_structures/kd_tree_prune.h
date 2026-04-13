@@ -1,18 +1,19 @@
 #pragma once
 #include "../types/lidar_points.h"
 
-typedef struct KDNode {
+typedef struct KDNodePrune {
 	size_t point_index;
-	struct KDNode *left;
-	struct KDNode *right;
-} KDNode;
+	struct KDNodePrune *left;
+	struct KDNodePrune *right;
+} KDNodePrune;
 
-typedef struct KDTree {
-	KDNode *nodes;
+typedef struct KDTreePrune {
+	KDNodePrune *nodes;
 	size_t *indices;
-	KDNode *root;
+	KDNodePrune *root;
 	const Points *pts;
-} KDTree;
+	double *max_distance; // POC: Max distance of N neighbor in KNN search
+} KDTreePrune;
 
 /**
  * Creates a KD-tree from a given collection of points.
@@ -23,13 +24,13 @@ typedef struct KDTree {
  * @note The point collection `pts` must be initialized before calling this function.
  * @note The KD-tree `tree` must be properly destroyed after calling this function.
  */
-void create_kd_tree(struct KDTree *tree, const Points *pts);
+void create_kd_tree_prune(struct KDTreePrune *tree, const Points *pts);
 
 /**
  * Destroys a KD-tree, releasing all associated resources.
  *
  * @param[in] tree Pointer to the KD-tree to be destroyed.
  */
-void destroy_kd_tree(struct KDTree *tree);
+void destroy_kd_tree_prune(struct KDTreePrune *tree);
 
-void check_kd_tree(KDTree *tree);
+void check_kd_tree_prune(KDTreePrune *tree);

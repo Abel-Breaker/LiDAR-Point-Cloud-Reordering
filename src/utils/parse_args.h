@@ -1,7 +1,7 @@
 #pragma once
 #include <getopt.h>
 
-#define K 150 // Defined as a constant and not an argument for optimization
+#define K 20 // Defined as a constant and not an argument for optimization
 
 typedef struct {
     char *cloud_points_file_name;

@@ -64,6 +64,11 @@ void reorder_bfs_sort_by_distance(const KDTree *tree, const Points *points, Poin
 		return;
 	}
 
+	for(int i=0; i<200; i++){
+		//printf("%d ", permutations[i]);
+	}
+	
+
 	for (unsigned int i = 0; i < points_visited; ++i) { // points_visited == points->num_points
 		add_point(new_points, i, points->x[permutations[i]], points->y[permutations[i]],
 			  points->z[permutations[i]]);

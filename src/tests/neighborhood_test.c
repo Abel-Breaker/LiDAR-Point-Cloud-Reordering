@@ -1,10 +1,12 @@
 #include "../neighborhood_algorithms/knn_kd_tree.h"
+#include "../neighborhood_algorithms/knn_kd_tree_prune.h"
 #include "../neighborhood_algorithms/search_octree.h"
 #include "../neighborhood_algorithms/knn_bruteforce.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 
 #define ITER 500
 
@@ -22,8 +24,33 @@ void check_neighborhoods_kd_tree(const KDTree *tree)
 		start_kdtree_knearest(tree, i, neighbours, neighbours_distances);
 		find_point_neighbors(tree->pts, i, neighbours_2, neighbours_distances_2);
 		for (size_t j = 0; j < K; j++) {
-			// printf("%ld - %ld\n", neighbours[j], neighbours_2[j]);
-			// printf("%f - %f\n", neighbours_distances[j], neighbours_distances_2[j]);
+			//printf("%ld - %ld\n", neighbours[j], neighbours_2[j]);
+			//printf("%f - %f\n", neighbours_distances[j], neighbours_distances_2[j]);
+			// assert(neighbours[j] == neighbours_2[j]);
+			//  Check distances because there are indices that are at the same distance and can colide
+			double diff = fabs(neighbours_distances[j] - neighbours_distances_2[j]);
+			const double epsilon = 1e-2f; // tolerancia para errores numéricos
+			assert(diff < epsilon);
+		}
+	}
+}
+
+void check_neighborhoods_kd_tree_prune(const KDTreePrune *tree)
+{
+
+	size_t neighbours[K];
+	double neighbours_distances[K];
+
+	// Test neighborhood
+	for (size_t i = 0; i < ITER; ++i) {
+		size_t neighbours_2[K];
+		double neighbours_distances_2[K];
+
+		start_kdtree_prune_knearest(tree, i, neighbours, neighbours_distances);
+		find_point_neighbors(tree->pts, i, neighbours_2, neighbours_distances_2);
+		for (size_t j = 0; j < K; j++) {
+			//printf("%ld - %ld\n", neighbours[j], neighbours_2[j]);
+			//printf("%f - %f\n", neighbours_distances[j], neighbours_distances_2[j]);
 			// assert(neighbours[j] == neighbours_2[j]);
 			//  Check distances because there are indices that are at the same distance and can colide
 			double diff = fabs(neighbours_distances[j] - neighbours_distances_2[j]);
