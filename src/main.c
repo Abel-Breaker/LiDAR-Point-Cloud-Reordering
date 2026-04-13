@@ -79,7 +79,6 @@ int main(int argc, char **argv)
 		printf("\n### DEFAULT ###\n");
 		if (args.do_benchmark){
 			bench(&points);
-			bench_prune(&points);
 		}
 		if (args.do_test){
 			test(&points);

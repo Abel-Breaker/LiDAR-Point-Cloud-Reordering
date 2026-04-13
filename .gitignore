@@ -71,4 +71,8 @@ TODO
 *.txt
 
 # Make
-#*.make
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.cmake.user
+CMakeLists.txt.user

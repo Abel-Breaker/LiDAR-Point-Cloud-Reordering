@@ -9,6 +9,7 @@
 #include "neighborhood_bench.h"
 #include "points_structures_bench.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 void bench(const Points *points)
 {
@@ -28,6 +29,20 @@ void bench(const Points *points)
 		destroy_kd_tree(&tree);
 	}
 
+	// KD-TREE (creation + knn)
+	{
+		printf("Prune ");
+		// Create new kd_tree
+		KDTreePrune tree = {};
+		create_kd_tree_prune(&tree, points);
+		set_upper_bound_distance(&tree);
+
+		// Benchmark neighborhoods
+		neighborhoods_kdtree_prune_knn_bench(&tree);
+
+		destroy_kd_tree_prune(&tree);
+	}
+
 	// OCTREE (creation + knn + radius)
 	{
 		// Benchmark Octree creation
@@ -45,22 +60,6 @@ void bench(const Points *points)
 	}
 }
 
-void bench_prune(const Points *points)
-{
-
-	// KD-TREE (creation + knn)
-	{
-		// Create new kd_tree
-		KDTreePrune tree = {};
-		create_kd_tree_prune(&tree, points);
-		set_upper_bound_distance(&tree);
-
-		// Benchmark neighborhoods
-		neighborhoods_kdtree_prune_knn_bench(&tree);
-
-		destroy_kd_tree_prune(&tree);
-	}
-}
 
 #define CACHE_FLUSH_SIZE (50 * 1024 * 1024) // 50 MB, ajustar según CPU
 
