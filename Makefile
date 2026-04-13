@@ -3,7 +3,7 @@
 Q ?= @
 
 # Nombre del ejecutable
-TARGET = program
+TARGET = build/program
 
 # Rutas de librerías estáticas opcionales
 LASLIB     = third_party/LAStools/LASlib/lib/libLASlib.a
@@ -81,6 +81,7 @@ $(LASPARSE):
 
 # ── Ejecutable principal ──────────────────────────────────────────────────────
 $(TARGET): $(C_OBJS)
+	@mkdir -p $(dir $(TARGET))
 	$(Q)$(CC) $(C_OBJS) $(STATIC_LIBRARIES) -o $(TARGET) $(CFLAGS)
 
 # Regla para compilar cualquier .c a .o
