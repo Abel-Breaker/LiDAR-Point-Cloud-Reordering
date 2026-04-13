@@ -78,4 +78,12 @@ cmake_install.cmake
 CMakeLists.txt.user
 
 # Cmake LASlib
-third_party/**/*.cmake
+third_party/LAStools/LASlib/src/cmake_install.cmake
+third_party/LAStools/LASlib/src/CMakeFiles/CMakeDirectoryInformation.cmake
+third_party/LAStools/LASlib/src/CMakeFiles/Export/c55326e5cb745217e14af8383b523273/laslib-targets.cmake
+third_party/LAStools/LASlib/src/CMakeFiles/LASlib.dir/build.make
+third_party/LAStools/LASlib/src/CMakeFiles/LASlib.dir/compiler_depend.internal
+third_party/LAStools/LASlib/src/CMakeFiles/LASlib.dir/compiler_depend.make
+third_party/LAStools/LASlib/src/CMakeFiles/LASlib.dir/DependInfo.cmake
+third_party/LAStools/LASlib/src/CMakeFiles/LASlib.dir/flags.make
+third_party/LAStools/LASlib/src/CMakeFiles/LASlib.dir/link.txt
