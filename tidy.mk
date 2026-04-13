@@ -23,6 +23,5 @@ TIDY_CHECKS = \
 
 tidy:
 	$(Q)clang-tidy $(TIDY_SRCS) \
-		--quiet \
 		-checks="$(TIDY_CHECKS)" \
 		-- -std=c2x
