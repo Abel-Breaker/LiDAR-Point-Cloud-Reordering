@@ -87,3 +87,11 @@ third_party/LAStools/LASlib/src/CMakeFiles/LASlib.dir/compiler_depend.make
 third_party/LAStools/LASlib/src/CMakeFiles/LASlib.dir/DependInfo.cmake
 third_party/LAStools/LASlib/src/CMakeFiles/LASlib.dir/flags.make
 third_party/LAStools/LASlib/src/CMakeFiles/LASlib.dir/link.txt
+
+third_party/LAStools/**/CMakeFiles/
+third_party/LAStools/**/*.cmake
+third_party/LAStools/**/*.make
+third_party/LAStools/**/link.txt
+
+third_party/LAStools/Makefile
+third_party/LAStools/LASlib/src/Makefile
