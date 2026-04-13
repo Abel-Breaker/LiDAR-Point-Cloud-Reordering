@@ -12,6 +12,7 @@
 #include "utils/error_handler.h"
 #include "utils/parse_args.h"
 #include "utils/parse_lidar_points.h"
+#include "utils/lidar_points_writer.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

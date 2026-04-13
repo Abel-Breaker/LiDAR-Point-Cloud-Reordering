@@ -8,13 +8,15 @@ TARGET = build/program
 # Rutas de librerías estáticas opcionales
 LASLIB     = third_party/LAStools/LASlib/lib/libLASlib.a
 LASPARSE   = src/utils/parse_lidar_points.a
+LASWRITER   = src/utils/lidar_points_writer.a
+
 
 # Busca todos los archivos .c en el proyecto (incluyendo subcarpetas)
 C_SRCS = $(shell find ./src -name "*.c")
 C_OBJS = $(C_SRCS:.c=.o)
 
 # Busca todos los archivos .a en el proyecto
-STATIC_LIBRARIES = $(LASPARSE) $(LASLIB)
+STATIC_LIBRARIES = $(LASPARSE) $(LASWRITER) $(LASLIB)
 
 # Todos los objetos combinados
 OBJS = $(C_OBJS) $(STATIC_LIBRARIES)
@@ -55,7 +57,7 @@ endif
 CC  = gcc
 CXX = g++
 
-all: $(LASLIB) $(LASPARSE) $(TARGET)
+all: $(LASLIB) $(LASPARSE) $(LASWRITER) $(TARGET)
 
 # ── LAStools: compilar solo si no existe la librería ──────────────────────────
 $(LASLIB):
@@ -68,8 +70,8 @@ $(LASLIB):
 
 # ── Wrapper parse_lidar_points: compilar solo si no existe la librería ────────
 $(LASPARSE):
-	@echo "[LASparse] Building libparse_lidar_points.a..."
-	$(Q)$(CXX) -std=c++23 -O0 \
+	@echo "[LASparse] Building libparse_lidar_points.a & lidar_points_writer.a..."
+	$(Q)$(CXX) -std=c++23 -O2 \
 		-I./third_party/LAStools/LASlib/inc \
 		-I./src/types \
 		-I./third_party/LAStools/LASzip/src \
@@ -78,6 +80,19 @@ $(LASPARSE):
 		-o ./src/utils/parse_lidar_points.o
 	$(Q)ar rcs $(LASPARSE) ./src/utils/parse_lidar_points.o
 	$(Q)rm ./src/utils/parse_lidar_points.o
+
+# ── Wrapper parse_lidar_points: compilar solo si no existe la librería ────────
+$(LASWRITER):
+	@echo "[LASwriter] Building lidar_points_writer.a..."
+	$(Q)$(CXX) -std=c++23 -O2 \
+		-I./third_party/LAStools/LASlib/inc \
+		-I./src/types \
+		-I./third_party/LAStools/LASzip/src \
+		-I./third_party/LAStools/LASzip/include/laszip \
+		-c ./src/utils/lidar_points_writer.cpp \
+		-o ./src/utils/lidar_points_writer.o
+	$(Q)ar rcs $(LASWRITER) ./src/utils/lidar_points_writer.o
+	$(Q)rm ./src/utils/lidar_points_writer.o
 
 # ── Ejecutable principal ──────────────────────────────────────────────────────
 $(TARGET): $(C_OBJS)
