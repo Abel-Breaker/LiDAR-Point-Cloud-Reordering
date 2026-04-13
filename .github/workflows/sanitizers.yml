@@ -14,4 +14,4 @@ jobs:
       - name: Build debug
         run: make MODE=debug
       - name: Run
-        run: ./program -f cloud_points/cloud_point_test.laz
+        run: ./program -f cloud_points/cloud_point_test.laz -t

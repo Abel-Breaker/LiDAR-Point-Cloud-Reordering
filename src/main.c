@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 	if (read_las_points(args.cloud_points_file_name, &points) == false) {
 		handle_error(ERROR_PARSE_POINTS, ERR_FATAL, nullptr);
 	}
-	//points.num_points = 10000;
+	points.num_points = 10000;
 	printf("%zu\n", points.num_points);
 
 	// Tree for testing
