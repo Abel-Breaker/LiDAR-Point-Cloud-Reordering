@@ -6,31 +6,37 @@
 #include <stdlib.h>
 #include <string.h>
 
+static Args args;
+
 static struct option long_options[] = {
     {"filename", required_argument, NULL, 'f'}, 
     {"benchmark", no_argument, NULL, 'b'}, 
     {"test", no_argument, NULL, 't'}, 
+    {"radius_search", required_argument, NULL, 'r'}, 
     {"help", no_argument, NULL, 'h'}, 
     {NULL, 0, NULL, 0}};
 
-void parse_args(int argc, char **argv, Args *args)
+void parse_args(int argc, char **argv)
 {
-    memset(args, 0, sizeof(*args)); // Inicialization default
+    memset(&args, 0, sizeof(args)); // Inicialization default
 
 	int option;
-	while ((option = getopt_long(argc, argv, "f:bth", long_options, NULL)) != -1) {
+	while ((option = getopt_long(argc, argv, "f:btr:h", long_options, NULL)) != -1) {
 		switch (option) {
 		case 'f':
-			args->cloud_points_file_name = optarg;
+			args.cloud_points_file_name = optarg;
 			break;
         case 'b':
-            args->do_benchmark = true;
+            args.do_benchmark = true;
             break;
         case 't':
-            args->do_test = true;
+            args.do_test = true;
+            break;
+        case 'r':
+            args.radius_search = atof(optarg);
             break;
         case 'h':
-            printf("Use: %s --filename archivo.laz\n", argv[0]);
+            printf("Use: %s --filename archivo.las\n", argv[0]);
             exit(EXIT_SUCCESS);
         case '?':
             exit(EXIT_FAILURE);
@@ -38,7 +44,11 @@ void parse_args(int argc, char **argv, Args *args)
 	}
 
     // Check for obligatory arguments
-    if (!args->cloud_points_file_name) {
+    if (!args.cloud_points_file_name) {
         handle_error(ERROR_PARSE_ARG, ERR_FATAL, "You must specify the required option --filename or -f\n");
     }
+}
+
+const Args *get_args(){
+    return &args;
 }

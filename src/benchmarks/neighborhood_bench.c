@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <time.h>
 
+typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index, double *neighbours_distances);
+
 static void neighborhoods_knn_bench(NeighborFunc neighbor_fun, const void *structure, size_t num_points)
 {
 	struct timespec start, end;
@@ -65,13 +67,12 @@ void neighborhoods_octree_radius_bench(const Octree *structure)
 	size_t nbr0[K];
 	double dist0[K];
 	start_octree_knearest(structure, 0, nbr0, dist0);
-	double test_radius = dist0[K - 1];
 
 	// Test neighborhood
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	for (size_t i = 0; i < structure->pts->num_points; ++i) {
 		RadiusResult res = {};
-		octree_radius_search(structure, i, test_radius, &res);
+		octree_radius_search(structure, i, get_args()->radius_search, &res);
 		// Force use to avoid code elimination
 		sink_dist += (double)res.distances[0];
 		radius_result_destroy(&res);

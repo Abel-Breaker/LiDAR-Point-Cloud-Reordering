@@ -7,13 +7,15 @@ typedef struct {
     char *cloud_points_file_name;
     bool do_benchmark;
     bool do_test;
+    double radius_search;
 } Args;
 
 /**
- * Parses command-line arguments into an Args structure.
+ * Parses command-line arguments into an singleton Args structure.
  *
  * @param[in] argc Number of command-line arguments.
  * @param[in] argv Array of command-line argument strings.
- * @param[out] args Pointer to the Args structure where parsed values will be stored.
  */
-void parse_args(int argc, char **argv, Args *args);
+void parse_args(int argc, char **argv);
+
+const Args *get_args();

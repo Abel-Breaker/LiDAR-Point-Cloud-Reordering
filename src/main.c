@@ -59,13 +59,12 @@ int main(int argc, char **argv)
 	double total = 0;
 
 	// Arguments parse
-	Args args = {};
-	parse_args(argc, argv, &args);
-	printf("filename: %s\n", args.cloud_points_file_name);
+	parse_args(argc, argv);
+	printf("filename: %s\n", get_args()->cloud_points_file_name);
 
 	// Read and save points
 	Points points = {};
-	if (read_las_points(args.cloud_points_file_name, &points) == false) {
+	if (read_las_points(get_args()->cloud_points_file_name, &points) == false) {
 		handle_error(ERROR_PARSE_POINTS, ERR_FATAL, nullptr);
 	}
 	//points.num_points = 10000;
@@ -78,10 +77,10 @@ int main(int argc, char **argv)
 	// DEFAULT
 	{
 		printf("\n### DEFAULT ###\n");
-		if (args.do_benchmark){
+		if (get_args()->do_benchmark){
 			bench(&points);
 		}
-		if (args.do_test){
+		if (get_args()->do_test){
 			test(&points);
 		}
 	}
@@ -98,10 +97,10 @@ int main(int argc, char **argv)
 		total = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
 		printf("SORT: %.6f s\n", total);
 
-		if (args.do_benchmark){
+		if (get_args()->do_benchmark){
 			bench(&points_reordered);
 		}
-		if (args.do_test){
+		if (get_args()->do_test){
 			test(&points_reordered);
 		}
 
@@ -120,10 +119,10 @@ int main(int argc, char **argv)
 		total = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
 		printf("SORT: %.6f s\n", total);
 
-		if (args.do_benchmark){
+		if (get_args()->do_benchmark){
 			bench(&points_reordered);
 		}
-		if (args.do_test){
+		if (get_args()->do_test){
 			test(&points_reordered);
 		}
 

@@ -8,11 +8,12 @@
 #include <assert.h>
 #include <stdio.h>
 
-#define ITER 500
+#define ITER 1000
 
-void check_neighborhoods_kd_tree(const KDTree *tree)
+typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index, double *neighbours_distances);
+
+static void check_neighborhoods_knn(NeighborFunc function, const void *structure, const Points *pts)
 {
-
 	size_t neighbours[K];
 	double neighbours_distances[K];
 
@@ -21,8 +22,8 @@ void check_neighborhoods_kd_tree(const KDTree *tree)
 		size_t neighbours_2[K];
 		double neighbours_distances_2[K];
 
-		start_kdtree_knearest(tree, i, neighbours, neighbours_distances);
-		find_point_neighbors(tree->pts, i, neighbours_2, neighbours_distances_2);
+		function(structure, i, neighbours, neighbours_distances);
+		find_point_neighbors(pts, i, neighbours_2, neighbours_distances_2);
 		for (size_t j = 0; j < K; j++) {
 			//printf("%ld - %ld\n", neighbours[j], neighbours_2[j]);
 			//printf("%f - %f\n", neighbours_distances[j], neighbours_distances_2[j]);
@@ -33,57 +34,21 @@ void check_neighborhoods_kd_tree(const KDTree *tree)
 			assert(diff < epsilon);
 		}
 	}
+}
+
+void check_neighborhoods_kd_tree(const KDTree *tree)
+{
+	check_neighborhoods_knn((NeighborFunc)start_kdtree_knearest, tree, tree->pts);
 }
 
 void check_neighborhoods_kd_tree_prune(const KDTreePrune *tree)
 {
-
-	size_t neighbours[K];
-	double neighbours_distances[K];
-
-	// Test neighborhood
-	for (size_t i = 0; i < ITER; ++i) {
-		size_t neighbours_2[K];
-		double neighbours_distances_2[K];
-
-		start_kdtree_prune_knearest(tree, i, neighbours, neighbours_distances);
-		find_point_neighbors(tree->pts, i, neighbours_2, neighbours_distances_2);
-		for (size_t j = 0; j < K; j++) {
-			//printf("%ld - %ld\n", neighbours[j], neighbours_2[j]);
-			//printf("%f - %f\n", neighbours_distances[j], neighbours_distances_2[j]);
-			// assert(neighbours[j] == neighbours_2[j]);
-			//  Check distances because there are indices that are at the same distance and can colide
-			double diff = fabs(neighbours_distances[j] - neighbours_distances_2[j]);
-			const double epsilon = 1e-2f; // tolerancia para errores numéricos
-			assert(diff < epsilon);
-		}
-	}
+	check_neighborhoods_knn((NeighborFunc)start_kdtree_prune_knearest, tree, tree->pts);
 }
 
 void check_neighborhoods_octree_knn(const Octree *octree)
 {
-
-	size_t neighbours[K];
-	double neighbours_distances[K];
-
-	// Test neighborhood
-	for (size_t i = 0; i < ITER; ++i) {
-		size_t neighbours_2[K];
-		double neighbours_distances_2[K];
-
-		start_octree_knearest(octree, i, neighbours, neighbours_distances);
-		find_point_neighbors(octree->pts, i, neighbours_2, neighbours_distances_2);
-		for (size_t j = 0; j < K; j++) {
-			// printf("%ld - %ld\n", neighbours[j], neighbours_2[j]);
-			// printf("%f - %f\n", neighbours_distances[j], neighbours_distances_2[j]);
-			// assert(neighbours[j] == neighbours_2[j]);
-			//  Check distances because there are indices that are at the same distance and can
-			//  colide
-			double diff = fabs(neighbours_distances[j] - neighbours_distances_2[j]);
-			const double epsilon = 1e-2f; // tolerancia para errores numéricos
-			assert(diff < epsilon);
-		}
-	}
+	check_neighborhoods_knn((NeighborFunc)start_octree_knearest, octree, octree->pts);
 }
 
 void check_neighborhoods_octree_radius(const Octree *octree)
