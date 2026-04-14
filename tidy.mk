@@ -1,5 +1,4 @@
 TIDY_SRCS = $(shell find ./src -name "*.c" -o -name "*.h")
-
 TIDY_CHECKS = \
     performance-*,\
     misc-*,\
@@ -18,10 +17,13 @@ TIDY_CHECKS = \
     bugprone-branch-clone,\
     -clang-analyzer-security.insecureAPI.*,\
     -misc-no-recursion,\
-	-misc-include-cleaner,\
+    -misc-include-cleaner,\
     -android-cloexec-fopen
 
+NPROC ?= $(shell nproc)
+
 tidy:
-	$(Q)clang-tidy $(TIDY_SRCS) \
-		-checks="$(TIDY_CHECKS)" \
-		-- -std=c2x
+	$(Q)echo $(TIDY_SRCS) | tr ' ' '\n' | \
+		xargs -P$(NPROC) -I{} clang-tidy {} \
+			-checks="$(TIDY_CHECKS)" \
+			-- -std=c2x

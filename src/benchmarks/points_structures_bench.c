@@ -10,8 +10,8 @@
 #include <stdio.h>
 #include <time.h>
 
-#define ITER_WARM_UP 3
-#define ITER 5
+#define ITER_WARM_UP 1
+#define ITER 2
 
 void kd_tree_benchmark(const Points *points)
 {
@@ -36,7 +36,7 @@ void kd_tree_benchmark(const Points *points)
 		destroy_kd_tree(&tree);
 	}
 
-	printf("KD-TREE CREATION: %.6f s\n", total / ITER);
+	printf("\tCreation: %.6f s\n", total / ITER);
 }
 
 void octree_benchmark(const Points *points)
@@ -62,5 +62,5 @@ void octree_benchmark(const Points *points)
 		destroy_octree(&octree);
 	}
 
-	printf("OCTREE CREATION: %.6f s\n", total / ITER);
+	printf("\tCreation: %.6f s\n", total / ITER);
 }

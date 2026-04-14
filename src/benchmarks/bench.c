@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 199309L
 #include "bench.h"
 #include "../neighborhood_algorithms/knn_kd_tree.h"
 #include "../neighborhood_algorithms/knn_kd_tree_prune.h"
@@ -10,12 +11,14 @@
 #include "points_structures_bench.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 void bench(const Points *points)
 {
 
 	// KD-TREE (creation + knn)
 	{
+		printf("\n\033[1mKD-TREE\033[0m\n");
 		// Benchmark KD-Tree creation
 		kd_tree_benchmark(points);
 
@@ -31,11 +34,16 @@ void bench(const Points *points)
 
 	// KD-TREE (creation + knn)
 	{
-		printf("Prune ");
+		printf("\n\033[1mKD-TREE Prune\033[0m\n");
 		// Create new kd_tree
 		KDTreePrune tree = {};
 		create_kd_tree_prune(&tree, points);
+
+		struct timespec start, end;
+		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 		set_upper_bound_distance(&tree);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+		printf("\tSet upper bound distance: %.6f s\n", (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000);
 
 		// Benchmark neighborhoods
 		neighborhoods_kdtree_prune_knn_bench(&tree);
@@ -45,6 +53,7 @@ void bench(const Points *points)
 
 	// OCTREE (creation + knn + radius)
 	{
+		printf("\n\033[1mOCTREE\033[0m\n");
 		// Benchmark Octree creation
 		octree_benchmark(points);
 
@@ -58,66 +67,4 @@ void bench(const Points *points)
 
 		destroy_octree(&octree);
 	}
-}
-
-
-#define CACHE_FLUSH_SIZE (50 * 1024 * 1024) // 50 MB, ajustar según CPU
-
-char *flush_buf;
-
-static void init_flush() {
-    flush_buf = malloc(CACHE_FLUSH_SIZE);
-    for (size_t i = 0; i < CACHE_FLUSH_SIZE; i++) {
-        flush_buf[i] = (char)i;
-    }
-}
-
-static void flush_cache() {
-    for (size_t i = 0; i < CACHE_FLUSH_SIZE; i++) {
-        flush_buf[i] += 1;
-    }
-}
-
-void cold_bench(const Points *points)
-{
-
-	// KD-TREE (creation + knn)
-	{
-		// Benchmark KD-Tree creation
-		kd_tree_benchmark(points);
-
-		// Create new kd_tree
-		KDTree tree = {};
-		create_kd_tree(&tree, points);
-
-		init_flush();
-		flush_cache();
-
-		// Benchmark neighborhoods
-		neighborhoods_kd_tree_knn_bench(&tree);
-
-		destroy_kd_tree(&tree);
-	}
-
-	// OCTREE (creation + knn + radius)
-	{
-		// Benchmark Octree creation
-		octree_benchmark(points);
-
-		// Octree creation and check
-		Octree octree = {};
-		create_octree(&octree, points);
-
-		// Benchmark neighborhoods
-		init_flush();
-		flush_cache();
-		neighborhoods_octree_knn_bench(&octree);
-		init_flush();
-		flush_cache();
-		neighborhoods_octree_radius_bench(&octree);
-
-		destroy_octree(&octree);
-	}
-
-	//free(flush_buf);
 }

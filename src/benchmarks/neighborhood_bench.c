@@ -32,7 +32,7 @@ static void neighborhoods_knn_bench(NeighborFunc neighbor_fun, const void *struc
 	}
 	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
-	printf("Neighborhood: %.6f s\n", total);
+	printf("\tNeighborhood: %.6f s\n", total);
 
 	(void)sink_dist;
 }
@@ -78,7 +78,7 @@ void neighborhoods_octree_radius_bench(const Octree *structure)
 	}
 	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
-	printf("Neighborhood Octree radius search: %.6f s\n", total);
+	printf("\tNeighborhood radius: %.6f s\n", total);
 
 	(void)sink_dist;
 }
