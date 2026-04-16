@@ -1,6 +1,6 @@
 #pragma once
-#include "../points_structures/octree.h"
-#include "../utils/parse_args.h"
+#include "../../points_structures/octree.h"
+#include "../../utils/parse_args.h"
 #include <stddef.h>
 
 void start_octree_knearest(const Octree *octree, size_t point_index,

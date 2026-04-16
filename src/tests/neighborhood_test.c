@@ -1,7 +1,7 @@
-#include "../neighborhood_algorithms/knn_kd_tree.h"
-#include "../neighborhood_algorithms/knn_kd_tree_prune.h"
-#include "../neighborhood_algorithms/search_octree.h"
-#include "../neighborhood_algorithms/knn_bruteforce.h"
+#include "../neighborhood_algorithms/knn/kd_tree.h"
+#include "../neighborhood_algorithms/knn/kd_tree_prune.h"
+#include "../neighborhood_algorithms/radius_search/octree.h"
+#include "../neighborhood_algorithms/knn/bruteforce.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
 #include <stdlib.h>

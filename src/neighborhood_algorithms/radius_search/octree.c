@@ -1,4 +1,4 @@
-#include "search_octree.h"
+#include "octree.h"
 #include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>

@@ -1,11 +1,9 @@
 #define _POSIX_C_SOURCE 199309L
 #include "points_structures_bench.h"
-#include "../points_structures/kd_tree.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
-#include "neighborhood_bench.h"
-#include "../neighborhood_algorithms/knn_kd_tree.h"
-#include "../neighborhood_algorithms/search_octree.h"
+#include "../points_structures/kd_tree.h"
+#include "../points_structures/octree.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>

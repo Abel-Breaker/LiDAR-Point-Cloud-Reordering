@@ -1,8 +1,8 @@
 #define _POSIX_C_SOURCE 199309L
 #include "neighborhood_bench.h"
-#include "../neighborhood_algorithms/knn_kd_tree.h"
-#include "../neighborhood_algorithms/knn_kd_tree_prune.h"
-#include "../neighborhood_algorithms/search_octree.h"
+#include "../neighborhood_algorithms/knn/kd_tree.h"
+#include "../neighborhood_algorithms/knn/kd_tree_prune.h"
+#include "../neighborhood_algorithms/radius_search/octree.h"
 #include "../points_structures/kd_tree.h"
 #include "../points_structures/kd_tree_prune.h"
 #include "../points_structures/octree.h"

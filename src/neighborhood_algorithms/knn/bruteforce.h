@@ -1,6 +1,6 @@
 #pragma once
-#include "../types/lidar_points.h"
-#include "../utils/parse_args.h"
+#include "../../types/lidar_points.h"
+#include "../../utils/parse_args.h"
 
 /**
  * Finds the K nearest neighbors of a point in a point collection.

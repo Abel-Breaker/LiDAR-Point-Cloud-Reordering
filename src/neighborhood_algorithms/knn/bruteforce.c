@@ -1,4 +1,4 @@
-#include "knn_bruteforce.h"
+#include "bruteforce.h"
 #include <string.h>
 #include <stdio.h>
 

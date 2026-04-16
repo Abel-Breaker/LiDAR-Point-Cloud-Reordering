@@ -1,10 +1,10 @@
-#include "knn_kd_tree_prune.h"
-#include "../types/lidar_points.h"
+#include "kd_tree.h"
+#include "../../types/lidar_points.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static inline KDNodePrune *get_next_node(const KDNodePrune *node, const Points *points, size_t point_index, int depth,
+static inline KDNode *get_next_node(const KDNode *node, const Points *points, size_t point_index, int depth,
 				    bool invert)
 {
 	int axis = depth % DIMENSIONS;
@@ -30,7 +30,7 @@ static inline KDNodePrune *get_next_node(const KDNodePrune *node, const Points *
 	return go_left ? node->left : node->right;
 }
 
-static void kdtree_knearest(const KDTreePrune *tree, const KDNodePrune *actual_node, int depth, size_t point_index,
+static void kdtree_knearest(const KDTree *tree, const KDNode *actual_node, int depth, size_t point_index,
 			    size_t neighbours_index[K], double neighbours_distances[K])
 {
 	if (actual_node == nullptr) {
@@ -58,7 +58,7 @@ static void kdtree_knearest(const KDTreePrune *tree, const KDNodePrune *actual_n
 	}
 
 	// Check next neighbourg
-	const KDNodePrune *next_node = get_next_node(actual_node, tree->pts, point_index, depth, false);
+	const KDNode *next_node = get_next_node(actual_node, tree->pts, point_index, depth, false);
 	kdtree_knearest(tree, next_node, depth + 1, point_index, neighbours_index, neighbours_distances);
 
 	// Check if necessary other branch
@@ -83,29 +83,19 @@ static void kdtree_knearest(const KDTreePrune *tree, const KDNodePrune *actual_n
 		break;
 	}
 
-	if (plane_distance <= neighbours_distances[K - 1]) { // Compare with the last best distance
+	// TODO: neighbours_distances[K-1] es INFINITY al principio
+	if (plane_distance < neighbours_distances[K - 1]) { // Compare with the last best distance
 		next_node = get_next_node(actual_node, tree->pts, point_index, depth, true);
 		kdtree_knearest(tree, next_node, depth + 1, point_index, neighbours_index, neighbours_distances);
 	}
 }
 
-void start_kdtree_prune_knearest(const KDTreePrune *tree, size_t point_index, size_t neighbours_index[K],
+void start_kdtree_knearest(const KDTree *tree, size_t point_index, size_t neighbours_index[K],
 			   double neighbours_distances[K])
 {
 	for (size_t i = 0; i < K; ++i) {
-		neighbours_distances[i] = tree->max_distance[i];
+		neighbours_distances[i] = INFINITY;
 	}
 
 	kdtree_knearest(tree, tree->root, 0, point_index, neighbours_index, neighbours_distances);
-}
-
-void set_upper_bound_distance(KDTreePrune *tree){
-	size_t neighbours[K];
-	double neighbours_distances[K];
-
-	// Test neighborhood
-	for (size_t i = 0; i < tree->pts->num_points; ++i) {
-		start_kdtree_prune_knearest(tree, i, neighbours, neighbours_distances);
-		tree->max_distance[i] = neighbours_distances[K-1]+ (double)0.01f; // TODO: Secure that visit all ramas
-	}
 }

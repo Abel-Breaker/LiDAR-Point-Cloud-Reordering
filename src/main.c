@@ -1,9 +1,10 @@
 #define _POSIX_C_SOURCE 199309L
 #include "benchmarks/bench.h"
-#include "neighborhood_algorithms/knn_bruteforce.h"
-#include "neighborhood_algorithms/knn_kd_tree.h"
-#include "neighborhood_algorithms/search_octree.h"
+#include "neighborhood_algorithms/knn/bruteforce.h"
+#include "neighborhood_algorithms/knn/kd_tree.h"
+#include "neighborhood_algorithms/radius_search/octree.h"
 #include "points_reorder_algorithms/cuthill-mckee.h"
+#include "points_reorder_algorithms/BFS.h"
 #include "points_reorder_algorithms/random.h"
 #include "points_structures/kd_tree.h"
 #include "points_structures/octree.h"
@@ -53,14 +54,48 @@ save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &
 		// "../R/before.txt");
 */
 
+typedef void (*SortFunc)(const void *structure, const Points *points, Points *new_points);
+
+void test_idea(const char *name,
+               SortFunc sort_fun,
+               const void *structure,
+               Points *points)
+{
+	printf("\n\x1b[34m\033[1m%s\033[0m\x1b[0m\n", name);
+
+	const Args *args = get_args();
+
+	// Case without sort
+	if (sort_fun == NULL) {
+		if (args->do_benchmark) bench(points);
+		if (args->do_test)      test(points);
+		return;
+	}
+
+	struct timespec start, end;
+
+	Points points_reordered = {0};
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	sort_fun(structure, points, &points_reordered);
+	clock_gettime(CLOCK_MONOTONIC, &end);
+
+	double total = (double)(end.tv_sec - start.tv_sec)
+	     + (double)(end.tv_nsec - start.tv_nsec) / 1e9;
+	printf("\tSort: %.6f s\n", total);
+
+	if (args->do_benchmark) bench(&points_reordered);
+	if (args->do_test)      test(&points_reordered);
+
+	destroy_points(&points_reordered);
+}
+
 int main(int argc, char **argv)
 {
-	struct timespec start, end;
-	double total = 0;
 
 	// Arguments parse
 	parse_args(argc, argv);
-	printf("filename: %s\n", get_args()->cloud_points_file_name);
+	printf("\033[1mFilename\033[0m: %s\n", get_args()->cloud_points_file_name);
 
 	// Read and save points
 	Points points = {};
@@ -68,7 +103,7 @@ int main(int argc, char **argv)
 		handle_error(ERROR_PARSE_POINTS, ERR_FATAL, nullptr);
 	}
 	//points.num_points = 10000;
-	printf("%zu\n", points.num_points);
+	printf("\033[1mNumber of points: \033[0m%zu\n", points.num_points);
 
 	// Tree for testing
 	KDTree tree = {};
@@ -76,103 +111,10 @@ int main(int argc, char **argv)
 
 	// DEFAULT
 	{
-		printf("\n### DEFAULT ###\n");
-		if (get_args()->do_benchmark){
-			bench(&points);
-		}
-		if (get_args()->do_test){
-			test(&points);
-		}
+		test_idea("DEFAULT", nullptr, &tree, &points);
+		test_idea("RANDOM REORDER", (SortFunc)reorder_random, &tree, &points);
+		test_idea("BFS SORT BY DISTANCE", (SortFunc)reorder_bfs_sort_by_distance, &tree, &points);
 	}
-
-	// RANDOM REORDER
-	{
-		printf("\n### RANDOM REORDER ###\n");
-
-		// Reorder points
-		Points points_reordered = {};
-		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-		reorder_random(&points, &points_reordered);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-		total = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
-		printf("SORT: %.6f s\n", total);
-
-		if (get_args()->do_benchmark){
-			bench(&points_reordered);
-		}
-		if (get_args()->do_test){
-			test(&points_reordered);
-		}
-
-		destroy_points(&points_reordered);
-	}
-
-	// BFS SORT BY DISTANCE
-	{
-		printf("\n### BFS SORT BY DISTANCE ###\n");
-
-		// Reorder points
-		Points points_reordered = {};
-		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-		reorder_bfs_sort_by_distance(&tree, &points, &points_reordered);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-		total = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
-		printf("SORT: %.6f s\n", total);
-
-		if (get_args()->do_benchmark){
-			bench(&points_reordered);
-		}
-		if (get_args()->do_test){
-			test(&points_reordered);
-		}
-
-		destroy_points(&points_reordered);
-	}
-
-	/*
-	// BFS SORT BY INDEX
-	{
-		printf("\n### BFS SORT BY INDEX ###\n");
-
-		// Reorder points
-		Points points_reordered = {};
-		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-		reorder_bfs_sort_by_index(&tree, &points, &points_reordered);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-		total = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
-		printf("SORT: %.6f s\n", total);
-
-		if (args.do_benchmark){
-			bench(&points_reordered);
-		}
-		if (args.do_test){
-			test(&points_reordered);
-		}
-
-		destroy_points(&points_reordered);
-	}
-
-	// BFS SORT BY DISTANCE REVERSE
-	{
-		printf("\n### BFS SORT BY DISTANCE REVERSE ###\n");
-
-		// Reorder points
-		Points points_reordered = {};
-		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-		reorder_bfs_sort_by_distance_reverse(&tree, &points, &points_reordered);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-		total = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
-		printf("SORT: %.6f s\n", total);
-
-		if (args.do_benchmark){
-			bench(&points_reordered);
-		}
-		if (args.do_test){
-			test(&points_reordered);
-		}
-
-		destroy_points(&points_reordered);
-	}*/
 
 	destroy_kd_tree(&tree);
 	destroy_points(&points);

@@ -1,6 +1,6 @@
 #pragma once
-#include "../points_structures/kd_tree_prune.h"
-#include "../utils/parse_args.h"
+#include "../../points_structures/kd_tree_prune.h"
+#include "../../utils/parse_args.h"
 
 /**
  * Finds the K nearest neighbors of a point in a KD-tree.

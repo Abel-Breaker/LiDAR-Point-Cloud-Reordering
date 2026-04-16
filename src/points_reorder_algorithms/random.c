@@ -1,5 +1,5 @@
 #include "cuthill-mckee.h"
-#include "../neighborhood_algorithms/knn_kd_tree.h"
+#include "../neighborhood_algorithms/knn/kd_tree.h"
 #include "../utils/auxiliar_structures/queue.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
@@ -7,8 +7,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-void reorder_random(const Points *points, Points *new_points)
+void reorder_random(const KDTree *tree, const Points *points, Points *new_points)
 {
+	(void)tree;
 	unsigned int number_of_points = (unsigned int)points->num_points;
 
 	unsigned int *permutations = malloc(number_of_points * sizeof(*permutations));
