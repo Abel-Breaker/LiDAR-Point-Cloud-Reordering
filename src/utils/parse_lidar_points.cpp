@@ -1,7 +1,9 @@
 extern "C" {
 #include "parse_lidar_points.h"
+#include "parse_args.h"
 }
 #include "../../third_party/LAStools/LASlib/inc/lasreader.hpp" // For reading points
+
 #include <cstdlib>
 
 bool read_las_points(const char *filename, Points *pts)
@@ -18,6 +20,12 @@ bool read_las_points(const char *filename, Points *pts)
 
 	// Get the number of points from the header
 	size_t point_count = static_cast<size_t>(lasReader->header.number_of_point_records);
+
+	if(get_args()->max_num_of_points != 0){
+		if(get_args()->max_num_of_points < point_count){
+			point_count = get_args()->max_num_of_points;
+		}
+	}
 
 	// Restart the reader
 	lasReader->close();
@@ -37,10 +45,9 @@ bool read_las_points(const char *filename, Points *pts)
 	}
 
 	// Read and copy points
-	size_t idx = 0;
-	while (lasReader->read_point()) {
-		add_point(pts, idx, lasReader->point.get_x(), lasReader->point.get_y(), lasReader->point.get_z());
-		idx++;
+	for(size_t i=0; i<point_count; ++i){
+		lasReader->read_point();
+		add_point(pts, i, lasReader->point.get_x(), lasReader->point.get_y(), lasReader->point.get_z());
 	}
 
 	lasReader->close();

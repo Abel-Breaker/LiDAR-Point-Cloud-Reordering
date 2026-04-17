@@ -3,7 +3,9 @@
 #include "../../utils/parse_args.h"
 #include <stddef.h>
 
-/* Resultados de búsqueda por radio: array dinámico de índices y distancias. */
+/* Resultados de búsqueda por radio: arrays dinámicos de índices, distancias
+ * y una marca booleana que indica si el punto está en la misma hoja que la
+ * consulta. */
 typedef struct {
 	size_t *indices;
 	bool *is_in_same_leaf;

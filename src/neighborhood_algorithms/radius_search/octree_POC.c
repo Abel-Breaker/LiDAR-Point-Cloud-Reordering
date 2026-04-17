@@ -35,30 +35,55 @@ static inline double aabb_min_dist(const AABB *box,
 
 
 /* Añade un punto al resultado, redoblando capacidad si es necesario. */
-static bool radius_result_push(RadiusResultPOC *res, size_t idx, double dist)
+static bool radius_result_push(RadiusResultPOC *res, size_t idx, double dist,
+                               bool in_same_leaf)
 {
 	if (res->count == res->capacity) {
 		size_t new_cap = res->capacity == 0 ? 64u : res->capacity * 2u;
 		size_t *ni = realloc(res->indices,  new_cap * sizeof(*res->indices));
+		bool *ns = realloc(res->is_in_same_leaf,
+		                  new_cap * sizeof(*res->is_in_same_leaf));
 		double *nd = realloc(res->distances, new_cap * sizeof(*res->distances));
-		if (!ni || !nd) {
+		if (!ni || !ns || !nd) {
 			free(ni);
+			free(ns);
 			free(nd);
 			return false;
 		}
 		res->indices   = ni;
+		res->is_in_same_leaf = ns;
 		res->distances = nd;
 		res->capacity  = new_cap;
 	}
 	res->indices[res->count]   = idx;
+	res->is_in_same_leaf[res->count] = in_same_leaf;
 	res->distances[res->count] = dist;
 	res->count++;
 	return true;
 }
 
+/* Devuelve la hoja que contiene al punto (px,py,pz), siguiendo el mismo
+ * criterio de desempate por orden de hijos usado en el recorrido. */
+static const Octant *find_containing_leaf(const Octant *octant,
+                                          double px, double py, double pz)
+{
+	if (!octant) return nullptr;
+
+	if (octant->point_indices) return octant;
+
+	for (int c = 0; c < 8; ++c) {
+		if (!octant->children[c]) continue;
+		if (aabb_contains(&octant->children[c]->bounds, px, py, pz))
+			return find_containing_leaf(octant->children[c], px, py, pz);
+	}
+
+	return nullptr;
+}
+
 static void radius_traverse(const Octree *octree, const Octant *octant,
                             double px, double py, double pz,
-                            double radius, RadiusResultPOC *result)
+                            double radius, const Octant *query_leaf,
+                            RadiusResultPOC *result)
 {
 	if (!octant) return;
 
@@ -74,7 +99,7 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 			    octree->pts->x[idx], octree->pts->y[idx], octree->pts->z[idx],
 			    px, py, pz);
 			if (dist <= radius)
-				radius_result_push(result, idx, dist);
+				radius_result_push(result, idx, dist, octant == query_leaf);
 		}
 		return;
 	}
@@ -85,13 +110,15 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 		if (!octant->children[c]) continue;
 		if (aabb_contains(&octant->children[c]->bounds, px, py, pz)) {
 			containing_child = c;
-			radius_traverse(octree, octant->children[c], px, py, pz, radius, result);
+			radius_traverse(octree, octant->children[c], px, py, pz, radius,
+			                query_leaf, result);
 			break;
 		}
 	}
 	for (int c = 0; c < 8; ++c) {
 		if (!octant->children[c] || c == containing_child) continue;
-		radius_traverse(octree, octant->children[c], px, py, pz, radius, result);
+		radius_traverse(octree, octant->children[c], px, py, pz, radius,
+		                query_leaf, result);
 	}
 }
 
@@ -99,6 +126,7 @@ void octree_radius_search_POC(const Octree *octree, size_t point_index, double r
                           RadiusResultPOC *result)
 {
 	result->indices   = nullptr;
+	result->is_in_same_leaf = nullptr;
 	result->distances = nullptr;
 	result->count     = 0;
 	result->capacity  = 0;
@@ -106,15 +134,18 @@ void octree_radius_search_POC(const Octree *octree, size_t point_index, double r
 	double px = octree->pts->x[point_index];
 	double py = octree->pts->y[point_index];
 	double pz = octree->pts->z[point_index];
+	const Octant *query_leaf = find_containing_leaf(octree->root, px, py, pz);
 
-	radius_traverse(octree, octree->root, px, py, pz, radius, result);
+	radius_traverse(octree, octree->root, px, py, pz, radius, query_leaf, result);
 }
 
 void radius_result_destroy_POC(RadiusResultPOC *result)
 {
 	free(result->indices);
+	free(result->is_in_same_leaf);
 	free(result->distances);
 	result->indices   = nullptr;
+	result->is_in_same_leaf = nullptr;
 	result->distances = nullptr;
 	result->count     = 0;
 	result->capacity  = 0;

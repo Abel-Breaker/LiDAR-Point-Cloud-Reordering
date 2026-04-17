@@ -97,3 +97,7 @@ third_party/LAStools/**/link.txt
 
 third_party/LAStools/Makefile
 third_party/LAStools/LASlib/src/Makefile
+
+outs/
+*.out
+*.err

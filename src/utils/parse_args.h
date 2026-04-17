@@ -1,5 +1,6 @@
 #pragma once
 #include <getopt.h>
+#include <stddef.h>
 
 #define K 20 // Defined as a constant and not an argument for optimization
 
@@ -8,6 +9,7 @@ typedef struct {
     bool do_benchmark;
     bool do_test;
     double radius_search;
+    size_t max_num_of_points;
 } Args;
 
 /**

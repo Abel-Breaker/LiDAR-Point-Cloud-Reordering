@@ -3,21 +3,24 @@
 #include "neighborhood_algorithms/knn/bruteforce.h"
 #include "neighborhood_algorithms/knn/kd_tree.h"
 #include "neighborhood_algorithms/radius_search/octree.h"
-#include "points_reorder_algorithms/cuthill-mckee.h"
+#include "neighborhood_algorithms/radius_search/octree_POC.h"
 #include "points_reorder_algorithms/BFS.h"
+#include "points_reorder_algorithms/cuthill-mckee.h"
 #include "points_reorder_algorithms/random.h"
 #include "points_structures/kd_tree.h"
 #include "points_structures/octree.h"
 #include "tests/test.h"
 #include "types/lidar_points.h"
 #include "utils/error_handler.h"
+#include "utils/lidar_points_writer.h"
 #include "utils/parse_args.h"
 #include "utils/parse_lidar_points.h"
-#include "utils/lidar_points_writer.h"
+#include "types/neighborhood_matrix.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 /*typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index,
 			     double *neighbours_distances);
@@ -56,10 +59,7 @@ save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &
 
 typedef void (*SortFunc)(const void *structure, const Points *points, Points *new_points);
 
-void test_idea(const char *name,
-               SortFunc sort_fun,
-               const void *structure,
-               Points *points)
+void test_idea(const char *name, SortFunc sort_fun, const void *structure, Points *points)
 {
 	printf("\n\x1b[34m\033[1m%s\033[0m\x1b[0m\n", name);
 
@@ -67,8 +67,10 @@ void test_idea(const char *name,
 
 	// Case without sort
 	if (sort_fun == NULL) {
-		if (args->do_benchmark) bench(points);
-		if (args->do_test)      test(points);
+		if (args->do_benchmark)
+			bench(points);
+		if (args->do_test)
+			test(points);
 		return;
 	}
 
@@ -80,12 +82,13 @@ void test_idea(const char *name,
 	sort_fun(structure, points, &points_reordered);
 	clock_gettime(CLOCK_MONOTONIC, &end);
 
-	double total = (double)(end.tv_sec - start.tv_sec)
-	     + (double)(end.tv_nsec - start.tv_nsec) / 1e9;
+	double total = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1e9;
 	printf("\tSort: %.6f s\n", total);
 
-	if (args->do_benchmark) bench(&points_reordered);
-	if (args->do_test)      test(&points_reordered);
+	if (args->do_benchmark)
+		bench(&points_reordered);
+	if (args->do_test)
+		test(&points_reordered);
 
 	destroy_points(&points_reordered);
 }
@@ -102,14 +105,60 @@ int main(int argc, char **argv)
 	if (read_las_points(get_args()->cloud_points_file_name, &points) == false) {
 		handle_error(ERROR_PARSE_POINTS, ERR_FATAL, nullptr);
 	}
-	//points.num_points = 10000;
 	printf("\033[1mNumber of points: \033[0m%zu\n", points.num_points);
 
 	// Tree for testing
 	KDTree tree = {};
 	create_kd_tree(&tree, &points);
 
+/*
+	{
+		Octree octree = {};
+		create_octree(&octree, &points);
+
+		FILE *out = fopen("../R/same_leaf/radius_neighbors_same_leaf.txt", "w");
+		if (!out) {
+			fprintf(stderr, "Error: no se pudo abrir radius_neighbors_same_leaf.txt para escritura\n");
+			destroy_octree(&octree);
+			destroy_kd_tree(&tree);
+			destroy_points(&points);
+			return 1;
+		}
+
+		// Validación búsqueda por radio fijo: comparar con fuerza bruta
+		// Usamos como radio la distancia al K-ésimo vecino del punto 0
+		size_t nbr0[K];
+		double dist0[K];
+		start_octree_knearest(&octree, 0, nbr0, dist0);
+
+		// Test neighborhood
+		for (size_t i = 0; i < octree.pts->num_points; ++i) {
+			RadiusResultPOC res = {};
+			octree_radius_search_POC(&octree, i, get_args()->radius_search, &res);
+
+			for (size_t j = 0; j < res.count; ++j) {
+				fprintf(out, "%zu", res.indices[j]);
+				if (j + 1 < res.count) fprintf(out, " ");
+			}
+			fprintf(out, ";");
+
+			for (size_t j = 0; j < res.count; ++j) {
+				if (!res.is_in_same_leaf[j]) continue;
+				fprintf(out, " %zu", res.indices[j]);
+			}
+			fprintf(out, "\n");
+
+			// Force use to avoid code elimination
+			radius_result_destroy_POC(&res);
+		}
+
+		fclose(out);
+
+		destroy_octree(&octree);
+	}*/
+
 	// DEFAULT
+	
 	{
 		test_idea("DEFAULT", nullptr, &tree, &points);
 		test_idea("RANDOM REORDER", (SortFunc)reorder_random, &tree, &points);

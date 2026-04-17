@@ -5,11 +5,24 @@
 #include "../utils/parse_args.h"
 #include <stdio.h>
 #include <stdlib.h>
-
+/*
 void reorder_cuthill_mckee(const Octree *tree, const Points *points, Points *new_points){
 	unsigned int number_of_points = (unsigned int)tree->pts->num_points;
 
 	Queue *queue = createQueue(number_of_points);
+
+	RadiusResult *res = malloc(sizeof(*res) * number_of_points);
+	size_t min_grade_index=0;
+	size_t min_grade=INFINITY;
+
+	// keep 
+	for(size_t i=0; i<number_of_points; ++i){
+		octree_radius_search(tree, i, get_args()->radius_search, res+i);
+		if(res[i].count < min_grade){
+			min_grade = res[i].count;
+			min_grade_index = i;
+		}
+	}
 
 	unsigned int *permutations;
 	bool *visited;
@@ -67,4 +80,4 @@ void reorder_cuthill_mckee(const Octree *tree, const Points *points, Points *new
 	destroyQueue(queue);
 	free(permutations);
 	free(visited);
-}
+}*/
