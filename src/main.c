@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 	// Tree for testing
 	KDTree tree = {};
 	create_kd_tree(&tree, &points);
-
+	
 /*
 	{
 		Octree octree = {};
@@ -160,8 +160,8 @@ int main(int argc, char **argv)
 	// DEFAULT
 	
 	{
-		test_idea("DEFAULT", nullptr, &tree, &points);
-		test_idea("RANDOM REORDER", (SortFunc)reorder_random, &tree, &points);
+		//test_idea("DEFAULT", nullptr, &tree, &points);
+		//test_idea("RANDOM REORDER", (SortFunc)reorder_random, &tree, &points);
 		test_idea("BFS SORT BY DISTANCE", (SortFunc)reorder_bfs_sort_by_distance, &tree, &points);
 	}
 

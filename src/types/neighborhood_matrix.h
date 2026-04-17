@@ -16,3 +16,5 @@ void create_neighborhood_matrix(neighborhood_matrix *matrix, const KDTree *tree)
 void get_neighbours(neighborhood_matrix matrix, size_t index, size_t *neighbours);
 
 void destroy_neighborhood_matrix(neighborhood_matrix matrix, size_t num_points);
+
+void print_matrix_stats(neighborhood_matrix matrix, size_t num_points);

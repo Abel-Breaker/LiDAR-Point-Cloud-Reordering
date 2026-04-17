@@ -20,12 +20,13 @@ static void neighborhoods_knn_bench(NeighborFunc neighbor_fun, const void *struc
 	double total = 0;
 
 	volatile double sink_dist = 0;
-	size_t neighbours[K];
-	double neighbours_distances[K];
 
 	// Test neighborhood
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	#pragma omp parallel for
 	for (size_t i = 0; i < num_points; ++i) {
+		size_t neighbours[K];
+		double neighbours_distances[K];
 		neighbor_fun(structure, i, neighbours, neighbours_distances);
 
 		// Force use to avoid code elimination
@@ -53,6 +54,30 @@ void neighborhoods_octree_knn_bench(const Octree *structure)
 void neighborhoods_kdtree_prune_knn_bench(const KDTreePrune *structure)
 {
 	neighborhoods_knn_bench((NeighborFunc)start_kdtree_prune_knearest, structure, structure->pts->num_points);
+}
+
+void neighborhoods_matrix_bench(neighborhood_matrix matrix, size_t num_points)
+{
+	struct timespec start, end;
+	double total = 0;
+
+	volatile double sink_dist = 0;
+	size_t neighbours[K];
+
+	// Test neighborhood
+	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	//#pragma omp parallel for
+	for (size_t i = 0; i < num_points; ++i) {
+		get_neighbours(matrix, 0, neighbours);
+
+		// Force use to avoid code elimination
+		sink_dist += (double)neighbours[0];
+	}
+	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+	printf("\tNeighborhood: %.6f s\n", total);
+
+	(void)sink_dist;
 }
 
 void neighborhoods_octree_radius_bench(const Octree *structure)

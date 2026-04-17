@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <time.h>
 
-#define ITER_WARM_UP 1
-#define ITER 2
+#define ITER_WARM_UP 0
+#define ITER 1
 
 void kd_tree_benchmark(const Points *points)
 {
