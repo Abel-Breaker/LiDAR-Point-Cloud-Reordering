@@ -63,7 +63,7 @@ void create_neighborhood_matrix(neighborhood_matrix *matrix, const KDTree *tree)
 
         //printf("%ld -> Neighbours: %ld - %ld: distance: %ld - (%ld bytes)\n", i, max, min, distance, num_bytes);
 
-        (*matrix)[i].offset = neighbours[0];
+        (*matrix)[i].offset = min;
         (*matrix)[i].row_size = num_bytes;
         (*matrix)[i].row = malloc(num_bytes);
 
