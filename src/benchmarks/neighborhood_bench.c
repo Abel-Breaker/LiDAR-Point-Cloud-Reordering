@@ -44,6 +44,7 @@ static void neighborhoods_knn_bench(NeighborFunc neighbor_fun, const void *struc
 void neighborhoods_kd_tree_knn_bench(const KDTree *structure)
 {
 	neighborhoods_knn_bench((NeighborFunc)start_kdtree_knearest, structure, structure->pts->num_points);
+	neighborhoods_knn_bench((NeighborFunc)start_kdtree_knearest, structure, structure->pts->num_points);
 }
 
 void neighborhoods_octree_knn_bench(const Octree *structure)
