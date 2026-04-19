@@ -33,7 +33,7 @@ void bench(const Points *points)
 
 		destroy_kd_tree(&tree);
 	}
-/*
+
 	{
 		printf("\n\033[1mMATRIX\033[0m\n");
 
@@ -78,7 +78,7 @@ void bench(const Points *points)
 
 		destroy_neighborhood_matrix_raw(matrix, points->num_points);
 		destroy_kd_tree(&tree);
-	}*/
+	}
 
 	// KD-TREE (creation + knn)
 	{

@@ -161,7 +161,7 @@ int main(int argc, char **argv)
 	
 	{
 		test_idea("DEFAULT", nullptr, &tree, &points);
-		test_idea("RANDOM REORDER", (SortFunc)reorder_random, &tree, &points);
+		//test_idea("RANDOM REORDER", (SortFunc)reorder_random, &tree, &points);
 		test_idea("BFS SORT BY DISTANCE", (SortFunc)reorder_bfs_sort_by_distance, &tree, &points);
 		//test_idea("BFS SORT BY DISTANCE REVERSE", (SortFunc)reorder_bfs_sort_by_distance_reverse, &tree, &points);
 	}
