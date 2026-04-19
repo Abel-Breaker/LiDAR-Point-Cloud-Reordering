@@ -42,6 +42,7 @@ SANITIZE_DEBUG_THREADS = -fsanitize=thread,undefined
 CFLAGS_DEBUG         = $(CFLAGS_DEBUG_BASE) $(SANITIZE_DEBUG)
 CFLAGS_DEBUG_THREADS = $(CFLAGS_DEBUG_BASE) $(SANITIZE_DEBUG_THREADS)
 CFLAGS_RELEASE       = -O2 -D_FORTIFY_SOURCE=2 -fopenmp
+CFLAGS_VALGRIND 	 = $(CFLAGS_DEBUG_BASE)
 
 
 # Define el modo por defecto
@@ -50,6 +51,8 @@ ifeq ($(MODE),release)
 	CFLAGS = $(CFLAGS_RELEASE) $(COMMON_FLAGS)
 else ifeq ($(MODE),debug_threads)
 	CFLAGS = $(CFLAGS_DEBUG_THREADS) $(COMMON_FLAGS)
+else ifeq ($(MODE),valgrind)
+	CFLAGS = $(CFLAGS_VALGRIND) $(COMMON_FLAGS)
 else
 	CFLAGS = $(CFLAGS_DEBUG) $(COMMON_FLAGS)
 endif

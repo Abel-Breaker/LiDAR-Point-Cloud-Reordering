@@ -8,6 +8,6 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y gcc cmake valgrind
       - name: Build
-        run: make MODE=release
+        run: make MODE=valgrind
       - name: Run Valgrind
         run: valgrind --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --num-callers=30 --show-leak-kinds=all --track-origins=yes ./build/program -f cloud_points/cloud_point_test.laz -b -t
