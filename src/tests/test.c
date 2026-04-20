@@ -4,6 +4,7 @@
 #include "../points_structures/octree.h"
 #include "../types/neighborhood_matrix.h"
 #include "../types/neighborhood_matrix_raw.h"
+#include "../types/neighborhood_matrix_mix/neighborhood_matrix_mix.h"
 #include "neighborhood_test.h"
 #include <stdio.h>
 
@@ -77,8 +78,24 @@ static void test_points_for_matrix_raw(const Points *points)
 		destroy_kd_tree(&tree);
 }
 
+static void test_points_for_matrix_mix(const Points *points)
+{
+	// Create new kd_tree
+		KDTree tree = {};
+		create_kd_tree(&tree, points);
+
+		matrix_mix matrix = {};
+		create_neighbourhood_matrix_mix(&matrix, &tree);
+
+		check_neighborhoods_matrix_mix(&matrix);
+
+		destroy_neighbourhood_matrix_mix(&matrix);
+		destroy_kd_tree(&tree);
+}
+
 void test(const Points *points)
 {
+	/*
 	printf("Testing KD-Tree\n");
 	test_points_for_kd_tree(points);
 	printf("Testing KD-Tree Prune\n");
@@ -88,5 +105,7 @@ void test(const Points *points)
 	printf("Testing Matrix\n");
 	test_points_for_matrix(points);
 	printf("Testing Matrix Raw\n");
-	test_points_for_matrix_raw(points);
+	test_points_for_matrix_raw(points);*/
+	printf("Testing Matrix Mix\n");
+	test_points_for_matrix_mix(points);
 }

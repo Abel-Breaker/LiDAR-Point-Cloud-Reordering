@@ -4,6 +4,7 @@
 #include "../points_structures/octree.h"
 #include "../types/neighborhood_matrix.h"
 #include "../types/neighborhood_matrix_raw.h"
+#include "../types/neighborhood_matrix_mix/neighborhood_matrix_mix.h"
 
 void check_neighborhoods_kd_tree(const KDTree *tree);
 
@@ -17,3 +18,5 @@ void check_neighborhoods_octree_radius(const Octree *octree);
 void check_neighborhoods_matrix_raw(const neighborhood_matrix_raw matrix, const Points *pts);
 
 void check_neighborhoods_matrix(const neighborhood_matrix matrix, const Points *pts);
+
+void check_neighborhoods_matrix_mix(const matrix_mix *matrix);

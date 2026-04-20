@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-size_t find_min(const size_t neighbours[], size_t size) {
+static size_t find_min(const size_t neighbours[], size_t size) {
     size_t min = neighbours[0];
     for (size_t i = 1; i < size; i++) {
         if (neighbours[i] < min) {
@@ -17,7 +17,7 @@ size_t find_min(const size_t neighbours[], size_t size) {
     return min;
 }
 
-size_t find_max(const size_t neighbours[], size_t size) {
+static size_t find_max(const size_t neighbours[], size_t size) {
     size_t max = neighbours[0];
     for (size_t i = 1; i < size; i++) {
         if (neighbours[i] > max) {

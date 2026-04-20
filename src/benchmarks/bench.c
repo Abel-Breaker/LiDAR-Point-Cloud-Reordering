@@ -11,6 +11,7 @@
 #include "points_structures_bench.h"
 #include "../types/neighborhood_matrix.h"
 #include "../types/neighborhood_matrix_raw.h"
+#include "../types/neighborhood_matrix_mix/neighborhood_matrix_mix.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -77,6 +78,29 @@ void bench(const Points *points)
 		print_matrix_stats_raw(matrix, points->num_points);
 
 		destroy_neighborhood_matrix_raw(matrix, points->num_points);
+		destroy_kd_tree(&tree);
+	}
+
+	{
+		printf("\n\033[1mMATRIX MIX\033[0m\n");
+
+		// Create new kd_tree
+		KDTree tree = {};
+		create_kd_tree(&tree, points);
+
+		struct timespec start, end;
+		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+		matrix_mix matrix = {};
+		create_neighbourhood_matrix_mix(&matrix, &tree);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+		printf("\tCreate matrix: %.6f s\n",
+		       (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000);
+
+		neighborhoods_matrix_mix_bench(&matrix);
+
+		print_matrix_mix_stats(&matrix);
+
+		destroy_neighbourhood_matrix_mix(&matrix);
 		destroy_kd_tree(&tree);
 	}
 

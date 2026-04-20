@@ -192,3 +192,29 @@ void check_neighborhoods_matrix(const neighborhood_matrix matrix, const Points *
 		}
 	}
 }
+
+void check_neighborhoods_matrix_mix(const matrix_mix *matrix)
+{
+	size_t neighbours[K];
+	double neighbours_distances[K];
+
+	for (size_t i = 0; i < ITER; ++i) {
+		size_t neighbours_2[K];
+		double neighbours_distances_2[K];
+
+		get_neighbours_matrix_mix(matrix, i, neighbours);
+		find_point_neighbors(matrix->points, i, neighbours_2, neighbours_distances_2);
+
+		// Ordenar ambos resultados
+		sort_neighbors(neighbours, neighbours_distances, K);
+		sort_neighbors(neighbours_2, neighbours_distances_2, K);
+
+		// Comparar
+		for (size_t j = 0; j < K; j++) {
+			if (neighbours[j] != neighbours_2[j]){
+				printf("%ld (%f) - %ld (%f)\n", neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
+				exit(-1);
+			}
+		}
+	}
+}

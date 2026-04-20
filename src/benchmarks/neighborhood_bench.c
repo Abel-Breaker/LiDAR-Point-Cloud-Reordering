@@ -112,6 +112,34 @@ void neighborhoods_matrix_bench_raw(neighborhood_matrix_raw matrix, const Points
 	(void)sink_dist;
 }
 
+void neighborhoods_matrix_mix_bench(matrix_mix *matrix)
+{
+	struct timespec start, end;
+	double total = 0;
+
+	volatile double sink_dist = 0;
+	size_t neighbours[K];
+
+	// Test neighborhood
+	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	//#pragma omp parallel for
+	for (size_t i = 0; i < matrix->points->num_points; ++i) {
+		get_neighbours_matrix_mix(matrix, 0, neighbours);
+
+		for(size_t j=0; j<K; ++j){
+			//sink_dist += euclidian_distance_3d(points->x[neighbours[j]], points->y[neighbours[j]], points->z[neighbours[j]], points->x[i], points->y[i], points->z[i]);
+		}
+
+		// Force use to avoid code elimination
+		sink_dist += (double)neighbours[0];
+	}
+	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+	printf("\tNeighborhood: %.6f s\n", total);
+
+	(void)sink_dist;
+}
+
 void neighborhoods_octree_radius_bench(const Octree *structure)
 {
 	struct timespec start, end;
