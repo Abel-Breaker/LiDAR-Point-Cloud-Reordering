@@ -35,7 +35,7 @@ void create_neighbourhood_matrix_mix(matrix_mix *matrix, KDTree *tree)
 	matrix->row_type = malloc(sizeof(*matrix->row_type) * matrix->points->num_points);
 
 	// Set matrix values
-	#pragma omp parallel for
+	//#pragma omp parallel for
 	for (size_t i = 0; i < tree->pts->num_points; ++i) {
 		size_t neighbours[K];
 		double neighbours_distances[K];
