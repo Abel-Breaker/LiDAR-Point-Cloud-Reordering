@@ -134,6 +134,7 @@ int main(int argc, char **argv)
 	printf("Matrix created\n");
 	save_matrix(&matrix, "no_reorder.txt");
 	printf("Matrix saved\n");
+	destroy_neighbourhood_matrix_mix(&matrix);
 	
 	Points points_reordered = {0};
 
@@ -145,6 +146,7 @@ int main(int argc, char **argv)
 	printf("Matrix reordered created\n");
 	save_matrix(&matrix_2, "reorder.txt");
 	printf("Matrix reordered saved\n");
+	destroy_neighbourhood_matrix_mix(&matrix_2);
 
 
 	/*
