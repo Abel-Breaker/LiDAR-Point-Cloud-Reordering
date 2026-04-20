@@ -113,8 +113,9 @@ void print_matrix_stats(neighborhood_matrix matrix, size_t num_points){
     }
 
     size_t total_bytes = 0;
+    // Inicializate
     size_t min_row_size = matrix[0].row_size;
-    size_t max_row_size = matrix[0].row_size;
+    size_t max_row_size = min_row_size;
     double sum_row_size = 0.0;
 
     for (size_t i = 0; i < num_points; ++i) {
@@ -136,7 +137,7 @@ void print_matrix_stats(neighborhood_matrix matrix, size_t num_points){
     printf("=== Matrix Stats ===\n");
     printf("Num points:         %zu\n", num_points);
     printf("Estimated size:     %zu bytes (%.6f GB)\n", total_estimated, total_gb);
-    printf("Best posible size:  %zu bytes (%.6f GB)\n", K*8*num_points , K*8*num_points/ (1024.0 * 1024.0 * 1024.0));
+    printf("Best posible size:  %zu bytes (%.6f GB)\n", (K * 8 * num_points), (double)(K * 8 * num_points) / (1024.0 * 1024.0 * 1024.0));
     printf("Row size  min:      %zu\n", min_row_size);
     printf("Row size  max:      %zu\n", max_row_size);
     printf("Row size  avg:      %.2f\n", avg_row_size);

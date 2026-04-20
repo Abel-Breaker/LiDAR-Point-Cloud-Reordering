@@ -27,15 +27,15 @@ static size_t find_max(const size_t neighbours[], size_t size)
 	return max;
 }
 
-void create_neighbourhood_matrix_mix(matrix_mix *matrix, KDTree *tree)
+void create_neighbourhood_matrix_mix(matrix_mix *matrix, const KDTree *tree)
 {
 	// Reserves memory
 	matrix->points = tree->pts;
 	matrix->rows = malloc(sizeof(void *) * matrix->points->num_points);
 	matrix->row_type = malloc(sizeof(*matrix->row_type) * matrix->points->num_points);
 
-	// Set matrix values
-	//#pragma omp parallel for
+// Set matrix values
+#pragma omp parallel for
 	for (size_t i = 0; i < tree->pts->num_points; ++i) {
 		size_t neighbours[K];
 		double neighbours_distances[K];
@@ -86,7 +86,7 @@ void destroy_neighbourhood_matrix_mix(matrix_mix *matrix)
 
 #include <limits.h> // para SIZE_MAX
 
-void print_matrix_mix_stats(matrix_mix *matrix)
+void print_matrix_mix_stats(const matrix_mix *matrix)
 {
 	size_t total = 0, bit_row_count = 0, index_row_count = 0;
 
@@ -115,7 +115,7 @@ void print_matrix_mix_stats(matrix_mix *matrix)
 
 	double avg_bit_row = 0.0;
 	if (bit_row_count > 0) {
-		avg_bit_row = (double)sum_bit_row / bit_row_count;
+		avg_bit_row = (double)sum_bit_row / (double)bit_row_count;
 	} else {
 		min_bit_row = 0; // evitar imprimir SIZE_MAX si no hay BIT_ROW
 	}
@@ -124,7 +124,7 @@ void print_matrix_mix_stats(matrix_mix *matrix)
 	printf("Estimated size:     %zu bytes (%.6f GB)\n", total, (double)total / (1024.0 * 1024.0 * 1024.0));
 
 	printf("Best posible size:  %zu bytes (%.6f GB)\n", (K * 8 + sizeof(index_row)) * matrix->points->num_points,
-	       ((K * 8 + sizeof(index_row)) * matrix->points->num_points) / (1024.0 * 1024.0 * 1024.0));
+	       (double)((K * 8 + sizeof(index_row)) * matrix->points->num_points) / (1024.0 * 1024.0 * 1024.0));
 
 	printf("Bit row count:      %zu\n", bit_row_count);
 	printf("Index row count:    %zu\n", index_row_count);

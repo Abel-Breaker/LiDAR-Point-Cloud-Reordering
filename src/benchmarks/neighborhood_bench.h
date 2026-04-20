@@ -16,6 +16,6 @@ void neighborhoods_matrix_bench(neighborhood_matrix matrix, const Points *points
 
 void neighborhoods_matrix_bench_raw(neighborhood_matrix_raw matrix, const Points *points);
 
-void neighborhoods_matrix_mix_bench(matrix_mix *matrix);
+void neighborhoods_matrix_mix_bench(const matrix_mix *matrix);
 
 void neighborhoods_kdtree_prune_knn_bench(const KDTreePrune *structure);

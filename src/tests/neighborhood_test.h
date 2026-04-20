@@ -15,8 +15,8 @@ void check_neighborhoods_octree_knn(const Octree *octree);
 void check_neighborhoods_octree_radius(const Octree *octree);
 
 
-void check_neighborhoods_matrix_raw(const neighborhood_matrix_raw matrix, const Points *pts);
+void check_neighborhoods_matrix_raw(neighborhood_matrix_raw matrix, const Points *pts);
 
-void check_neighborhoods_matrix(const neighborhood_matrix matrix, const Points *pts);
+void check_neighborhoods_matrix(neighborhood_matrix matrix, const Points *pts);
 
 void check_neighborhoods_matrix_mix(const matrix_mix *matrix);

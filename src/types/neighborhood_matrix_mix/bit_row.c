@@ -9,7 +9,7 @@ static inline size_t get_row_size(size_t min_index, size_t max_index){
     return ((max_index - min_index + 1 + 7) / 8); // TODO: Change 8 to avx size vector
 }
 
-size_t get_bit_row_size(bit_row *row){
+size_t get_bit_row_size(const  bit_row *row){
     return row->row_size + sizeof(bit_row);
 }
 

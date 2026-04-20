@@ -78,7 +78,7 @@ static void check_neighborhoods_knn(NeighborFunc function, const void *structure
 		// Comparar
 		for (size_t j = 0; j < K; j++) {
 			if (neighbours[j] != neighbours_2[j]){
-				printf("%ld (%f) - %ld (%f)\n", neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
+				printf("%zu (%f) - %zu (%f)\n", neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
 				exit(-1);
 			}
 		}
@@ -132,7 +132,7 @@ void check_neighborhoods_octree_radius(const Octree *octree)
 }
 
 
-void check_neighborhoods_matrix_raw(const neighborhood_matrix_raw matrix, const Points *pts)
+void check_neighborhoods_matrix_raw(neighborhood_matrix_raw matrix, const Points *pts)
 {
 	size_t neighbours[K];
 	double neighbours_distances[K];
@@ -151,14 +151,14 @@ void check_neighborhoods_matrix_raw(const neighborhood_matrix_raw matrix, const 
 		// Comparar
 		for (size_t j = 0; j < K; j++) {
 			if (neighbours[j] != neighbours_2[j]){
-				printf("%ld (%f) - %ld (%f)\n", neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
+				printf("%zu (%f) - %zu (%f)\n", neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
 				exit(-1);
 			}
 		}
 	}
 }
 
-void check_neighborhoods_matrix(const neighborhood_matrix matrix, const Points *pts)
+void check_neighborhoods_matrix(neighborhood_matrix matrix, const Points *pts)
 {
 	size_t neighbours[K];
 	double neighbours_distances[K];
@@ -186,7 +186,7 @@ void check_neighborhoods_matrix(const neighborhood_matrix matrix, const Points *
 		// Comparar
 		for (size_t j = 0; j < K; j++) {
 			if (neighbours[j] != neighbours_2[j]){
-				printf("Point %ld: %ld (%f) - %ld (%f)\n", i, neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
+				printf("Point %zu: %zu (%f) - %zu (%f)\n", i, neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
 				exit(-1);
 			}
 		}
@@ -212,7 +212,7 @@ void check_neighborhoods_matrix_mix(const matrix_mix *matrix)
 		// Comparar
 		for (size_t j = 0; j < K; j++) {
 			if (neighbours[j] != neighbours_2[j]){
-				printf("%ld (%f) - %ld (%f)\n", neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
+				printf("%zu (%f) - %zu (%f)\n", neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
 				exit(-1);
 			}
 		}

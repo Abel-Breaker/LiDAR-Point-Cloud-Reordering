@@ -96,8 +96,7 @@ void neighborhoods_matrix_bench_raw(neighborhood_matrix_raw matrix, const Points
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	//#pragma omp parallel for
 	for (size_t i = 0; i < points->num_points; ++i) {
-		get_neighbours_matrix_raw(matrix, 0, neighbours);
-
+		get_neighbours_matrix_raw(matrix, i, neighbours);
 		for(size_t j=0; j<K; ++j){
 			sink_dist += euclidian_distance_3d(points->x[neighbours[j]], points->y[neighbours[j]], points->z[neighbours[j]], points->x[i], points->y[i], points->z[i]);
 		}
@@ -112,7 +111,7 @@ void neighborhoods_matrix_bench_raw(neighborhood_matrix_raw matrix, const Points
 	(void)sink_dist;
 }
 
-void neighborhoods_matrix_mix_bench(matrix_mix *matrix)
+void neighborhoods_matrix_mix_bench(const matrix_mix *matrix)
 {
 	struct timespec start, end;
 	double total = 0;
@@ -124,7 +123,7 @@ void neighborhoods_matrix_mix_bench(matrix_mix *matrix)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	//#pragma omp parallel for
 	for (size_t i = 0; i < matrix->points->num_points; ++i) {
-		get_neighbours_matrix_mix(matrix, 0, neighbours);
+		get_neighbours_matrix_mix(matrix, i, neighbours);
 
 		for(size_t j=0; j<K; ++j){
 			//sink_dist += euclidian_distance_3d(points->x[neighbours[j]], points->y[neighbours[j]], points->z[neighbours[j]], points->x[i], points->y[i], points->z[i]);

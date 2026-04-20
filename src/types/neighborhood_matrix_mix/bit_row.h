@@ -9,7 +9,7 @@ typedef struct {
     uint8_t *row; // Row of bytes (each byte has 8 index)
 }bit_row;
 
-size_t get_bit_row_size(bit_row *row);
+size_t get_bit_row_size(const bit_row *row);
 
 size_t estimate_bit_row_size(size_t min_index, size_t max_index);
 

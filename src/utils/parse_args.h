@@ -2,7 +2,7 @@
 #include <getopt.h>
 #include <stddef.h>
 
-#define K 20 // Defined as a constant and not an argument for optimization
+#define K 100 // Defined as a constant and not an argument for optimization
 
 typedef struct {
     char *cloud_points_file_name;

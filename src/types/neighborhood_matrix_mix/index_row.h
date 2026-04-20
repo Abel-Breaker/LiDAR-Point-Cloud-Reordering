@@ -6,7 +6,7 @@ typedef struct{
     size_t *row;
 } index_row;
 
-size_t get_index_row_size(index_row *row);
+size_t get_index_row_size(const index_row *row);
 
 size_t estimate_index_row_size(size_t neighbours_size);
 

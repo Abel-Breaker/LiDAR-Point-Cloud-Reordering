@@ -63,15 +63,19 @@ void save_matrix(const matrix_mix *matrix, const char *filename)
 	FILE *fd;
 	fd = fopen(filename, "w");
 
-	for (size_t i = 0; i < matrix->points->num_points; ++i) {
+	size_t i = 0;
+
+	for (i = 0; i < matrix->points->num_points; ++i) {
+		size_t neighbours[K];
+		get_neighbours_matrix_mix(matrix, i, neighbours);
 		for (size_t k = 0; k < K; ++k) {
-			size_t neighbours[K];
-			get_neighbours_matrix_mix(matrix, i, neighbours);
-			fprintf(fd, "%ld ", neighbours[k]);
+			fprintf(fd, "%zu ", neighbours[k]);
 		}
 
 		fprintf(fd, "\n");
 	}
+
+	printf("i : %zu\n", i);
 
 	fclose(fd);
 }
@@ -129,11 +133,11 @@ int main(int argc, char **argv)
 	KDTree tree = {};
 	create_kd_tree(&tree, &points);
 	
-	matrix_mix matrix = {};
+	/*matrix_mix matrix = {};
 	create_neighbourhood_matrix_mix(&matrix, &tree);
 	printf("Matrix created\n");
 	print_matrix_mix_stats(&matrix);
-	save_matrix(&matrix, "no_reorder.txt");
+	//save_matrix(&matrix, "no_reorder.txt");
 	printf("Matrix saved\n");
 	destroy_neighbourhood_matrix_mix(&matrix);
 	
@@ -146,9 +150,10 @@ int main(int argc, char **argv)
 	create_neighbourhood_matrix_mix(&matrix_2, &tree);
 	printf("Matrix reordered created\n");
 	print_matrix_mix_stats(&matrix_2);
-	save_matrix(&matrix_2, "reorder.txt");
+	//save_matrix(&matrix_2, "reorder.txt");
 	printf("Matrix reordered saved\n");
 	destroy_neighbourhood_matrix_mix(&matrix_2);
+	destroy_points(&points_reordered);*/
 
 
 	/*
@@ -196,13 +201,13 @@ int main(int argc, char **argv)
 
 	// DEFAULT
 
-	/*{
+	{
 		test_idea("DEFAULT", nullptr, &tree, &points);
 		// test_idea("RANDOM REORDER", (SortFunc)reorder_random, &tree, &points);
 		test_idea("BFS SORT BY DISTANCE", (SortFunc)reorder_bfs_sort_by_distance, &tree, &points);
 		// test_idea("BFS SORT BY DISTANCE REVERSE", (SortFunc)reorder_bfs_sort_by_distance_reverse, &tree,
 		// &points);
-	}*/
+	}
 
 	destroy_kd_tree(&tree);
 	destroy_points(&points);

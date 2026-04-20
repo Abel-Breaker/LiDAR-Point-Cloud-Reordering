@@ -31,7 +31,8 @@ CFLAGS_DEBUG_BASE = -O0 -g3 -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 \
 -Wnull-dereference -Wdouble-promotion -Wstack-protector -Wstrict-aliasing=3 \
 -fno-omit-frame-pointer -fstack-clash-protection -fanalyzer \
 -Wshift-overflow -Wundef -Wbad-function-cast -Wcast-align -Wwrite-strings \
---strict-flex-arrays=3 -Wshift-negative-value -Walloc-zero -fno-common
+--strict-flex-arrays=3 -Wshift-negative-value -Walloc-zero -fno-common \
+-Wno-unknown-pragmas
 #-Wunsuffixed-float-constants
 
 # Sanitizers: incompatibles entre sí, se seleccionan por modo

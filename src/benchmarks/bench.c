@@ -32,7 +32,7 @@ void bench(const Points *points)
 		neighborhoods_kd_tree_knn_bench(&tree);
 	}
 
-	/*{
+	{
 		printf("\n\033[1mMATRIX\033[0m\n");
 
 		struct timespec start, end;
