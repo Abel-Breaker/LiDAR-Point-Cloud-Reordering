@@ -131,7 +131,9 @@ int main(int argc, char **argv)
 	
 	matrix_mix matrix = {};
 	create_neighbourhood_matrix_mix(&matrix, &tree);
+	printf("Matrix created\n");
 	save_matrix(&matrix, "../R/reorder/data/no_reorder.txt");
+	printf("Matrix saved\n");
 	
 	Points points_reordered = {0};
 
@@ -140,7 +142,9 @@ int main(int argc, char **argv)
 	create_kd_tree(&tree, &points_reordered);
 	matrix_mix matrix_2 = {};
 	create_neighbourhood_matrix_mix(&matrix_2, &tree);
+	printf("Matrix reordered created\n");
 	save_matrix(&matrix_2, "../R/reorder/data/reorder.txt");
+	printf("Matrix reordered saved\n");
 
 
 	/*
