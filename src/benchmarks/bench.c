@@ -18,6 +18,9 @@
 
 void bench(const Points *points)
 {
+	// Create new kd_tree
+	KDTree tree = {};
+	create_kd_tree(&tree, points);
 
 	// KD-TREE (creation + knn)
 	{
@@ -25,22 +28,12 @@ void bench(const Points *points)
 		// Benchmark KD-Tree creation
 		kd_tree_benchmark(points);
 
-		// Create new kd_tree
-		KDTree tree = {};
-		create_kd_tree(&tree, points);
-
 		// Benchmark neighborhoods
 		neighborhoods_kd_tree_knn_bench(&tree);
-
-		destroy_kd_tree(&tree);
 	}
 
-	{
+	/*{
 		printf("\n\033[1mMATRIX\033[0m\n");
-
-		// Create new kd_tree
-		KDTree tree = {};
-		create_kd_tree(&tree, points);
 
 		struct timespec start, end;
 		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
@@ -55,15 +48,12 @@ void bench(const Points *points)
 		print_matrix_stats(matrix, points->num_points);
 
 		destroy_neighborhood_matrix(matrix, points->num_points);
-		destroy_kd_tree(&tree);
-	}
+	}*/
 
 	{
 		printf("\n\033[1mMATRIX RAW\033[0m\n");
 
-		// Create new kd_tree
-		KDTree tree = {};
-		create_kd_tree(&tree, points);
+		
 
 		struct timespec start, end;
 		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
@@ -78,15 +68,10 @@ void bench(const Points *points)
 		print_matrix_stats_raw(matrix, points->num_points);
 
 		destroy_neighborhood_matrix_raw(matrix, points->num_points);
-		destroy_kd_tree(&tree);
 	}
 
 	{
 		printf("\n\033[1mMATRIX MIX\033[0m\n");
-
-		// Create new kd_tree
-		KDTree tree = {};
-		create_kd_tree(&tree, points);
 
 		struct timespec start, end;
 		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
@@ -101,27 +86,26 @@ void bench(const Points *points)
 		print_matrix_mix_stats(&matrix);
 
 		destroy_neighbourhood_matrix_mix(&matrix);
-		destroy_kd_tree(&tree);
 	}
 
-	// KD-TREE (creation + knn)
+	// KD-TREE Prune (creation + knn)
 	{
 		printf("\n\033[1mKD-TREE Prune\033[0m\n");
 		// Create new kd_tree
-		KDTreePrune tree = {};
-		create_kd_tree_prune(&tree, points);
+		KDTreePrune tree_prune = {};
+		create_kd_tree_prune(&tree_prune, points);
 
 		struct timespec start, end;
 		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-		set_upper_bound_distance(&tree);
+		set_upper_bound_distance(&tree_prune);
 		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 		printf("\tSet upper bound distance: %.6f s\n",
 		       (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000);
 
 		// Benchmark neighborhoods
-		neighborhoods_kdtree_prune_knn_bench(&tree);
+		neighborhoods_kdtree_prune_knn_bench(&tree_prune);
 
-		destroy_kd_tree_prune(&tree);
+		destroy_kd_tree_prune(&tree_prune);
 	}
 
 	// OCTREE (creation + knn + radius)
@@ -140,4 +124,6 @@ void bench(const Points *points)
 
 		destroy_octree(&octree);
 	}
+
+	destroy_kd_tree(&tree);
 }

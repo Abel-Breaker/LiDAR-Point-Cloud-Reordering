@@ -1,9 +1,9 @@
 #include "neighborhood_matrix_mix.h"
 #include "../../neighborhood_algorithms/knn/kd_tree.h"
 #include "bit_row.h"
-#include <stdlib.h>
+#include "index_row.h"
 #include <stdio.h>
-
+#include <stdlib.h>
 
 static size_t find_min(const size_t neighbours[], size_t size)
 {
@@ -40,32 +40,61 @@ void create_neighbourhood_matrix_mix(matrix_mix *matrix, KDTree *tree)
 		double neighbours_distances[K];
 		start_kdtree_knearest(tree, i, neighbours, neighbours_distances);
 
-		matrix->rows[i] = create_bit_row(find_min(neighbours, K), find_max(neighbours, K), neighbours);
+		size_t min = find_min(neighbours, K);
+		size_t max = find_max(neighbours, K);
+		size_t bit_row_size = estimate_bit_row_size(min, max);
+		size_t index_row_size = estimate_index_row_size(K);
+
+		if (bit_row_size < index_row_size) {
+			matrix->rows[i] = create_bit_row(find_min(neighbours, K), find_max(neighbours, K), neighbours);
+			matrix->row_type[i] = BIT_ROW;
+		} else {
+			matrix->rows[i] = create_index_row(neighbours, K);
+			matrix->row_type[i] = INDEX_ROW;
+		}
 	}
 }
 
-void get_neighbours_matrix_mix(matrix_mix *matrix, size_t index, size_t *neighbours)
+void get_neighbours_matrix_mix(const matrix_mix *matrix, size_t index, size_t *neighbours)
 {
-    get_neighbours_bit_row(matrix->rows[index], neighbours);
+	if (matrix->row_type[index] == BIT_ROW) {
+		get_neighbours_bit_row(matrix->rows[index], neighbours);
+	} else {
+		get_neighbours_index_row(matrix->rows[index], neighbours);
+	}
 }
 
 void destroy_neighbourhood_matrix_mix(matrix_mix *matrix)
 {
-	free(matrix->row_type);
 	for (size_t i = 0; i < matrix->points->num_points; ++i) {
-		destroy_bit_row(matrix->rows[i]);
+		if (matrix->row_type[i] == BIT_ROW) {
+			destroy_bit_row(matrix->rows[i]);
+		} else {
+			destroy_index_row(matrix->rows[i]);
+		}
 	}
+	free(matrix->row_type);
 	free(matrix->rows);
 }
 
-void print_matrix_mix_stats(matrix_mix *matrix){
-    size_t total=0;
-    for(size_t i=0; i<matrix->points->num_points; ++i){
-        total += get_bit_row_size(matrix->rows[i]);
-    }
-    
-    printf("=== Matrix Stats ===\n");
-    printf("Estimated size:     %zu bytes (%.6f GB)\n", total, (double)total / (1024.0 * 1024.0 * 1024.0));
-	printf("Best posible size:  %zu bytes (%.6f GB)\n", K*8*matrix->points->num_points , K*8*matrix->points->num_points/ (1024.0 * 1024.0 * 1024.0));
-    printf("====================\n");
+void print_matrix_mix_stats(matrix_mix *matrix)
+{
+	size_t total = 0, bit_row_count = 0, index_row_count = 0;
+	for (size_t i = 0; i < matrix->points->num_points; ++i) {
+		if (matrix->row_type[i] == BIT_ROW) {
+			total += get_bit_row_size(matrix->rows[i]);
+			bit_row_count++;
+		} else {
+			total += get_index_row_size(matrix->rows[i]);
+			index_row_count++;
+		}
+	}
+
+	printf("=== Matrix Stats ===\n");
+	printf("Estimated size:     %zu bytes (%.6f GB)\n", total, (double)total / (1024.0 * 1024.0 * 1024.0));
+	printf("Best posible size:  %zu bytes (%.6f GB)\n", (K * 8 + sizeof(index_row)) * matrix->points->num_points,
+	       ((K * 8 + sizeof(index_row)) * matrix->points->num_points)/ (1024.0 * 1024.0 * 1024.0));
+	printf("Bit row count: %ld\n", bit_row_count);
+	printf("Index row count: %ld\n", index_row_count);
+	printf("====================\n");
 }
