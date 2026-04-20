@@ -132,6 +132,7 @@ int main(int argc, char **argv)
 	matrix_mix matrix = {};
 	create_neighbourhood_matrix_mix(&matrix, &tree);
 	printf("Matrix created\n");
+	print_matrix_mix_stats(&matrix);
 	save_matrix(&matrix, "no_reorder.txt");
 	printf("Matrix saved\n");
 	destroy_neighbourhood_matrix_mix(&matrix);
@@ -144,6 +145,7 @@ int main(int argc, char **argv)
 	matrix_mix matrix_2 = {};
 	create_neighbourhood_matrix_mix(&matrix_2, &tree);
 	printf("Matrix reordered created\n");
+	print_matrix_mix_stats(&matrix_2);
 	save_matrix(&matrix_2, "reorder.txt");
 	printf("Matrix reordered saved\n");
 	destroy_neighbourhood_matrix_mix(&matrix_2);
