@@ -21,7 +21,7 @@ void bench(const Points *points)
 	// Create new kd_tree
 	KDTree tree = {};
 	create_kd_tree(&tree, points);
-
+/*
 	// KD-TREE (creation + knn)
 	{
 		printf("\n\033[1mKD-TREE\033[0m\n");
@@ -48,7 +48,7 @@ void bench(const Points *points)
 		print_matrix_stats(matrix, points->num_points);
 
 		destroy_neighborhood_matrix(matrix, points->num_points);
-	}*/
+	}
 
 	{
 		printf("\n\033[1mMATRIX RAW\033[0m\n");
@@ -69,7 +69,7 @@ void bench(const Points *points)
 
 		destroy_neighborhood_matrix_raw(matrix, points->num_points);
 	}
-
+*/
 	{
 		printf("\n\033[1mMATRIX MIX\033[0m\n");
 
@@ -87,7 +87,7 @@ void bench(const Points *points)
 
 		destroy_neighbourhood_matrix_mix(&matrix);
 	}
-
+/*
 	// KD-TREE Prune (creation + knn)
 	{
 		printf("\n\033[1mKD-TREE Prune\033[0m\n");
@@ -123,7 +123,7 @@ void bench(const Points *points)
 		neighborhoods_octree_radius_bench(&octree);
 
 		destroy_octree(&octree);
-	}
+	}*/
 
 	destroy_kd_tree(&tree);
 }

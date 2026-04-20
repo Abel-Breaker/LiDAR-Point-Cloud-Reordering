@@ -40,6 +40,18 @@ bit_row *create_bit_row(size_t min_index, size_t max_index, const size_t *neighb
 }
 
 // TODO: Optimice
+/*void get_neighbours_bit_row(const bit_row *row, size_t *neighbours)
+{
+    size_t count = 0;
+
+    for (size_t i = 0; i < row->row_size * 8; i++) {
+        size_t byte_i = i / 8;
+        size_t bit_i  = i % 8;
+        if (row->row[byte_i] & (1u << bit_i))
+            neighbours[(count)++] = i + row->offset;
+    }
+}*/
+
 void get_neighbours_bit_row(const bit_row *row, size_t *neighbours)
 {
     size_t count = 0;
@@ -51,6 +63,7 @@ void get_neighbours_bit_row(const bit_row *row, size_t *neighbours)
             neighbours[(count)++] = i + row->offset;
     }
 }
+
 
 void destroy_bit_row(bit_row *row){
     row->offset = 0;

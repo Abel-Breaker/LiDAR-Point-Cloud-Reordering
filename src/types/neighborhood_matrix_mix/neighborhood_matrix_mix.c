@@ -35,6 +35,7 @@ void create_neighbourhood_matrix_mix(matrix_mix *matrix, KDTree *tree)
 	matrix->row_type = malloc(sizeof(*matrix->row_type) * matrix->points->num_points);
 
 	// Set matrix values
+	#pragma omp parallel for
 	for (size_t i = 0; i < tree->pts->num_points; ++i) {
 		size_t neighbours[K];
 		double neighbours_distances[K];
@@ -46,12 +47,18 @@ void create_neighbourhood_matrix_mix(matrix_mix *matrix, KDTree *tree)
 		size_t index_row_size = estimate_index_row_size(K);
 
 		if (bit_row_size < index_row_size) {
-			matrix->rows[i] = create_bit_row(find_min(neighbours, K), find_max(neighbours, K), neighbours);
+			matrix->rows[i] = create_bit_row(min, max, neighbours);
 			matrix->row_type[i] = BIT_ROW;
 		} else {
 			matrix->rows[i] = create_index_row(neighbours, K);
 			matrix->row_type[i] = INDEX_ROW;
 		}
+		/*if (i < 2) {
+			for (size_t j = 0; j < K; ++j) {
+				printf("%ld ", neighbours[j]);
+			}
+			printf("\n");
+		}*/
 	}
 }
 
@@ -77,12 +84,28 @@ void destroy_neighbourhood_matrix_mix(matrix_mix *matrix)
 	free(matrix->rows);
 }
 
+#include <limits.h> // para SIZE_MAX
+
 void print_matrix_mix_stats(matrix_mix *matrix)
 {
 	size_t total = 0, bit_row_count = 0, index_row_count = 0;
+
+	size_t min_bit_row = SIZE_MAX;
+	size_t max_bit_row = 0;
+	size_t sum_bit_row = 0;
+
 	for (size_t i = 0; i < matrix->points->num_points; ++i) {
 		if (matrix->row_type[i] == BIT_ROW) {
-			total += get_bit_row_size(matrix->rows[i]);
+			size_t size = get_bit_row_size(matrix->rows[i]);
+
+			total += size;
+			sum_bit_row += size;
+
+			if (size < min_bit_row)
+				min_bit_row = size;
+			if (size > max_bit_row)
+				max_bit_row = size;
+
 			bit_row_count++;
 		} else {
 			total += get_index_row_size(matrix->rows[i]);
@@ -90,11 +113,24 @@ void print_matrix_mix_stats(matrix_mix *matrix)
 		}
 	}
 
+	double avg_bit_row = 0.0;
+	if (bit_row_count > 0) {
+		avg_bit_row = (double)sum_bit_row / bit_row_count;
+	} else {
+		min_bit_row = 0; // evitar imprimir SIZE_MAX si no hay BIT_ROW
+	}
+
 	printf("=== Matrix Stats ===\n");
 	printf("Estimated size:     %zu bytes (%.6f GB)\n", total, (double)total / (1024.0 * 1024.0 * 1024.0));
+
 	printf("Best posible size:  %zu bytes (%.6f GB)\n", (K * 8 + sizeof(index_row)) * matrix->points->num_points,
-	       ((K * 8 + sizeof(index_row)) * matrix->points->num_points)/ (1024.0 * 1024.0 * 1024.0));
-	printf("Bit row count: %ld\n", bit_row_count);
-	printf("Index row count: %ld\n", index_row_count);
+	       ((K * 8 + sizeof(index_row)) * matrix->points->num_points) / (1024.0 * 1024.0 * 1024.0));
+
+	printf("Bit row count:      %zu\n", bit_row_count);
+	printf("Index row count:    %zu\n", index_row_count);
+	printf("Bit Row min size:   %zu bytes\n", min_bit_row);
+	printf("Bit Row max size:   %zu bytes\n", max_bit_row);
+	printf("Bit Row avg size:   %.2f bytes\n", avg_bit_row);
+
 	printf("====================\n");
 }
