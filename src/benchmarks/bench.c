@@ -10,41 +10,12 @@
 #include "../utils/parse_args.h"
 #include "neighborhood_bench.h"
 #include "points_structures_bench.h"
-#include <papi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
 void bench(const Points *points)
 {
-	// Init PAPI
-	int EventSet = PAPI_NULL;
-	long long values[2];
-	int events[2] = {PAPI_L1_DCM, PAPI_L2_DCM};
-
-	int ret;
-
-	// Init library
-	ret = PAPI_library_init(PAPI_VER_CURRENT);
-	if (ret != PAPI_VER_CURRENT && ret < 0) {
-		fprintf(stderr, "PAPI init error\n");
-	}
-
-	// Create event set
-	ret = PAPI_create_eventset(&EventSet);
-	if (ret != PAPI_OK) {
-		fprintf(stderr, "PAPI_create_eventset error\n");
-	}
-
-	// Add events one by one (MUCHO más compatible)
-	ret = PAPI_add_event(EventSet, PAPI_L1_DCM);
-	if (ret != PAPI_OK)
-		fprintf(stderr, "L1 event not supported\n");
-
-	ret = PAPI_add_event(EventSet, PAPI_L2_DCM);
-	if (ret != PAPI_OK)
-		fprintf(stderr, "L2 event not supported\n");
-
 	// Create new kd_tree
 	KDTree tree = {};
 	create_kd_tree(&tree, points);
@@ -56,11 +27,7 @@ void bench(const Points *points)
 		kd_tree_benchmark(points);
 
 		// Benchmark neighborhoods
-		PAPI_start(EventSet);
 		neighborhoods_kd_tree_knn_bench(&tree);
-		PAPI_stop(EventSet, values);
-		printf("\tL1 cache misses: %lld\n", values[0]);
-		printf("\tL2 cache misses: %lld\n", values[1]);
 	}
 
 	// KD-TREE Prune (creation + knn)
