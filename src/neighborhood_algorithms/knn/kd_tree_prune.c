@@ -103,7 +103,7 @@ void set_upper_bound_distance(KDTreePrune *tree){
 	size_t neighbours[K];
 	double neighbours_distances[K];
 
-	// Test neighborhood
+	#pragma omp parallel for
 	for (size_t i = 0; i < tree->pts->num_points; ++i) {
 		start_kdtree_prune_knearest(tree, i, neighbours, neighbours_distances);
 		tree->max_distance[i] = neighbours_distances[K-1]+ (double)0.01f; // TODO: Secure that visit all ramas

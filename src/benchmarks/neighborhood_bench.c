@@ -102,6 +102,7 @@ void neighborhoods_octree_radius_bench(const Octree *structure)
 
 	// Test neighborhood
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	#pragma omp parallel for
 	for (size_t i = 0; i < structure->pts->num_points; ++i) {
 		RadiusResult res = {};
 		octree_radius_search(structure, i, get_args()->radius_search, &res);

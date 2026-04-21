@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 		handle_error(ERROR_PARSE_POINTS, ERR_FATAL, nullptr);
 	}
 	printf("\033[1mNumber of points: \033[0m%zu\n", points.num_points);
-
+	printf("\033[1mNumber of neighbours calculated: \033[0m%zu\n", (size_t)K);
 	// Tree for testing
 	KDTree tree = {};
 	create_kd_tree(&tree, &points);

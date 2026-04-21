@@ -42,6 +42,7 @@ static void check_neighborhoods_knn(NeighborFunc function, const void *structure
 
 	srand((unsigned)time(NULL));
 
+	//#pragma omp parallel for
 	for (size_t i = 0; i < ITER; ++i) {
 
 		size_t index = (size_t)rand() % pts->num_points;
@@ -91,6 +92,7 @@ void check_neighborhoods_octree_radius(const Octree *octree)
 		start_octree_knearest(octree, 0, nbr0, dist0);
 		double test_radius = dist0[K - 1];
 
+		//#pragma omp parallel for
 		for (size_t i = 0; i < ITER; ++i) {
 			double px = octree->pts->x[i], py = octree->pts->y[i], pz = octree->pts->z[i];
 
@@ -116,6 +118,7 @@ void check_neighborhoods_matrix_mix(const matrix_mix *matrix)
 	size_t neighbours[K];
 	double neighbours_distances[K];
 
+	//#pragma omp parallel for
 	for (size_t i = 0; i < ITER; ++i) {
 		size_t neighbours_2[K];
 		double neighbours_distances_2[K];
