@@ -20,8 +20,6 @@ static void neighborhoods_knn_bench(NeighborFunc neighbor_fun, const void *struc
 	struct timespec start, end;
 	double total = 0;
 
-	volatile double sink_dist = 0;
-
 	// Test neighborhood
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 #pragma omp parallel for
@@ -30,15 +28,14 @@ static void neighborhoods_knn_bench(NeighborFunc neighbor_fun, const void *struc
 		double neighbours_distances[K];
 		neighbor_fun(structure, i, neighbours, neighbours_distances);
 
-		// Force use to avoid code elimination
-		sink_dist += (double)neighbours[0];
-		sink_dist += neighbours_distances[0];
+		// Avoid code elimination
+		__asm__ volatile("" : : "r"(neighbours[0]) : "memory");
+		__asm__ volatile("" : : "r"(neighbours_distances[0]) : "memory");
+
 	}
 	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
 	printf("\tNeighborhood: %.6f s\n", total);
-
-	(void)sink_dist;
 }
 
 void neighborhoods_kd_tree_knn_bench(const KDTree *structure)
@@ -102,7 +99,7 @@ void neighborhoods_octree_radius_bench(const Octree *structure)
 
 	// Test neighborhood
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-	#pragma omp parallel for
+#pragma omp parallel for
 	for (size_t i = 0; i < structure->pts->num_points; ++i) {
 		RadiusResult res = {};
 		octree_radius_search(structure, i, get_args()->radius_search, &res);

@@ -127,7 +127,7 @@ void print_matrix_mix_stats(const matrix_mix *matrix)
 
 	printf("Estimated size:     %zu bytes (%.6f GB)\n", estimated, (double)estimated / (1024.0 * 1024.0 * 1024.0));
 
-	printf("Best theorical size:  %zu bytes (%.6f GB)\n", theoretical,
+	printf("Best theorical size: %zu bytes (%.6f GB)\n", theoretical,
 	       (double)theoretical / (1024.0 * 1024.0 * 1024.0));
 
 	double diff_percent = 0.0;
@@ -135,7 +135,7 @@ void print_matrix_mix_stats(const matrix_mix *matrix)
 		diff_percent = ((double)estimated - (double)theoretical) / (double)theoretical * 100.0;
 	}
 
-	printf("Difference vs theoretical: %+0.2f%%\n", diff_percent);
+	printf("Size reduction:     %+0.2f%%\n", diff_percent);
 
 	printf("Bit row count:      %zu\n", bit_row_count);
 	printf("Index row count:    %zu\n", index_row_count);

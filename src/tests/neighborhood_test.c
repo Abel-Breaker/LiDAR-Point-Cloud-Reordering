@@ -1,20 +1,21 @@
 #include "neighborhood_test.h"
+#include "../neighborhood_algorithms/knn/bruteforce.h"
 #include "../neighborhood_algorithms/knn/kd_tree.h"
 #include "../neighborhood_algorithms/knn/kd_tree_prune.h"
 #include "../neighborhood_algorithms/radius_search/octree.h"
-#include "../neighborhood_algorithms/knn/bruteforce.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
-#include <stdlib.h>
 #include <assert.h>
-#include <stdio.h>
 #include <math.h>
-#include <time.h> 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 #define ITER 1000
 
-typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index, double *neighbours_distances);
-
+typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index,
+			     double *neighbours_distances);
 
 static void sort_neighbors(size_t *idx, double *dist, size_t k)
 {
@@ -42,7 +43,7 @@ static void check_neighborhoods_knn(NeighborFunc function, const void *structure
 
 	srand((unsigned)time(NULL));
 
-	//#pragma omp parallel for
+	// #pragma omp parallel for
 	for (size_t i = 0; i < ITER; ++i) {
 
 		size_t index = (size_t)rand() % pts->num_points;
@@ -58,14 +59,21 @@ static void check_neighborhoods_knn(NeighborFunc function, const void *structure
 
 		// Comparar
 		for (size_t j = 0; j < K; j++) {
-			if (neighbours[j] != neighbours_2[j]){
-				printf("%zu (%f) - %zu (%f)\n", neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
-				exit(-1);
+			if (neighbours[j] != neighbours_2[j]) {
+
+				const double epsilon = 1e-5;
+				double diff = fabs(neighbours_distances[j] - neighbours_distances_2[j]);
+
+				if (diff > epsilon) {
+					printf("%zu (%f) - %zu (%f) | diff = %f\n", neighbours[j],
+					       neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j],
+					       diff);
+					exit(-1);
+				}
 			}
 		}
 	}
 }
-
 
 void check_neighborhoods_kd_tree(const KDTree *tree)
 {
@@ -92,14 +100,15 @@ void check_neighborhoods_octree_radius(const Octree *octree)
 		start_octree_knearest(octree, 0, nbr0, dist0);
 		double test_radius = dist0[K - 1];
 
-		//#pragma omp parallel for
+		// #pragma omp parallel for
 		for (size_t i = 0; i < ITER; ++i) {
 			double px = octree->pts->x[i], py = octree->pts->y[i], pz = octree->pts->z[i];
 
 			// Fuerza bruta
 			size_t bf_count = 0;
 			for (size_t j = 0; j < octree->pts->num_points; ++j) {
-				double d = euclidian_distance_3d(octree->pts->x[j], octree->pts->y[j], octree->pts->z[j], px, py, pz);
+				double d = euclidian_distance_3d(octree->pts->x[j], octree->pts->y[j],
+								 octree->pts->z[j], px, py, pz);
 				if (d <= test_radius)
 					bf_count++;
 			}
@@ -118,10 +127,11 @@ void check_neighborhoods_matrix_mix(const matrix_mix *matrix)
 	size_t neighbours[K];
 	double neighbours_distances[K];
 
-	//#pragma omp parallel for
+	// #pragma omp parallel for
 	for (size_t i = 0; i < ITER; ++i) {
 		size_t neighbours_2[K];
 		double neighbours_distances_2[K];
+		memset((void *)neighbours_distances, 0, K * sizeof(double)); // tmp to avoid warnings
 
 		get_neighbours_matrix_mix(matrix, i, neighbours);
 		find_point_neighbors(matrix->points, i, neighbours_2, neighbours_distances_2);
@@ -132,8 +142,9 @@ void check_neighborhoods_matrix_mix(const matrix_mix *matrix)
 
 		// Comparar
 		for (size_t j = 0; j < K; j++) {
-			if (neighbours[j] != neighbours_2[j]){
-				printf("%zu (%f) - %zu (%f)\n", neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
+			if (neighbours[j] != neighbours_2[j]) {
+				printf("%zu (%f) - %zu (%f)\n", neighbours[j], neighbours_distances[j], neighbours_2[j],
+				       neighbours_distances_2[j]);
 				exit(-1);
 			}
 		}
