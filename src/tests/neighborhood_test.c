@@ -9,35 +9,11 @@
 #include <assert.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h> 
 
 #define ITER 1000
 
 typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index, double *neighbours_distances);
-/*
-static void check_neighborhoods_knn(NeighborFunc function, const void *structure, const Points *pts)
-{
-	size_t neighbours[K];
-	double neighbours_distances[K];
-
-	// Test neighborhood
-	for (size_t i = 0; i < ITER; ++i) {
-		size_t neighbours_2[K];
-		double neighbours_distances_2[K];
-
-		function(structure, i, neighbours, neighbours_distances);
-		find_point_neighbors(pts, i, neighbours_2, neighbours_distances_2);
-		for (size_t j = 0; j < K; j++) {
-			//printf("%ld - %ld\n", neighbours[j], neighbours_2[j]);
-			//printf("%f - %f\n", neighbours_distances[j], neighbours_distances_2[j]);
-			// assert(neighbours[j] == neighbours_2[j]);
-			//  Check distances because there are indices that are at the same distance and can colide
-			double diff = fabs(neighbours_distances[j] - neighbours_distances_2[j]);
-			const double epsilon = 1e-2f; // tolerancia para errores numéricos
-			assert(diff < epsilon);
-		}
-	}
-}*/
-
 
 
 static void sort_neighbors(size_t *idx, double *dist, size_t k)
@@ -64,12 +40,16 @@ static void check_neighborhoods_knn(NeighborFunc function, const void *structure
 	size_t neighbours[K];
 	double neighbours_distances[K];
 
+	srand((unsigned)time(NULL));
+
 	for (size_t i = 0; i < ITER; ++i) {
+
+		size_t index = (size_t)rand() % pts->num_points;
 		size_t neighbours_2[K];
 		double neighbours_distances_2[K];
 
-		function(structure, i, neighbours, neighbours_distances);
-		find_point_neighbors(pts, i, neighbours_2, neighbours_distances_2);
+		function(structure, index, neighbours, neighbours_distances);
+		find_point_neighbors(pts, index, neighbours_2, neighbours_distances_2);
 
 		// Ordenar ambos resultados
 		sort_neighbors(neighbours, neighbours_distances, K);
@@ -127,68 +107,6 @@ void check_neighborhoods_octree_radius(const Octree *octree)
 			octree_radius_search(octree, i, test_radius, &res);
 			assert(res.count == bf_count);
 			radius_result_destroy(&res);
-		}
-	}
-}
-
-
-void check_neighborhoods_matrix_raw(neighborhood_matrix_raw matrix, const Points *pts)
-{
-	size_t neighbours[K];
-	double neighbours_distances[K];
-
-	for (size_t i = 0; i < ITER; ++i) {
-		size_t neighbours_2[K];
-		double neighbours_distances_2[K];
-
-		get_neighbours_matrix_raw(matrix, i, neighbours);
-		find_point_neighbors(pts, i, neighbours_2, neighbours_distances_2);
-
-		// Ordenar ambos resultados
-		sort_neighbors(neighbours, neighbours_distances, K);
-		sort_neighbors(neighbours_2, neighbours_distances_2, K);
-
-		// Comparar
-		for (size_t j = 0; j < K; j++) {
-			if (neighbours[j] != neighbours_2[j]){
-				printf("%zu (%f) - %zu (%f)\n", neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
-				exit(-1);
-			}
-		}
-	}
-}
-
-void check_neighborhoods_matrix(neighborhood_matrix matrix, const Points *pts)
-{
-	size_t neighbours[K];
-	double neighbours_distances[K];
-
-	for (size_t i = 0; i < ITER; ++i) {
-		size_t neighbours_2[K];
-		double neighbours_distances_2[K];
-
-		get_neighbours(matrix, i, neighbours);
-		find_point_neighbors(pts, i, neighbours_2, neighbours_distances_2);
-
-		// Ordenar ambos resultados
-		sort_neighbors(neighbours, neighbours_distances, K);
-		sort_neighbors(neighbours_2, neighbours_distances_2, K);
-
-		/*for(size_t j=0; j<K; ++j){
-            printf("%ld\n", neighbours[j]);
-        }
-		printf("Pepe\n");
-		for(size_t j=0; j<K; ++j){
-            printf("%ld\n", neighbours_2[j]);
-        }*/
-
-
-		// Comparar
-		for (size_t j = 0; j < K; j++) {
-			if (neighbours[j] != neighbours_2[j]){
-				printf("Point %zu: %zu (%f) - %zu (%f)\n", i, neighbours[j], neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j]);
-				exit(-1);
-			}
 		}
 	}
 }

@@ -11,7 +11,6 @@
 #include "points_structures/octree.h"
 #include "tests/test.h"
 #include "types/lidar_points.h"
-#include "types/neighborhood_matrix.h"
 #include "types/neighborhood_matrix_mix/neighborhood_matrix_mix.h"
 #include "utils/error_handler.h"
 #include "utils/lidar_points_writer.h"
@@ -22,41 +21,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-/*typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index,
-			     double *neighbours_distances);
-
-void save_neighborhood_matrix_on_file(const Points *points, NeighborFunc neighbor_func, const void *structure,
-				      const char *filename)
-{
-	FILE *fd;
-	fd = fopen(filename, "w");
-
-	for (size_t i = 0; i < points->num_points; ++i) {
-		size_t neighbours[K];
-		double neighbours_distances[K];
-
-		neighbor_func(structure, i, neighbours, neighbours_distances);
-
-		for (size_t j = 0; j < points->num_points; ++j) {
-			int is_neighbour = 0;
-			for (size_t k = 0; k < K; ++k) {
-				if (neighbours[k] == j) {
-					is_neighbour = 1;
-					break;
-				}
-			}
-			fprintf(fd, "%d ", is_neighbour);
-		}
-		fprintf(fd, "\n");
-	}
-
-	fclose(fd);
-}
-
-save_neighborhood_matrix_on_file(&points, (const void *)start_kdtree_knearest, &tree,
-		// "../R/before.txt");
-*/
 
 void save_matrix(const matrix_mix *matrix, const char *filename)
 {
@@ -79,6 +43,7 @@ void save_matrix(const matrix_mix *matrix, const char *filename)
 
 	fclose(fd);
 }
+
 typedef void (*SortFunc)(const void *structure, const Points *points, Points *new_points);
 
 void test_idea(const char *name, SortFunc sort_fun, const void *structure, Points *points)
@@ -155,52 +120,7 @@ int main(int argc, char **argv)
 	destroy_neighbourhood_matrix_mix(&matrix_2);
 	destroy_points(&points_reordered);*/
 
-
-	/*
-		{
-			Octree octree = {};
-			create_octree(&octree, &points);
-
-			FILE *out = fopen("../R/same_leaf/radius_neighbors_same_leaf.txt", "w");
-			if (!out) {
-				fprintf(stderr, "Error: no se pudo abrir radius_neighbors_same_leaf.txt para
-	   escritura\n"); destroy_octree(&octree); destroy_kd_tree(&tree); destroy_points(&points); return 1;
-			}
-
-			// Validación búsqueda por radio fijo: comparar con fuerza bruta
-			// Usamos como radio la distancia al K-ésimo vecino del punto 0
-			size_t nbr0[K];
-			double dist0[K];
-			start_octree_knearest(&octree, 0, nbr0, dist0);
-
-			// Test neighborhood
-			for (size_t i = 0; i < octree.pts->num_points; ++i) {
-				RadiusResultPOC res = {};
-				octree_radius_search_POC(&octree, i, get_args()->radius_search, &res);
-
-				for (size_t j = 0; j < res.count; ++j) {
-					fprintf(out, "%zu", res.indices[j]);
-					if (j + 1 < res.count) fprintf(out, " ");
-				}
-				fprintf(out, ";");
-
-				for (size_t j = 0; j < res.count; ++j) {
-					if (!res.is_in_same_leaf[j]) continue;
-					fprintf(out, " %zu", res.indices[j]);
-				}
-				fprintf(out, "\n");
-
-				// Force use to avoid code elimination
-				radius_result_destroy_POC(&res);
-			}
-
-			fclose(out);
-
-			destroy_octree(&octree);
-		}*/
-
 	// DEFAULT
-
 	{
 		test_idea("DEFAULT", nullptr, &tree, &points);
 		// test_idea("RANDOM REORDER", (SortFunc)reorder_random, &tree, &points);

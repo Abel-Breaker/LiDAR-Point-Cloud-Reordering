@@ -7,11 +7,9 @@
 #include "../points_structures/kd_tree_prune.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
-#include "neighborhood_bench.h"
 #include "points_structures_bench.h"
-#include "../types/neighborhood_matrix.h"
-#include "../types/neighborhood_matrix_raw.h"
 #include "../types/neighborhood_matrix_mix/neighborhood_matrix_mix.h"
+#include "neighborhood_bench.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -21,7 +19,7 @@ void bench(const Points *points)
 	// Create new kd_tree
 	KDTree tree = {};
 	create_kd_tree(&tree, points);
-/*
+
 	// KD-TREE (creation + knn)
 	{
 		printf("\n\033[1mKD-TREE\033[0m\n");
@@ -32,44 +30,6 @@ void bench(const Points *points)
 		neighborhoods_kd_tree_knn_bench(&tree);
 	}
 
-	{
-		printf("\n\033[1mMATRIX\033[0m\n");
-
-		struct timespec start, end;
-		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-		neighborhood_matrix matrix = nullptr;
-		create_neighborhood_matrix(&matrix, &tree);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-		printf("\tCreate matrix: %.6f s\n",
-		       (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000);
-
-		neighborhoods_matrix_bench(matrix, points);
-
-		print_matrix_stats(matrix, points->num_points);
-
-		destroy_neighborhood_matrix(matrix, points->num_points);
-	}
-
-	{
-		printf("\n\033[1mMATRIX RAW\033[0m\n");
-
-		
-
-		struct timespec start, end;
-		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-		neighborhood_matrix_raw matrix = nullptr;
-		create_neighborhood_matrix_raw(&matrix, &tree);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-		printf("\tCreate matrix: %.6f s\n",
-		       (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000);
-
-		neighborhoods_matrix_bench_raw(matrix, points);
-
-		print_matrix_stats_raw(matrix, points->num_points);
-
-		destroy_neighborhood_matrix_raw(matrix, points->num_points);
-	}
-*/
 	{
 		printf("\n\033[1mMATRIX MIX\033[0m\n");
 
@@ -87,7 +47,7 @@ void bench(const Points *points)
 
 		destroy_neighbourhood_matrix_mix(&matrix);
 	}
-/*
+
 	// KD-TREE Prune (creation + knn)
 	{
 		printf("\n\033[1mKD-TREE Prune\033[0m\n");
@@ -123,7 +83,7 @@ void bench(const Points *points)
 		neighborhoods_octree_radius_bench(&octree);
 
 		destroy_octree(&octree);
-	}*/
+	}
 
 	destroy_kd_tree(&tree);
 }

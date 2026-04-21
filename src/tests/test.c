@@ -2,8 +2,6 @@
 #include "../points_structures/kd_tree.h"
 #include "../points_structures/kd_tree_prune.h"
 #include "../points_structures/octree.h"
-#include "../types/neighborhood_matrix.h"
-#include "../types/neighborhood_matrix_raw.h"
 #include "../types/neighborhood_matrix_mix/neighborhood_matrix_mix.h"
 #include "neighborhood_test.h"
 #include <stdio.h>
@@ -34,7 +32,6 @@ static void test_points_for_kd_tree_prune(const Points *points)
 	destroy_kd_tree_prune(&tree);
 }
 
-
 static void test_points_for_octree(const Points *points)
 {
 	// Octree creation
@@ -48,64 +45,36 @@ static void test_points_for_octree(const Points *points)
 	destroy_octree(&octree);
 }
 
-static void test_points_for_matrix(const Points *points)
-{
-	// Create new kd_tree
-		KDTree tree = {};
-		create_kd_tree(&tree, points);
-
-		neighborhood_matrix matrix = nullptr;
-		create_neighborhood_matrix(&matrix, &tree);
-
-		check_neighborhoods_matrix(matrix, points);
-
-		destroy_neighborhood_matrix(matrix, points->num_points);
-		destroy_kd_tree(&tree);
-}
-
-static void test_points_for_matrix_raw(const Points *points)
-{
-	// Create new kd_tree
-		KDTree tree = {};
-		create_kd_tree(&tree, points);
-
-		neighborhood_matrix_raw matrix = nullptr;
-		create_neighborhood_matrix_raw(&matrix, &tree);
-
-		check_neighborhoods_matrix_raw(matrix, points);
-
-		destroy_neighborhood_matrix_raw(matrix, points->num_points);
-		destroy_kd_tree(&tree);
-}
-
 static void test_points_for_matrix_mix(const Points *points)
 {
 	// Create new kd_tree
-		KDTree tree = {};
-		create_kd_tree(&tree, points);
+	KDTree tree = {};
+	create_kd_tree(&tree, points);
 
-		matrix_mix matrix = {};
-		create_neighbourhood_matrix_mix(&matrix, &tree);
+	matrix_mix matrix = {};
+	create_neighbourhood_matrix_mix(&matrix, &tree);
 
-		check_neighborhoods_matrix_mix(&matrix);
+	check_neighborhoods_matrix_mix(&matrix);
 
-		destroy_neighbourhood_matrix_mix(&matrix);
-		destroy_kd_tree(&tree);
+	destroy_neighbourhood_matrix_mix(&matrix);
+	destroy_kd_tree(&tree);
 }
 
 void test(const Points *points)
 {
-	/*
-	printf("Testing KD-Tree\n");
+	const char *pink = "\033[1;95m";
+	const char *reset = "\033[0m";
+
+	printf("\n");
+	printf("%sTesting KD-Tree...\n%s", pink, reset);
 	test_points_for_kd_tree(points);
-	printf("Testing KD-Tree Prune\n");
+
+	printf("%sTesting KD-Tree Prune...\n%s", pink, reset);
 	test_points_for_kd_tree_prune(points);
-	printf("Testing Octree\n");
+
+	printf("%sTesting Octree...\n%s", pink, reset);
 	test_points_for_octree(points);
-	printf("Testing Matrix\n");
-	test_points_for_matrix(points);
-	printf("Testing Matrix Raw\n");
-	test_points_for_matrix_raw(points);*/
-	printf("Testing Matrix Mix\n");
+
+	printf("%sTesting Matrix Mix..\n%s", pink, reset);
 	test_points_for_matrix_mix(points);
 }
