@@ -1,89 +1,74 @@
 #define _POSIX_C_SOURCE 199309L
 #include "bench.h"
-#include "../neighborhood_algorithms/knn/kd_tree.h"
-#include "../neighborhood_algorithms/knn/kd_tree_prune.h"
 #include "../neighborhood_algorithms/radius_search/octree.h"
-#include "../points_structures/kd_tree.h"
-#include "../points_structures/kd_tree_prune.h"
-#include "../types/neighborhood_matrix_mix/neighborhood_matrix_mix.h"
+#include "../types/neighborhood_matrix_mix/neighborhood_matrix.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
 #include "neighborhood_bench.h"
 #include "points_structures_bench.h"
+#include <papi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
 void bench(const Points *points)
 {
-	// Create new kd_tree
-	KDTree tree = {};
-	create_kd_tree(&tree, points);
+	/*
+	int EventSet = PAPI_NULL;
+	long long values[1]; // [0] = L1 DCM, [1] = L2 DCM
+	int ret;
 
-	// KD-TREE (creation + knn)
-	{
-		printf("\n\033[1mKD-TREE\033[0m\n");
-		// Benchmark KD-Tree creation
-		kd_tree_benchmark(points);
-
-		// Benchmark neighborhoods
-		neighborhoods_kd_tree_knn_bench(&tree);
+	// 1. Inicializar PAPI 
+	ret = PAPI_library_init(PAPI_VER_CURRENT);
+	if (ret != PAPI_VER_CURRENT) {
+		fprintf(stderr, "Error init PAPI: %s\n", PAPI_strerror(ret));
+		return;
 	}
 
-	// KD-TREE Prune (creation + knn)
-	{
-		printf("\n\033[1mKD-TREE Prune\033[0m\n");
-		// Create new kd_tree
-		KDTreePrune tree_prune = {};
-		create_kd_tree_prune(&tree_prune, points);
-
-		struct timespec start, end;
-		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-		set_upper_bound_distance(&tree_prune);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-		printf("\tSet upper bound distance: %.6f s\n",
-		       (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000);
-
-		// Benchmark neighborhoods
-		neighborhoods_kdtree_prune_knn_bench(&tree_prune);
-
-		destroy_kd_tree_prune(&tree_prune);
+	// 2. Crear el conjunto de eventos 
+	ret = PAPI_create_eventset(&EventSet);
+	if (ret != PAPI_OK) {
+		fprintf(stderr, "Error create_eventset: %s\n", PAPI_strerror(ret));
+		return;
 	}
 
-	// OCTREE (creation + knn + radius)
-	{
-		printf("\n\033[1mOCTREE\033[0m\n");
-		// Benchmark Octree creation
-		octree_benchmark(points);
+	// 3. Añadir eventos de fallos de caché de datos 
 
-		// Octree creation and check
-		Octree octree = {};
-		create_octree(&octree, points);
+	ret = PAPI_add_event(EventSet, PAPI_L2_DCM); // L2 Data Cache Misses
+	if (ret != PAPI_OK) {
+		fprintf(stderr, "Error add L2_DCM: %s\n", PAPI_strerror(ret));
+		return;
+	}
+*/
+	// Octree creation and check
+			Octree octree = {};
+			create_octree(&octree, points);
+		// OCTREE (creation + knn + radius)
+		{
+			printf("\n\033[1mOCTREE\033[0m\n");
+			// Benchmark Octree creation
+			octree_benchmark(points);
 
-		// Benchmark neighborhoods
-		neighborhoods_octree_knn_bench(&octree);
-		neighborhoods_octree_radius_bench(&octree);
+			// Benchmark neighborhoods
+			neighborhoods_octree_knn_bench(&octree);
+			neighborhoods_octree_radius_bench(&octree);
+
+			
+		}
+
+		// OCTREE (creation + knn + radius)
+		{
+			printf("\n\033[1mMATRIX\033[0m\n");
+			// matrix_t creation
+			struct matrix_t matrix = {};
+			create_neighbourhood_matrix(&matrix, &octree);
+
+			// Benchmark neighborhoods
+			neighborhoods_matrix_bench(&matrix);
+
+			destroy_neighbourhood_matrix(&matrix);
+		}
 
 		destroy_octree(&octree);
-	}
 
-	{
-		printf("\n\033[1mMATRIX MIX\033[0m\n");
-
-		struct timespec start, end;
-		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-		matrix_mix matrix = {};
-		create_neighbourhood_matrix_mix(&matrix, &tree);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-		printf("\tCreate matrix: %.6f s\n",
-		       (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000);
-
-		neighborhoods_matrix_mix_bench(&matrix);
-
-		print_matrix_mix_stats(&matrix);
-
-		destroy_neighbourhood_matrix_mix(&matrix);
-	}
-
-	destroy_kd_tree(&tree);
 }

@@ -13,11 +13,11 @@ typedef struct {
 	double *distances;
 	size_t  count;
 	size_t  capacity;
-} RadiusResult;
+} RadiusResultOctree;
 
 /* Rellena 'result' con todos los puntos a distancia <= radius del punto dado.
  * Inicializa el struct internamente; llamar radius_result_destroy al terminar. */
 void octree_radius_search(const Octree *octree, size_t point_index, double radius,
-                          RadiusResult *result);
+                          RadiusResultOctree *result);
 
-void radius_result_destroy(RadiusResult *result);
+void radius_result_destroy(RadiusResultOctree *result);

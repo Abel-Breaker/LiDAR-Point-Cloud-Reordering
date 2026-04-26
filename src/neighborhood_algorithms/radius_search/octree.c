@@ -119,7 +119,7 @@ void start_octree_knearest(const Octree *octree, size_t point_index,
 }
 
 /* Añade un punto al resultado, redoblando capacidad si es necesario. */
-static bool radius_result_push(RadiusResult *res, size_t idx, double dist)
+static bool radius_result_push(RadiusResultOctree *res, size_t idx, double dist)
 {
 	if (res->count == res->capacity) {
 		size_t new_cap = res->capacity == 0 ? 64u : res->capacity * 2u;
@@ -142,7 +142,7 @@ static bool radius_result_push(RadiusResult *res, size_t idx, double dist)
 
 static void radius_traverse(const Octree *octree, const Octant *octant,
                             double px, double py, double pz,
-                            double radius, RadiusResult *result)
+                            double radius, RadiusResultOctree *result)
 {
 	if (!octant) return;
 
@@ -180,7 +180,7 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 }
 
 void octree_radius_search(const Octree *octree, size_t point_index, double radius,
-                          RadiusResult *result)
+                          RadiusResultOctree *result)
 {
 	result->indices   = nullptr;
 	result->distances = nullptr;
@@ -194,7 +194,7 @@ void octree_radius_search(const Octree *octree, size_t point_index, double radiu
 	radius_traverse(octree, octree->root, px, py, pz, radius, result);
 }
 
-void radius_result_destroy(RadiusResult *result)
+void radius_result_destroy(RadiusResultOctree *result)
 {
 	free(result->indices);
 	free(result->distances);

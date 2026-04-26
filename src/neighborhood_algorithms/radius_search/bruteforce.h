@@ -1,9 +1,12 @@
 #pragma once
 #include "../../types/lidar_points.h"
 #include "../../utils/parse_args.h"
+#include "../../utils/auxiliar_structures/radius_result.h"
+
+
 
 /**
- * Finds the K nearest neighbors of a point in a point collection.
+ * Finds the neighbors of a point in a certain radio of a point collection.
  *
  * @param[in] points Pointer to the collection of points.
  * @param[in] point_index Index of the point in the collection for which neighbors are being searched.
@@ -12,4 +15,4 @@
  * 
  * @note The point collection `points` must be initialized before calling this function.
  */
-void find_knn_neighbors(const Points *points, size_t point_index, size_t neighbours_index[K], double neighbours_distances[K]);
+void find_radius_neighbors(const Points *points, size_t point_index, RadiusResult *result);

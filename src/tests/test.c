@@ -1,36 +1,10 @@
 #include "test.h"
-#include "../points_structures/kd_tree.h"
-#include "../points_structures/kd_tree_prune.h"
 #include "../points_structures/octree.h"
-#include "../types/neighborhood_matrix_mix/neighborhood_matrix_mix.h"
+#include "../types/neighborhood_matrix_mix/neighborhood_matrix.h"
 #include "neighborhood_test.h"
 #include <stdio.h>
-
-static void test_points_for_kd_tree(const Points *points)
-{
-	// Create kdtree
-	KDTree tree = {};
-	create_kd_tree(&tree, points);
-
-	// Checks
-	check_kd_tree(&tree);
-	check_neighborhoods_kd_tree(&tree);
-
-	destroy_kd_tree(&tree);
-}
-
-static void test_points_for_kd_tree_prune(const Points *points)
-{
-	// Create kdtree
-	KDTreePrune tree = {};
-	create_kd_tree_prune(&tree, points);
-
-	// Checks
-	check_kd_tree_prune(&tree);
-	check_neighborhoods_kd_tree_prune(&tree);
-
-	destroy_kd_tree_prune(&tree);
-}
+#include <time.h>
+#include <stdlib.h>
 
 static void test_points_for_octree(const Points *points)
 {
@@ -47,30 +21,27 @@ static void test_points_for_octree(const Points *points)
 
 static void test_points_for_matrix_mix(const Points *points)
 {
-	// Create new kd_tree
-	KDTree tree = {};
-	create_kd_tree(&tree, points);
+	// Octree creation
+	Octree octree = {};
+	create_octree(&octree, points);
 
-	matrix_mix matrix = {};
-	create_neighbourhood_matrix_mix(&matrix, &tree);
+	struct matrix_t matrix = {};
+	create_neighbourhood_matrix(&matrix, &octree);
 
 	check_neighborhoods_matrix_mix(&matrix);
 
-	destroy_neighbourhood_matrix_mix(&matrix);
-	destroy_kd_tree(&tree);
+	destroy_neighbourhood_matrix(&matrix);
+	destroy_octree(&octree);
 }
 
 void test(const Points *points)
 {
+	srand((unsigned)time(NULL));
+
 	const char *pink = "\033[1;95m";
 	const char *reset = "\033[0m";
 
 	printf("\n");
-	printf("%sTesting KD-Tree...\n%s", pink, reset);
-	test_points_for_kd_tree(points);
-
-	printf("%sTesting KD-Tree Prune...\n%s", pink, reset);
-	test_points_for_kd_tree_prune(points);
 
 	printf("%sTesting Octree...\n%s", pink, reset);
 	test_points_for_octree(points);

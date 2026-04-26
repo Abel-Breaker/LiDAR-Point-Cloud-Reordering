@@ -1,5 +1,5 @@
 #pragma once
-#include "../points_structures/octree.h"
 #include "../types/lidar_points.h"
+#include "../types/neighborhood_matrix_mix/neighborhood_matrix.h"
 
-void reorder_cuthill_mckee(const Octree *tree, const Points *points, Points *new_points);
+void reorder_cuthill_mckee(const struct matrix_t *matrix, Points *new_points);

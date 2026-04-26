@@ -23,26 +23,6 @@ void add_point(Points *points, size_t index, double x, double y, double z)
 	points->z[index] = z;
 }
 
-/*void swap_points(Points *points, const unsigned int *permutations){
-    double *new_x = malloc(points->num_points * sizeof(double));
-    double *new_y = malloc(points->num_points * sizeof(double));
-    double *new_z = malloc(points->num_points * sizeof(double));
-
-    for (size_t i = 0; i < points->num_points; ++i){
-        new_x[i] = points->x[permutations[i]];
-        new_y[i] = points->y[permutations[i]];
-        new_z[i] = points->z[permutations[i]];
-    }
-
-    free(points->x);
-    free(points->y);
-    free(points->z);
-
-    points->x = new_x;
-    points->y = new_y;
-    points->z = new_z;
-}*/
-
 void destroy_points(Points *points)
 {
     if(!points) return;

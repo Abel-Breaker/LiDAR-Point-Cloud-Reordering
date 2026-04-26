@@ -2,7 +2,6 @@
 #include "points_structures_bench.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
-#include "../points_structures/kd_tree.h"
 #include "../points_structures/octree.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,32 +9,6 @@
 
 #define ITER_WARM_UP 0
 #define ITER 1
-
-void kd_tree_benchmark(const Points *points)
-{
-	struct timespec start, end;
-	double total=0;
-
-	// Create and check new kd_tree
-	KDTree tree = {};
-
-	// WARM UP
-	for (int i = 0; i < ITER_WARM_UP; ++i) {
-		create_kd_tree(&tree, points);
-		destroy_kd_tree(&tree);
-	}
-
-	for (int i = 0; i < ITER; ++i) {
-		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-		create_kd_tree(&tree, points);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-		total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
-
-		destroy_kd_tree(&tree);
-	}
-
-	printf("\tCreation: %.6f s\n", total / ITER);
-}
 
 void octree_benchmark(const Points *points)
 {

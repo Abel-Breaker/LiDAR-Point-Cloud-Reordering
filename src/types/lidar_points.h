@@ -4,6 +4,8 @@
 
 #define DIMENSIONS 3
 
+typedef size_t index_type;
+
 enum axis { X = 0, Y = 1, Z = 2 };
 
 /**

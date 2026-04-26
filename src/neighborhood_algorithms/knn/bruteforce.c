@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 
-void find_point_neighbors(const Points *points, size_t point_index, size_t neighbours_index[K], double neighbours_distances[K]){
+void find_knn_neighbors(const Points *points, size_t point_index, size_t neighbours_index[K], double neighbours_distances[K]){
 
     double x = points->x[point_index];
     double y = points->y[point_index];

@@ -1,5 +1,5 @@
 #include "BFS.h"
-#include "../neighborhood_algorithms/knn/kd_tree.h"
+
 #include "../utils/auxiliar_structures/queue.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
@@ -14,7 +14,7 @@
  *  - Probar DFS (utilizar una pila/recursión en vez de una cola)
  *  - Simetrizar la matriz
  */
-
+/*
 void reorder_bfs_sort_by_distance(const KDTree *tree, const Points *points, Points *new_points)
 {
 	unsigned int number_of_points = (unsigned int)tree->pts->num_points;
@@ -207,4 +207,4 @@ void reorder_bfs_sort_by_index(const KDTree *tree, const Points *points, Points 
 	destroyQueue(queue);
 	free(permutations);
 	free(visited);
-}
+}*/

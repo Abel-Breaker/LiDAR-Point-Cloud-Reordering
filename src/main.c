@@ -1,17 +1,14 @@
 #define _POSIX_C_SOURCE 199309L
 #include "benchmarks/bench.h"
 #include "neighborhood_algorithms/knn/bruteforce.h"
-#include "neighborhood_algorithms/knn/kd_tree.h"
 #include "neighborhood_algorithms/radius_search/octree.h"
-#include "neighborhood_algorithms/radius_search/octree_POC.h"
 #include "points_reorder_algorithms/BFS.h"
 #include "points_reorder_algorithms/cuthill-mckee.h"
 #include "points_reorder_algorithms/random.h"
-#include "points_structures/kd_tree.h"
 #include "points_structures/octree.h"
 #include "tests/test.h"
 #include "types/lidar_points.h"
-#include "types/neighborhood_matrix_mix/neighborhood_matrix_mix.h"
+#include "types/neighborhood_matrix_mix/neighborhood_matrix.h"
 #include "utils/error_handler.h"
 #include "utils/lidar_points_writer.h"
 #include "utils/parse_args.h"
@@ -21,8 +18,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-void save_matrix(const matrix_mix *matrix, const char *filename)
+/*
+void save_matrix(const struct matrix_t *matrix, const char *filename)
 {
 	FILE *fd;
 	fd = fopen(filename, "w");
@@ -31,7 +28,7 @@ void save_matrix(const matrix_mix *matrix, const char *filename)
 
 	for (i = 0; i < matrix->points->num_points; ++i) {
 		size_t neighbours[K];
-		get_neighbours_matrix_mix(matrix, i, neighbours);
+		get_neighbours_matrix(matrix, i, neighbours);
 		for (size_t k = 0; k < K; ++k) {
 			fprintf(fd, "%zu ", neighbours[k]);
 		}
@@ -42,7 +39,7 @@ void save_matrix(const matrix_mix *matrix, const char *filename)
 	printf("i : %zu\n", i);
 
 	fclose(fd);
-}
+}*/
 
 typedef void (*SortFunc)(const void *structure, const Points *points, Points *new_points);
 
@@ -94,40 +91,16 @@ int main(int argc, char **argv)
 	}
 	printf("\033[1mNumber of points: \033[0m%zu\n", points.num_points);
 	printf("\033[1mNumber of neighbours calculated: \033[0m%zu\n", (size_t)K);
-	// Tree for testing
-	KDTree tree = {};
-	create_kd_tree(&tree, &points);
-	
-	/*matrix_mix matrix = {};
-	create_neighbourhood_matrix_mix(&matrix, &tree);
-	printf("Matrix created\n");
-	print_matrix_mix_stats(&matrix);
-	//save_matrix(&matrix, "no_reorder.txt");
-	printf("Matrix saved\n");
-	destroy_neighbourhood_matrix_mix(&matrix);
-	
-	Points points_reordered = {0};
 
-	reorder_bfs_sort_by_distance(&tree, tree.pts, &points_reordered);
-	destroy_kd_tree(&tree);
-	create_kd_tree(&tree, &points_reordered);
-	matrix_mix matrix_2 = {};
-	create_neighbourhood_matrix_mix(&matrix_2, &tree);
-	printf("Matrix reordered created\n");
-	print_matrix_mix_stats(&matrix_2);
-	//save_matrix(&matrix_2, "reorder.txt");
-	printf("Matrix reordered saved\n");
-	destroy_neighbourhood_matrix_mix(&matrix_2);
-	destroy_points(&points_reordered);*/
+	if (get_args()->do_benchmark)
+		bench(&points);
+	if (get_args()->do_test)
+		test(&points);
 
-	// DEFAULT
 	{
-		test_idea("DEFAULT", nullptr, &tree, &points);
-		test_idea("BFS SORT BY DISTANCE", (SortFunc)reorder_bfs_sort_by_distance, &tree, &points);
-		test_idea("RANDOM REORDER", (SortFunc)reorder_random, &tree, &points);
+		// test_idea("DEFAULT", nullptr, &tree, &points);
 	}
 
-	destroy_kd_tree(&tree);
 	destroy_points(&points);
 
 	return 0;
