@@ -66,6 +66,8 @@ void bench(const Points *points)
 			// Benchmark neighborhoods
 			neighborhoods_matrix_bench(&matrix);
 
+			print_matrix_stats(&matrix);
+
 			destroy_neighbourhood_matrix(&matrix);
 		}
 

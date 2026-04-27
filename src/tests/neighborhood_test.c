@@ -92,10 +92,10 @@ void check_neighborhoods_octree_radius(const Octree *octree)
 
 		// Octree
 		RadiusResultOctree res = {};
-		octree_radius_search(octree, i, get_args()->radius_search, &res);
+		octree_radius_search(octree, index, get_args()->radius_search, &res);
 
 		if (resbf.count != res.count) {
-			printf("Not the same number of neighbours: %zu - %zu\n", resbf.count, res.count);
+			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", i, index, resbf.count, res.count);
 			exit(-1);
 		}
 
@@ -135,7 +135,7 @@ void check_neighborhoods_matrix_mix(const struct matrix_t *matrix)
 		size_t index = (size_t)rand() % matrix->points->num_points;
 
 		RadiusResult res = {};
-		get_neighbours_matrix(matrix, i, &res);
+		get_neighbours_matrix(matrix, index, &res);
 
 		RadiusResult resbf = {};
 		find_radius_neighbors(matrix->points, index, &resbf);

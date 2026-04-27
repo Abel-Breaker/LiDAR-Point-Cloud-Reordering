@@ -10,4 +10,7 @@ void reserves_memory_radius_result(RadiusResult *result, size_t num_elements){
 void destroy_radius_result(RadiusResult *result){
     free(result->distances);
     free(result->indices);
+    result->count = 0;
+    result->distances = nullptr;
+    result->indices = nullptr;
 }
