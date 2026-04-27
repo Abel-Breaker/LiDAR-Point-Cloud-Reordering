@@ -3,13 +3,13 @@
 #include <stdlib.h>
 
 struct Queue{
-    unsigned int head;
-    unsigned int tail;
-    unsigned int *indices;
+    size_t head;
+    size_t tail;
+    size_t *indices;
 };
 
 // Crear cola
-Queue *createQueue(unsigned int size) {
+Queue *createQueue(size_t size) {
     Queue* q = calloc(1, sizeof(*q)); // Set head and tail to 0
     if(!q){
         handle_error(ERROR_MALLOC, ERR_FATAL, "Can not allocate memory for queue");
@@ -26,12 +26,12 @@ Queue *createQueue(unsigned int size) {
 }
 
 // Encolar (push)
-void enqueue(Queue* q, unsigned int index) {
+void enqueue(Queue* q, size_t index) {
     q->indices[q->tail++] = index;
 }
 
 // TODO: Test to reallocate each X dequeues to reduce memory usage and check impact on rendimiento
-unsigned int dequeue(Queue* q) {
+size_t dequeue(Queue* q) {
     /*
     if(q->tail % 100000 == 0){ // Each 100000 dequeues
         reallocate

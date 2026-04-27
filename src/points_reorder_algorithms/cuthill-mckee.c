@@ -1,11 +1,112 @@
 #include "cuthill-mckee.h"
 #include "../neighborhood_algorithms/radius_search/octree.h"
+#include "../types/neighborhood_matrix_mix/row.h"
 #include "../utils/auxiliar_structures/queue.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
+#include <stdint.h> // for SIZE_MAX
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-void reorder_cuthill_mckee(const struct matrix_t *matrix, Points *new_points){
-	
+static void sort_neighbors(size_t *idx, size_t *grade, size_t k)
+{
+	for (size_t i = 0; i < k - 1; i++) {
+		for (size_t j = i + 1; j < k; j++) {
+			if (grade[j] < grade[i]) {
+				// swap grade
+				size_t dtmp = grade[i];
+				grade[i] = grade[j];
+				grade[j] = dtmp;
+
+				// swap idx
+				size_t itmp = idx[i];
+				idx[i] = idx[j];
+				idx[j] = itmp;
+			}
+		}
+	}
+}
+
+void reorder_cuthill_mckee(const struct matrix_t *matrix, Points *new_points)
+{
+	bool *visited = calloc(matrix->points->num_points, sizeof(*visited));
+	size_t *permutations = malloc(sizeof(*permutations) * matrix->points->num_points);
+	Queue *queue = createQueue(matrix->points->num_points);
+	size_t points_visited = 0;
+
+	// Get point with lowest grade
+	size_t min_grade = SIZE_MAX;
+	size_t min_grade_point_index = 0;
+	for (size_t i = 0; i < matrix->points->num_points; ++i) {
+		if (get_num_elements_row(matrix->rows[i]) < min_grade) {
+			min_grade = get_num_elements_row(matrix->rows[i]);
+			min_grade_point_index = i;
+		}
+	}
+	printf("Node with lowest grade: %zu with grade %zu\n", min_grade_point_index, min_grade);
+
+	visited[min_grade_point_index] = true;
+	enqueue(queue, min_grade_point_index);
+
+	while (points_visited < matrix->points->num_points) {
+
+		// Si la cola está vacía, el grafo está desconectado:
+		// buscar el siguiente nodo no visitado de menor grado
+		if (is_queue_empty(queue)) {
+			min_grade = SIZE_MAX;
+			for (size_t i = 0; i < matrix->points->num_points; ++i) {
+				if (!visited[i] && get_num_elements_row(matrix->rows[i]) < min_grade) {
+					min_grade = get_num_elements_row(matrix->rows[i]);
+					min_grade_point_index = i;
+				}
+			}
+			visited[min_grade_point_index] = true;
+			enqueue(queue, min_grade_point_index);
+		}
+
+		size_t index = dequeue(queue);
+		permutations[points_visited] = index;
+		++points_visited;
+
+		// Optimized access to the row directly (violating opaquing)
+		const size_t *neighbors = get_neighbours_row(matrix->rows[index]);
+		size_t num_elements = get_num_elements_row(matrix->rows[index]);
+
+		size_t *neighbors_cpy = malloc(sizeof(*neighbors_cpy) * num_elements);
+		size_t *neighbors_grade = malloc(sizeof(*neighbors_grade) * num_elements);
+		memcpy(neighbors_cpy, neighbors, sizeof(*neighbors_cpy) * num_elements);
+		for (size_t i = 0; i < num_elements; ++i) {
+			neighbors_grade[i] = get_num_elements_row(matrix->rows[neighbors_cpy[i]]);
+		}
+
+		sort_neighbors(neighbors_cpy, neighbors_grade, num_elements);
+
+		for (size_t i = 0; i < num_elements; ++i) {
+			if (visited[neighbors_cpy[i]] == false) {
+				enqueue(queue, neighbors_cpy[i]);
+				visited[neighbors_cpy[i]] = true;
+			}
+		}
+
+		free(neighbors_cpy);
+		free(neighbors_grade);
+	}
+
+	if (!reserve_memory_points(new_points, matrix->points->num_points)) {
+		destroyQueue(queue);
+		free(permutations);
+		free(visited);
+		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot reserve memory for points");
+		return;
+	}
+
+	for (size_t i = 0; i < points_visited; ++i) { // points_visited == points->num_points
+		add_point(new_points, i, matrix->points->x[permutations[i]], matrix->points->y[permutations[i]],
+			  matrix->points->z[permutations[i]]);
+	}
+
+	destroyQueue(queue);
+	free(permutations);
+	free(visited);
 }

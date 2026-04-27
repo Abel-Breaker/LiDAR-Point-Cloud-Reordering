@@ -56,27 +56,61 @@ void print_matrix_stats(const struct matrix_t *matrix)
 	size_t max_row = 0;
 	size_t min_row = SIZE_MAX;
 
+	// NUEVO: stats de rangos de índices
+	size_t max_index_range = 0;
+	size_t min_index_range = SIZE_MAX;
+	size_t total_index_range = 0;
+	size_t valid_range_rows = 0;
+
 	for (size_t i = 0; i < n_rows; i++) {
 
 		const struct row_t *row = matrix->rows[i];
 		if (!row)
 			continue;
 
-		size_t elems = get_num_elements_row(row);
+		size_t elems = row->num_elements;
 
 		total_elements += elems;
 
-		if (elems > max_row) {
+		if (elems > max_row)
 			max_row = elems;
-		}
-		if (elems < min_row) {
+		if (elems < min_row)
 			min_row = elems;
-		}
 
 		total_size += get_row_t_size(row);
+
+		// Bandwith
+		if (row->num_elements > 0 && row->indices) {
+
+			size_t min_idx = row->indices[0];
+			size_t max_idx = row->indices[0];
+
+			for (size_t j = 1; j < row->num_elements; j++) {
+				size_t v = row->indices[j];
+				if (v < min_idx) min_idx = v;
+				if (v > max_idx) max_idx = v;
+			}
+
+			size_t range = max_idx - min_idx;
+
+			if (range > max_index_range)
+				max_index_range = range;
+			if (range < min_index_range)
+				min_index_range = range;
+
+			total_index_range += range;
+			valid_range_rows++;
+		}
 	}
 
-	double avg = (double)total_elements / (double)n_rows;
+	double avg = (n_rows > 0)
+		? (double)total_elements / (double)n_rows
+		: 0.0;
+
+	double avg_range = (valid_range_rows > 0)
+		? (double)total_index_range / (double)valid_range_rows
+		: 0.0;
+
 	double total_gb = (double)total_size / (1024.0 * 1024.0 * 1024.0);
 
 	printf("Matrix stats:\n");
@@ -85,5 +119,11 @@ void print_matrix_stats(const struct matrix_t *matrix)
 	printf("  Average elements per row: %.2f\n", avg);
 	printf("  Max elements in row: %zu\n", max_row);
 	printf("  Min elements in row: %zu\n", min_row);
+
+	printf("Index range stats per row:\n");
+	printf("  Max index range: %zu\n", max_index_range);
+	printf("  Min index range: %zu\n", min_index_range);
+	printf("  Avg index range: %.2f\n", avg_range);
+
 	printf("Total size: %zu bytes (%.6f GB)\n", total_size, total_gb);
 }
