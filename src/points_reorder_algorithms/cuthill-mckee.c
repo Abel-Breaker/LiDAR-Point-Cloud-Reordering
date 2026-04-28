@@ -28,39 +28,48 @@ static void sort_neighbors(size_t *idx, size_t *grade, size_t k)
 	}
 }
 
-void reorder_cuthill_mckee(const struct matrix_t *matrix, Points *new_points)
-{
-	bool *visited = calloc(matrix->points->num_points, sizeof(*visited));
-	size_t *permutations = malloc(sizeof(*permutations) * matrix->points->num_points);
-	Queue *queue = createQueue(matrix->points->num_points);
-	size_t points_visited = 0;
-
-	// Get point with lowest grade
+static inline size_t get_point_index_lowest_degree(const size_t *restrict degrees, const bool *restrict visited, size_t num_points){
 	size_t min_grade = SIZE_MAX;
 	size_t min_grade_point_index = 0;
-	for (size_t i = 0; i < matrix->points->num_points; ++i) {
-		if (get_num_elements_row(matrix->rows[i]) < min_grade) {
-			min_grade = get_num_elements_row(matrix->rows[i]);
+	for (size_t i = 0; i < num_points; ++i) {
+		if (!visited[i] && degrees[i] < min_grade) {
+			min_grade = degrees[i];
 			min_grade_point_index = i;
 		}
 	}
-	printf("Node with lowest grade: %zu with grade %zu\n", min_grade_point_index, min_grade);
+	return min_grade_point_index;
+}
+
+void reorder_cuthill_mckee(const struct matrix_t *matrix, Points *new_points)
+{
+	const size_t num_points = matrix->points->num_points;
+	bool *visited = calloc(num_points, sizeof(*visited));
+	size_t *permutations = malloc(sizeof(*permutations) * num_points);
+	Queue *queue = createQueue(num_points);
+	size_t points_visited = 0;
+
+	size_t *degrees = malloc(num_points * sizeof(*degrees));
+	for (size_t i = 0; i < num_points; ++i){
+		degrees[i] = matrix->rows[i]->num_elements;
+	}
+
+	// Get point with lowest grade
+	size_t min_grade_point_index = get_point_index_lowest_degree(degrees, visited, num_points);
+	printf("Node with lowest grade: %zu with grade %zu\n", min_grade_point_index, degrees[min_grade_point_index]);
 
 	visited[min_grade_point_index] = true;
 	enqueue(queue, min_grade_point_index);
 
-	while (points_visited < matrix->points->num_points) {
+	size_t max_num_elements = get_max_num_elements_row(matrix);
+	size_t *neighbors_cpy = malloc(sizeof(*neighbors_cpy) * max_num_elements);
+	size_t *neighbors_grade = malloc(sizeof(*neighbors_grade) * max_num_elements);
+
+	while (points_visited < num_points) {
 
 		// Si la cola está vacía, el grafo está desconectado:
 		// buscar el siguiente nodo no visitado de menor grado
 		if (is_queue_empty(queue)) {
-			min_grade = SIZE_MAX;
-			for (size_t i = 0; i < matrix->points->num_points; ++i) {
-				if (!visited[i] && get_num_elements_row(matrix->rows[i]) < min_grade) {
-					min_grade = get_num_elements_row(matrix->rows[i]);
-					min_grade_point_index = i;
-				}
-			}
+			min_grade_point_index = get_point_index_lowest_degree(degrees, visited, num_points);
 			visited[min_grade_point_index] = true;
 			enqueue(queue, min_grade_point_index);
 		}
@@ -71,13 +80,11 @@ void reorder_cuthill_mckee(const struct matrix_t *matrix, Points *new_points)
 
 		// Optimized access to the row directly (violating opaquing)
 		const size_t *neighbors = get_neighbours_row(matrix->rows[index]);
-		size_t num_elements = get_num_elements_row(matrix->rows[index]);
+		size_t num_elements = degrees[index];
 
-		size_t *neighbors_cpy = malloc(sizeof(*neighbors_cpy) * num_elements);
-		size_t *neighbors_grade = malloc(sizeof(*neighbors_grade) * num_elements);
 		memcpy(neighbors_cpy, neighbors, sizeof(*neighbors_cpy) * num_elements);
 		for (size_t i = 0; i < num_elements; ++i) {
-			neighbors_grade[i] = get_num_elements_row(matrix->rows[neighbors_cpy[i]]);
+			neighbors_grade[i] = degrees[neighbors_cpy[i]];
 		}
 
 		sort_neighbors(neighbors_cpy, neighbors_grade, num_elements);
@@ -88,12 +95,12 @@ void reorder_cuthill_mckee(const struct matrix_t *matrix, Points *new_points)
 				visited[neighbors_cpy[i]] = true;
 			}
 		}
-
-		free(neighbors_cpy);
-		free(neighbors_grade);
 	}
+	free(neighbors_cpy);
+	free(neighbors_grade);
+	free(degrees);
 
-	if (!reserve_memory_points(new_points, matrix->points->num_points)) {
+	if (!reserve_memory_points(new_points, num_points)) {
 		destroyQueue(queue);
 		free(permutations);
 		free(visited);

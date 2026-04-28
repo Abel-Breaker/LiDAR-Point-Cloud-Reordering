@@ -6,7 +6,6 @@
 #include "../utils/parse_args.h"
 #include "neighborhood_bench.h"
 #include "points_structures_bench.h"
-#include <papi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

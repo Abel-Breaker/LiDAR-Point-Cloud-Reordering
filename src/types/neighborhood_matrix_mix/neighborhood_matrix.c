@@ -46,6 +46,16 @@ void destroy_neighbourhood_matrix(struct matrix_t *matrix)
 	free(matrix->rows);
 }
 
+size_t get_max_num_elements_row(const struct matrix_t *matrix){
+	size_t max_row = 0;
+	for (size_t i = 0; i <  matrix->points->num_points; i++) {
+		if(max_row < matrix->rows[i]->num_elements){
+			max_row = matrix->rows[i]->num_elements;
+		}
+	}
+	return max_row;
+}
+
 void print_matrix_stats(const struct matrix_t *matrix)
 {
 	size_t n_rows = matrix->points->num_points;

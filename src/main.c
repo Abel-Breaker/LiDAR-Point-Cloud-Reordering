@@ -146,7 +146,13 @@ int main(int argc, char **argv)
 	create_neighbourhood_matrix(&matrix, &octree);
 
 	Points new_points = {};
+	struct timespec start, end;
+	double total = 0;
+	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	reorder_cuthill_mckee(&matrix, &new_points);
+	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+	printf("\tReorder neighbours: %.6f s\n", total);
 	printf("\n\n");
 
 	if (get_args()->do_benchmark)
