@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 199309L
 #include "neighborhood_bench.h"
 #include "../neighborhood_algorithms/radius_search/octree.h"
+#include "../neighborhood_algorithms/radius_search/tfg_idea.h"
 #include "../points_structures/octree.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
@@ -18,7 +19,7 @@ static void neighborhoods_knn_bench(NeighborFunc neighbor_fun, const void *struc
 
 	// Test neighborhood
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for (size_t i = 0; i < num_points; ++i) {
 		size_t neighbours[K];
 		double neighbours_distances[K];
@@ -87,4 +88,25 @@ void neighborhoods_octree_radius_bench(const Octree *structure)
 	printf("\tNeighborhood radius: %.6f s\n", total);
 
 	(void)sink_dist;
+}
+
+void neighborhoods_tfg_bench(const struct matrix_t *matrix)
+{
+	struct timespec start, end;
+	double total = 0;
+
+	// Test neighborhood
+	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	#pragma omp parallel for
+	for (size_t i = 0; i < matrix->points->num_points; ++i) {
+		RadiusResult res = {};
+		tfg_radius_search(matrix, i, &res);
+
+		// Force use to avoid code elimination
+		__asm__ volatile("" : : "r"(res.count) : "memory");
+		destroy_radius_result(&res);
+	}
+	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+	printf("\tNeighborhood radius: %.6f s\n", total);
 }

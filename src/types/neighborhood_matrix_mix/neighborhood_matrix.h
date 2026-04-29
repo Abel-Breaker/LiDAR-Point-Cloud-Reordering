@@ -16,6 +16,8 @@ void get_neighbours_matrix(const struct matrix_t *matrix, size_t index, RadiusRe
 
 void destroy_neighbourhood_matrix(struct matrix_t *matrix);
 
+size_t get_matrix_bandwidth(const struct matrix_t *matrix);
+
 size_t get_max_num_elements_row(const struct matrix_t *matrix);
 
 void print_matrix_stats(const struct matrix_t *matrix);

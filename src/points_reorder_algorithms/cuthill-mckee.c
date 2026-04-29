@@ -10,6 +10,8 @@
 #include <string.h>
 
 static size_t *degrees;
+static size_t *indices;
+
 
 int compare(const void *a, const void *b) {
     size_t ia = *(const size_t *)a;
@@ -30,15 +32,13 @@ static inline void sort_matrix(struct matrix_t *matrix){
 }
 
 static inline size_t get_point_index_lowest_degree(const bool *restrict visited, size_t num_points){
-	size_t min_grade = SIZE_MAX;
-	size_t min_grade_point_index = 0;
-	for (size_t i = 0; i < num_points; ++i) {
-		if (!visited[i] && degrees[i] < min_grade) {
-			min_grade = degrees[i];
-			min_grade_point_index = i;
+	static size_t counter = 0;
+	for (; counter < num_points; ++counter) {
+		if (!visited[indices[counter]]) {
+			return indices[counter];
 		}
 	}
-	return min_grade_point_index;
+	return 0;
 }
 
 void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
@@ -48,13 +48,15 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 	size_t *permutations = malloc(sizeof(*permutations) * num_points);
 	Queue *queue = createQueue(num_points);
 	size_t points_visited = 0;
+	indices = malloc(matrix->points->num_points * sizeof(*indices));
 
 	degrees = malloc(matrix->points->num_points * sizeof(*degrees));
 
-	if (!visited || !permutations || !degrees) {
+	if (!visited || !permutations || !degrees || !indices) {
 		free(visited);
 		free(permutations);
 		free(degrees);
+		free(indices);
 		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot allocate CK buffers");
 		return;
 	}
@@ -62,6 +64,7 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 	// Precalculate all degrees
 	for (size_t i = 0; i < matrix->points->num_points; ++i){
 		degrees[i] = matrix->rows[i]->num_elements;
+		indices[i] = i;
 	}
 
 	printf("Degrees calculated\n");
@@ -69,6 +72,10 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 	sort_matrix(matrix);
 
 	printf("Matrix ordered\n");
+
+	qsort(indices, matrix->points->num_points, sizeof(size_t), compare);
+
+	printf("Indices ordered\n");
 
 	// Get point with lowest grade
 	size_t min_grade_point_index = get_point_index_lowest_degree(visited, num_points);
@@ -79,11 +86,14 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 
 	//size_t max_num_elements = get_max_num_elements_row(matrix);
 
+	size_t queue_empty_count = 0;
+
 	while (points_visited < num_points) {
 
 		// Si la cola está vacía, el grafo está desconectado:
 		// buscar el siguiente nodo no visitado de menor grado
 		if (is_queue_empty(queue)) {
+			queue_empty_count++;
 			min_grade_point_index = get_point_index_lowest_degree(visited, num_points);
 			if(visited[min_grade_point_index] == true){ // Case where all nodes visited (return 0)
 				break;
@@ -106,7 +116,10 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 				visited[neighbors[i]] = true;
 			}
 		}
+
 	}
+	// Al final:
+printf("Queue went empty %zu times\n", queue_empty_count);
 
 	
 	if (!reserve_memory_points(new_points, num_points)) {
@@ -127,5 +140,6 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 	free(permutations);
 	free(visited);
 	free(degrees);
+	free(indices);
 
 }

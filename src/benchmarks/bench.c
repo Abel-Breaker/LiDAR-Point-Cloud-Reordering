@@ -55,7 +55,7 @@ void bench(const Points *points)
 			
 		}
 
-		// OCTREE (creation + knn + radius)
+		// MATRIX
 		{
 			printf("\n\033[1mMATRIX\033[0m\n");
 			// matrix_t creation
@@ -66,6 +66,19 @@ void bench(const Points *points)
 			neighborhoods_matrix_bench(&matrix);
 
 			print_matrix_stats(&matrix);
+
+			destroy_neighbourhood_matrix(&matrix);
+		}
+
+		// TFG IDEA
+		{
+			printf("\n\033[1mTFG IDEA\033[0m\n");
+			// matrix_t creation
+			struct matrix_t matrix = {};
+			create_neighbourhood_matrix(&matrix, &octree);
+
+			// Benchmark neighborhoods
+			//neighborhoods_tfg_bench(&matrix);
 
 			destroy_neighbourhood_matrix(&matrix);
 		}

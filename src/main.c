@@ -140,6 +140,7 @@ int main(int argc, char **argv)
 	if (get_args()->do_test)
 		test(&points);
 
+	
 	struct matrix_t matrix = {};
 	Octree octree = {};
 	create_octree(&octree, &points);

@@ -56,6 +56,37 @@ size_t get_max_num_elements_row(const struct matrix_t *matrix){
 	return max_row;
 }
 
+size_t get_matrix_bandwidth(const struct matrix_t *matrix){
+	size_t n_rows = matrix->points->num_points;
+	size_t max_index_range = 0;
+
+	for (size_t i = 0; i < n_rows; i++) {
+
+		const struct row_t *row = matrix->rows[i];
+		if (!row)
+			continue;
+
+		// Bandwith
+		if (row->num_elements > 0 && row->indices) {
+
+			size_t min_idx = row->indices[0];
+			size_t max_idx = row->indices[0];
+
+			for (size_t j = 1; j < row->num_elements; j++) {
+				size_t v = row->indices[j];
+				if (v < min_idx) min_idx = v;
+				if (v > max_idx) max_idx = v;
+			}
+
+			size_t range = max_idx - min_idx;
+
+			if (range > max_index_range)
+				max_index_range = range;
+		}
+	}
+	return max_index_range;
+}
+
 void print_matrix_stats(const struct matrix_t *matrix)
 {
 	size_t n_rows = matrix->points->num_points;
