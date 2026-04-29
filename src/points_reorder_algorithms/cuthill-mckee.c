@@ -51,6 +51,14 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 
 	degrees = malloc(matrix->points->num_points * sizeof(*degrees));
 
+	if (!visited || !permutations || !degrees) {
+		free(visited);
+		free(permutations);
+		free(degrees);
+		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot allocate CK buffers");
+		return;
+	}
+
 	// Precalculate all degrees
 	for (size_t i = 0; i < matrix->points->num_points; ++i){
 		degrees[i] = matrix->rows[i]->num_elements;
