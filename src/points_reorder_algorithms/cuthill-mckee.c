@@ -9,26 +9,27 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void sort_neighbors(size_t *idx, size_t *grade, size_t k)
-{
-	for (size_t i = 0; i < k - 1; i++) {
-		for (size_t j = i + 1; j < k; j++) {
-			if (grade[j] < grade[i]) {
-				// swap grade
-				size_t dtmp = grade[i];
-				grade[i] = grade[j];
-				grade[j] = dtmp;
+static size_t *degrees;
 
-				// swap idx
-				size_t itmp = idx[i];
-				idx[i] = idx[j];
-				idx[j] = itmp;
-			}
-		}
-	}
+int compare(const void *a, const void *b) {
+    size_t ia = *(const size_t *)a;
+    size_t ib = *(const size_t *)b;
+
+    if (degrees[ia] < degrees[ib]) return -1;
+    if (degrees[ia] > degrees[ib]) return 1;
+    return 0;
 }
 
-static inline size_t get_point_index_lowest_degree(const size_t *restrict degrees, const bool *restrict visited, size_t num_points){
+static inline void sort_matrix(struct matrix_t *matrix){
+
+	#pragma omp parallel for schedule(static)
+	for (size_t i = 0; i < matrix->points->num_points; ++i){
+		qsort(matrix->rows[i]->indices, matrix->rows[i]->num_elements, sizeof(size_t), compare);
+	}
+
+}
+
+static inline size_t get_point_index_lowest_degree(const bool *restrict visited, size_t num_points){
 	size_t min_grade = SIZE_MAX;
 	size_t min_grade_point_index = 0;
 	for (size_t i = 0; i < num_points; ++i) {
@@ -40,7 +41,7 @@ static inline size_t get_point_index_lowest_degree(const size_t *restrict degree
 	return min_grade_point_index;
 }
 
-void reorder_cuthill_mckee(const struct matrix_t *matrix, Points *new_points)
+void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 {
 	const size_t num_points = matrix->points->num_points;
 	bool *visited = calloc(num_points, sizeof(*visited));
@@ -48,28 +49,37 @@ void reorder_cuthill_mckee(const struct matrix_t *matrix, Points *new_points)
 	Queue *queue = createQueue(num_points);
 	size_t points_visited = 0;
 
-	size_t *degrees = malloc(num_points * sizeof(*degrees));
-	for (size_t i = 0; i < num_points; ++i){
+	degrees = malloc(matrix->points->num_points * sizeof(*degrees));
+
+	// Precalculate all degrees
+	for (size_t i = 0; i < matrix->points->num_points; ++i){
 		degrees[i] = matrix->rows[i]->num_elements;
 	}
 
+	printf("Degrees calculated\n");
+
+	sort_matrix(matrix);
+
+	printf("Matrix ordered\n");
+
 	// Get point with lowest grade
-	size_t min_grade_point_index = get_point_index_lowest_degree(degrees, visited, num_points);
+	size_t min_grade_point_index = get_point_index_lowest_degree(visited, num_points);
 	printf("Node with lowest grade: %zu with grade %zu\n", min_grade_point_index, degrees[min_grade_point_index]);
 
 	visited[min_grade_point_index] = true;
 	enqueue(queue, min_grade_point_index);
 
-	size_t max_num_elements = get_max_num_elements_row(matrix);
-	size_t *neighbors_cpy = malloc(sizeof(*neighbors_cpy) * max_num_elements);
-	size_t *neighbors_grade = malloc(sizeof(*neighbors_grade) * max_num_elements);
+	//size_t max_num_elements = get_max_num_elements_row(matrix);
 
 	while (points_visited < num_points) {
 
 		// Si la cola está vacía, el grafo está desconectado:
 		// buscar el siguiente nodo no visitado de menor grado
 		if (is_queue_empty(queue)) {
-			min_grade_point_index = get_point_index_lowest_degree(degrees, visited, num_points);
+			min_grade_point_index = get_point_index_lowest_degree(visited, num_points);
+			if(visited[min_grade_point_index] == true){ // Case where all nodes visited (return 0)
+				break;
+			}
 			visited[min_grade_point_index] = true;
 			enqueue(queue, min_grade_point_index);
 		}
@@ -82,28 +92,20 @@ void reorder_cuthill_mckee(const struct matrix_t *matrix, Points *new_points)
 		const size_t *neighbors = get_neighbours_row(matrix->rows[index]);
 		size_t num_elements = degrees[index];
 
-		memcpy(neighbors_cpy, neighbors, sizeof(*neighbors_cpy) * num_elements);
 		for (size_t i = 0; i < num_elements; ++i) {
-			neighbors_grade[i] = degrees[neighbors_cpy[i]];
-		}
-
-		sort_neighbors(neighbors_cpy, neighbors_grade, num_elements);
-
-		for (size_t i = 0; i < num_elements; ++i) {
-			if (visited[neighbors_cpy[i]] == false) {
-				enqueue(queue, neighbors_cpy[i]);
-				visited[neighbors_cpy[i]] = true;
+			if (visited[neighbors[i]] == false) {
+				enqueue(queue, neighbors[i]);
+				visited[neighbors[i]] = true;
 			}
 		}
 	}
-	free(neighbors_cpy);
-	free(neighbors_grade);
-	free(degrees);
 
+	
 	if (!reserve_memory_points(new_points, num_points)) {
 		destroyQueue(queue);
 		free(permutations);
 		free(visited);
+		free(degrees);
 		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot reserve memory for points");
 		return;
 	}
@@ -116,4 +118,6 @@ void reorder_cuthill_mckee(const struct matrix_t *matrix, Points *new_points)
 	destroyQueue(queue);
 	free(permutations);
 	free(visited);
+	free(degrees);
+
 }
