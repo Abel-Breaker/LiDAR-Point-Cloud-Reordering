@@ -137,6 +137,4 @@ void neighborhoods_tfg_opt_bench(const struct matrix_t *matrix)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
 	printf("\n\tNeighborhood radius opt: %.6f s\n", total);
-
-	tfg_print_timing_stats_opt();
 }

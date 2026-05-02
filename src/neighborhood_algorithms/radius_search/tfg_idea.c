@@ -17,7 +17,7 @@ static inline double diff_us(struct timespec a, struct timespec b)
 	return (b.tv_sec - a.tv_sec) * 1e6 + (b.tv_nsec - a.tv_nsec) / 1e3;
 }
 
-void tfg_radius_search_opt(const struct matrix_t *matrix, size_t index, size_t bandwith, RadiusResult *result)
+void tfg_radius_search(const struct matrix_t *matrix, size_t index, size_t bandwith, RadiusResult *result)
 {
 	struct timespec t0, tb, tc, t1, t2, t3;
 
@@ -78,7 +78,7 @@ void tfg_radius_search_opt(const struct matrix_t *matrix, size_t index, size_t b
 	call_count++;
 }
 
-void tfg_print_timing_stats_opt(void)
+void tfg_print_timing_stats(void)
 {
 	if (call_count == 0)
 		return;

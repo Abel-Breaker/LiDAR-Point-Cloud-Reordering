@@ -96,17 +96,17 @@ int main(int argc, char **argv)
 	printf("\033[1mNumber of neighbours calculated: \033[0m%zu\n", (size_t)K);
 	printf("\033[1mRadius: \033[0m%f\n", get_args()->radius_search);
 
-	if (get_args()->do_benchmark)
+	/*if (get_args()->do_benchmark)
 		bench(&points);
 	if (get_args()->do_test)
-		test(&points);
+		test(&points);*/
 
-	/*
+	
 	struct matrix_t matrix = {};
 	Octree octree = {};
 	create_octree(&octree, &points);
 	create_neighbourhood_matrix(&matrix, &octree);
-	print_matrix_stats(&matrix);
+	//print_matrix_stats(&matrix);
 
 	Points new_points = {};
 	struct timespec start, end;
@@ -120,6 +120,7 @@ int main(int argc, char **argv)
 
 	destroy_neighbourhood_matrix(&matrix);
 	destroy_octree(&octree);
+	/*
 	create_octree(&octree, &new_points);
 	create_neighbourhood_matrix(&matrix, &octree);
 
@@ -127,7 +128,7 @@ int main(int argc, char **argv)
 	save_matrix(&matrix, "../R/reorder/data/reorder_4.txt");
 
 	destroy_neighbourhood_matrix(&matrix);
-	destroy_octree(&octree);
+	destroy_octree(&octree);*/
 
 	if (get_args()->do_benchmark)
 		bench(&new_points);
@@ -135,7 +136,7 @@ int main(int argc, char **argv)
 		test(&new_points);
 
 	
-	destroy_points(&new_points);*/
+	destroy_points(&new_points);
 
 	// test_idea("DEFAULT", nullptr, &tree, &points);
 

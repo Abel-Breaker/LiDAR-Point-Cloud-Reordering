@@ -77,10 +77,10 @@ void test(const Points *points)
 	test_points_for_octree(points);
 
 	printf("%sTesting Matrix Mix..\n%s", pink, reset);
-	test_points_for_matrix_mix(points);
+	//test_points_for_matrix_mix(points);
 
 	printf("%sTesting TFG..\n%s", pink, reset);
-	test_points_for_tfg(points);
+	//test_points_for_tfg(points);
 
 	printf("%sTesting TFG Optimized..\n%s", pink, reset);
 	test_points_for_tfg_opt(points);

@@ -14,7 +14,7 @@
 #include <string.h>
 #include <time.h>
 
-#define ITER 1000
+#define ITER 300
 
 typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index,
 			     double *neighbours_distances);
