@@ -42,7 +42,7 @@ SANITIZE_DEBUG_THREADS = -fsanitize=thread,undefined
 
 CFLAGS_DEBUG         = $(CFLAGS_DEBUG_BASE) $(SANITIZE_DEBUG)
 CFLAGS_DEBUG_THREADS = $(CFLAGS_DEBUG_BASE) $(SANITIZE_DEBUG_THREADS) -fopenmp
-CFLAGS_RELEASE       = -O2 -D_FORTIFY_SOURCE=2 -fopenmp #-ftree-vectorize -fopt-info-vec -fopt-info-vec-missed
+CFLAGS_RELEASE       = -O2 -march=native -D_FORTIFY_SOURCE=2 -fopenmp -ftree-vectorize #-fopt-info-vec -fopt-info-vec-missed
 CFLAGS_VALGRIND 	 = $(CFLAGS_DEBUG_BASE)
 
 

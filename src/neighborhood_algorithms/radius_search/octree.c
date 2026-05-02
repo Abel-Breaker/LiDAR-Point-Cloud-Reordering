@@ -30,7 +30,7 @@ static inline double aabb_min_dist(const AABB *box,
 	if      (pz < box->min[2]) dz = box->min[2] - pz;
 	else if (pz > box->max[2]) dz = pz - box->max[2];
 
-	return sqrt(dx * dx + dy * dy + dz * dz);
+	return (dx * dx + dy * dy + dz * dz);
 }
 
 /* Inserta (idx, dist) en la lista ordenada de K mejores vecinos. */
