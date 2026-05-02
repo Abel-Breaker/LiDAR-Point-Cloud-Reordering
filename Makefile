@@ -22,7 +22,7 @@ STATIC_LIBRARIES = $(LASPARSE) $(LASWRITER) $(LASLIB)
 OBJS = $(C_OBJS) $(STATIC_LIBRARIES)
 
 # Flags comunes a todos los modos
-COMMON_FLAGS = -std=c2x -lstdc++ -lm -fopt-info-vec #-fopt-info-vec-missed
+COMMON_FLAGS = -std=c2x -lstdc++ -lm
 
 # Base de flags de debug (sin sanitizers) -Wpedantic
 CFLAGS_DEBUG_BASE = -O0 -g3 -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 \
@@ -42,7 +42,7 @@ SANITIZE_DEBUG_THREADS = -fsanitize=thread,undefined
 
 CFLAGS_DEBUG         = $(CFLAGS_DEBUG_BASE) $(SANITIZE_DEBUG)
 CFLAGS_DEBUG_THREADS = $(CFLAGS_DEBUG_BASE) $(SANITIZE_DEBUG_THREADS) -fopenmp
-CFLAGS_RELEASE       = -O2 -D_FORTIFY_SOURCE=2 -fopenmp -ftree-vectorize
+CFLAGS_RELEASE       = -O2 -D_FORTIFY_SOURCE=2 -fopenmp #-ftree-vectorize -fopt-info-vec -fopt-info-vec-missed
 CFLAGS_VALGRIND 	 = $(CFLAGS_DEBUG_BASE)
 
 

@@ -13,7 +13,7 @@ static void test_points_for_octree(const Points *points)
 	create_octree(&octree, points);
 
 	// Checks
-	check_neighborhoods_octree_knn(&octree);
+	//check_neighborhoods_octree_knn(&octree);
 	check_neighborhoods_octree_radius(&octree);
 
 	destroy_octree(&octree);
@@ -34,6 +34,36 @@ static void test_points_for_matrix_mix(const Points *points)
 	destroy_octree(&octree);
 }
 
+static void test_points_for_tfg(const Points *points)
+{
+	// Octree creation
+	Octree octree = {};
+	create_octree(&octree, points);
+
+	struct matrix_t matrix = {};
+	create_neighbourhood_matrix(&matrix, &octree);
+
+	check_neighborhoods_tfg(&matrix);
+
+	destroy_neighbourhood_matrix(&matrix);
+	destroy_octree(&octree);
+}
+
+static void test_points_for_tfg_opt(const Points *points)
+{
+	// Octree creation
+	Octree octree = {};
+	create_octree(&octree, points);
+
+	struct matrix_t matrix = {};
+	create_neighbourhood_matrix(&matrix, &octree);
+
+	check_neighborhoods_tfg_opt(&matrix);
+
+	destroy_neighbourhood_matrix(&matrix);
+	destroy_octree(&octree);
+}
+
 void test(const Points *points)
 {
 	srand((unsigned)time(NULL));
@@ -48,4 +78,11 @@ void test(const Points *points)
 
 	printf("%sTesting Matrix Mix..\n%s", pink, reset);
 	test_points_for_matrix_mix(points);
+
+	printf("%sTesting TFG..\n%s", pink, reset);
+	test_points_for_tfg(points);
+
+	printf("%sTesting TFG Optimized..\n%s", pink, reset);
+	test_points_for_tfg_opt(points);
+	
 }

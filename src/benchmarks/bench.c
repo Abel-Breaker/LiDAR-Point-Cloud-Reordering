@@ -78,7 +78,8 @@ void bench(const Points *points)
 			create_neighbourhood_matrix(&matrix, &octree);
 
 			// Benchmark neighborhoods
-			//neighborhoods_tfg_bench(&matrix);
+			neighborhoods_tfg_bench(&matrix);
+			neighborhoods_tfg_opt_bench(&matrix);
 
 			destroy_neighbourhood_matrix(&matrix);
 		}

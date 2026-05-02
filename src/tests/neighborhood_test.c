@@ -2,6 +2,8 @@
 #include "../neighborhood_algorithms/knn/bruteforce.h"
 #include "../neighborhood_algorithms/radius_search/bruteforce.h"
 #include "../neighborhood_algorithms/radius_search/octree.h"
+#include "../neighborhood_algorithms/radius_search/tfg_idea.h"
+#include "../neighborhood_algorithms/radius_search/tfg_idea_opt.h"
 #include "../utils/auxiliar_structures/radius_result.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
@@ -63,7 +65,7 @@ static void check_neighborhoods_knn(NeighborFunc function, const void *structure
 				double diff = fabs(neighbours_distances[j] - neighbours_distances_2[j]);
 
 				if (diff > epsilon) {
-					printf("%zu (%f) - %zu (%f) | diff = %f\n", neighbours[j],
+					printf("KNN in %zu: %zu (%f) - %zu (%f) | diff = %f\n", j, neighbours[j],
 					       neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j],
 					       diff);
 					exit(-1);
@@ -143,6 +145,94 @@ void check_neighborhoods_matrix_mix(const struct matrix_t *matrix)
 		// Ordenar ambos resultados
 		sort_neighbors(res.indices, res.distances, res.count);
 		sort_neighbors(resbf.indices, resbf.distances, resbf.count);
+
+		// Comparar
+		for (size_t j = 0; j < res.count; j++) {
+			if (res.indices[j] != resbf.indices[j]) {
+				const double epsilon = 1e-5;
+				double diff = fabs(resbf.distances[j] - res.distances[j]);
+
+				if (diff > epsilon) {
+					printf("%zu (%f) - %zu (%f)\n", res.indices[j], res.distances[j],
+					       resbf.indices[j], resbf.distances[j]);
+					destroy_radius_result(&resbf);
+					destroy_radius_result(&res);
+					exit(-1);
+				}
+			}
+		}
+		destroy_radius_result(&resbf);
+		destroy_radius_result(&res);
+	}
+}
+
+void check_neighborhoods_tfg(const struct matrix_t *matrix)
+{
+
+	size_t bandwidth = get_matrix_bandwidth(matrix);
+
+	// #pragma omp parallel for
+	for (size_t i = 0; i < ITER; ++i) {
+		size_t index = (size_t)rand() % matrix->points->num_points;
+
+		RadiusResult res = {};
+		tfg_radius_search(matrix, index, bandwidth, &res);
+
+		RadiusResult resbf = {};
+		find_radius_neighbors(matrix->points, index, &resbf);
+
+		// Ordenar ambos resultados
+		sort_neighbors(res.indices, res.distances, res.count);
+		sort_neighbors(resbf.indices, resbf.distances, resbf.count);
+
+		if (resbf.count != res.count) {
+			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", i, index, resbf.count, res.count);
+			exit(-1);
+		}
+
+		// Comparar
+		for (size_t j = 0; j < res.count; j++) {
+			if (res.indices[j] != resbf.indices[j]) {
+				const double epsilon = 1e-5;
+				double diff = fabs(resbf.distances[j] - res.distances[j]);
+
+				if (diff > epsilon) {
+					printf("%zu (%f) - %zu (%f)\n", res.indices[j], res.distances[j],
+					       resbf.indices[j], resbf.distances[j]);
+					destroy_radius_result(&resbf);
+					destroy_radius_result(&res);
+					exit(-1);
+				}
+			}
+		}
+		destroy_radius_result(&resbf);
+		destroy_radius_result(&res);
+	}
+}
+
+void check_neighborhoods_tfg_opt(const struct matrix_t *matrix)
+{
+
+	size_t bandwidth = get_matrix_bandwidth(matrix);
+
+	// #pragma omp parallel for
+	for (size_t i = 0; i < ITER; ++i) {
+		size_t index = (size_t)rand() % matrix->points->num_points;
+
+		RadiusResult res = {};
+		tfg_radius_search_opt(matrix, index, bandwidth, &res);
+
+		RadiusResult resbf = {};
+		find_radius_neighbors(matrix->points, index, &resbf);
+
+		// Ordenar ambos resultados
+		sort_neighbors(res.indices, res.distances, res.count);
+		sort_neighbors(resbf.indices, resbf.distances, resbf.count);
+
+		if (resbf.count != res.count) {
+			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", i, index, resbf.count, res.count);
+			exit(-1);
+		}
 
 		// Comparar
 		for (size_t j = 0; j < res.count; j++) {

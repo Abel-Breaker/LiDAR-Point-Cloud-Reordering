@@ -2,6 +2,7 @@
 #include "neighborhood_bench.h"
 #include "../neighborhood_algorithms/radius_search/octree.h"
 #include "../neighborhood_algorithms/radius_search/tfg_idea.h"
+#include "../neighborhood_algorithms/radius_search/tfg_idea_opt.h"
 #include "../points_structures/octree.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
@@ -46,7 +47,7 @@ void neighborhoods_matrix_bench(const struct matrix_t *matrix)
 
 	// Test neighborhood
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-	// #pragma omp parallel for
+	#pragma omp parallel for
 	for (size_t i = 0; i < matrix->points->num_points; ++i) {
 		RadiusResult res = {};
 		get_neighbours_matrix(matrix, i, &res);
@@ -95,12 +96,14 @@ void neighborhoods_tfg_bench(const struct matrix_t *matrix)
 	struct timespec start, end;
 	double total = 0;
 
+	size_t bandwidth = get_matrix_bandwidth(matrix);
+
 	// Test neighborhood
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	#pragma omp parallel for
 	for (size_t i = 0; i < matrix->points->num_points; ++i) {
 		RadiusResult res = {};
-		tfg_radius_search(matrix, i, &res);
+		tfg_radius_search(matrix, i, bandwidth, &res);
 
 		// Force use to avoid code elimination
 		__asm__ volatile("" : : "r"(res.count) : "memory");
@@ -109,4 +112,31 @@ void neighborhoods_tfg_bench(const struct matrix_t *matrix)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
 	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
 	printf("\tNeighborhood radius: %.6f s\n", total);
+
+	tfg_print_timing_stats();
+}
+
+void neighborhoods_tfg_opt_bench(const struct matrix_t *matrix)
+{
+	struct timespec start, end;
+	double total = 0;
+
+	size_t bandwidth = get_matrix_bandwidth(matrix);
+
+	// Test neighborhood
+	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	#pragma omp parallel for
+	for (size_t i = 0; i < matrix->points->num_points; ++i) {
+		RadiusResult res = {};
+		tfg_radius_search_opt(matrix, i, bandwidth, &res);
+
+		// Force use to avoid code elimination
+		__asm__ volatile("" : : "r"(res.count) : "memory");
+		destroy_radius_result(&res);
+	}
+	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+	printf("\n\tNeighborhood radius opt: %.6f s\n", total);
+
+	tfg_print_timing_stats();
 }
