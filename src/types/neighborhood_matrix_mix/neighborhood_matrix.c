@@ -2,26 +2,79 @@
 #include "../../neighborhood_algorithms/radius_search/octree.h"
 #include "row.h"
 #include <limits.h> // for SIZE_MAX
+#include <omp.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+size_t get_block_index(size_t i, size_t num_points)
+{
+	size_t block_size = num_points / NUMBER_OF_BLOCKS;
+	size_t block = i / block_size;
+	return (block >= NUMBER_OF_BLOCKS) ? NUMBER_OF_BLOCKS - 1 : block;
+}
+
 void create_neighbourhood_matrix(struct matrix_t *matrix, const Octree *octree)
 {
-	// Reserves memory
+	const size_t n = octree->pts->num_points;
+
 	matrix->points = octree->pts;
-	matrix->rows = malloc(sizeof(*matrix->rows) * matrix->points->num_points);
+	matrix->rows = malloc(sizeof(*matrix->rows) * n);
+	matrix->bandwith = calloc(NUMBER_OF_BLOCKS, sizeof(size_t));
 
-// Calculates neighbors and set matrix values
-#pragma omp parallel for
-	for (size_t i = 0; i < octree->pts->num_points; ++i) {
-		RadiusResultOctree res = {};
-		octree_radius_search(octree, i, get_args()->radius_search, &res);
+	int max_threads = omp_get_max_threads();
 
-		matrix->rows[i] = create_row(res.indices, res.count);
+	// bandwidth local por thread
+	size_t (*local_bw)[NUMBER_OF_BLOCKS] = calloc(max_threads, sizeof(*local_bw));
 
-		radius_result_destroy(&res);
+#pragma omp parallel
+	{
+		int tid = omp_get_thread_num();
+
+#pragma omp for
+		for (size_t i = 0; i < n; ++i) {
+
+			RadiusResultOctree res = {};
+			octree_radius_search(octree, i, get_args()->radius_search, &res);
+
+			matrix->rows[i] = create_row(res.indices, res.count);
+
+			if (res.count > 0 && res.indices) {
+
+				size_t min_idx = res.indices[0];
+				size_t max_idx = res.indices[0];
+
+				for (size_t j = 1; j < res.count; ++j) {
+					size_t v = res.indices[j];
+					if (v < min_idx)
+						min_idx = v;
+					if (v > max_idx)
+						max_idx = v;
+				}
+
+				size_t range = max_idx - min_idx;
+
+				size_t block = get_block_index(i, n);
+
+				if (range > local_bw[tid][block]) {
+					local_bw[tid][block] = range;
+				}
+			}
+
+			radius_result_destroy(&res);
+		}
 	}
+
+	// REDUCCIÓN FINAL
+	for (int t = 0; t < max_threads; ++t) {
+		for (size_t b = 0; b < NUMBER_OF_BLOCKS; ++b) {
+			if (local_bw[t][b] > matrix->bandwith[b]) {
+				matrix->bandwith[b] = local_bw[t][b];
+			}
+		}
+	}
+
+	free(local_bw);
 }
 
 void get_neighbours_matrix(const struct matrix_t *matrix, size_t index, RadiusResult *result)
@@ -43,20 +96,23 @@ void destroy_neighbourhood_matrix(struct matrix_t *matrix)
 	for (size_t i = 0; i < matrix->points->num_points; ++i) {
 		destroy_row(matrix->rows[i]);
 	}
+	free(matrix->bandwith);
 	free(matrix->rows);
 }
 
-size_t get_max_num_elements_row(const struct matrix_t *matrix){
+size_t get_max_num_elements_row(const struct matrix_t *matrix)
+{
 	size_t max_row = 0;
-	for (size_t i = 0; i <  matrix->points->num_points; i++) {
-		if(max_row < matrix->rows[i]->num_elements){
+	for (size_t i = 0; i < matrix->points->num_points; i++) {
+		if (max_row < matrix->rows[i]->num_elements) {
 			max_row = matrix->rows[i]->num_elements;
 		}
 	}
 	return max_row;
 }
 
-size_t get_matrix_bandwidth(const struct matrix_t *matrix){
+size_t get_matrix_bandwidth(const struct matrix_t *matrix)
+{
 	size_t n_rows = matrix->points->num_points;
 	size_t max_index_range = 0;
 
@@ -74,8 +130,10 @@ size_t get_matrix_bandwidth(const struct matrix_t *matrix){
 
 			for (size_t j = 1; j < row->num_elements; j++) {
 				size_t v = row->indices[j];
-				if (v < min_idx) min_idx = v;
-				if (v > max_idx) max_idx = v;
+				if (v < min_idx)
+					min_idx = v;
+				if (v > max_idx)
+					max_idx = v;
 			}
 
 			size_t range = max_idx - min_idx;
@@ -86,7 +144,6 @@ size_t get_matrix_bandwidth(const struct matrix_t *matrix){
 	}
 	return max_index_range;
 }
-
 void print_matrix_stats(const struct matrix_t *matrix)
 {
 	size_t n_rows = matrix->points->num_points;
@@ -97,11 +154,16 @@ void print_matrix_stats(const struct matrix_t *matrix)
 	size_t max_row = 0;
 	size_t min_row = SIZE_MAX;
 
-	// NUEVO: stats de rangos de índices
+	// Stats de rangos de índices
 	size_t max_index_range = 0;
 	size_t min_index_range = SIZE_MAX;
 	size_t total_index_range = 0;
 	size_t valid_range_rows = 0;
+
+	// Triángulos superior / inferior
+	size_t upper_triangle_elements = 0;
+	size_t lower_triangle_elements = 0;
+	size_t diagonal_elements = 0;
 
 	for (size_t i = 0; i < n_rows; i++) {
 
@@ -120,16 +182,31 @@ void print_matrix_stats(const struct matrix_t *matrix)
 
 		total_size += get_row_t_size(row);
 
-		// Bandwith
+		// Clasificación triangular basada en índices (i, j)
 		if (row->num_elements > 0 && row->indices) {
 
+			for (size_t j = 0; j < row->num_elements; j++) {
+
+				size_t col = row->indices[j];
+
+				if (col > i)
+					upper_triangle_elements++;
+				else if (col < i)
+					lower_triangle_elements++;
+				else
+					diagonal_elements++;
+			}
+
+			// Bandwidth (rango de índices en la fila)
 			size_t min_idx = row->indices[0];
 			size_t max_idx = row->indices[0];
 
 			for (size_t j = 1; j < row->num_elements; j++) {
 				size_t v = row->indices[j];
-				if (v < min_idx) min_idx = v;
-				if (v > max_idx) max_idx = v;
+				if (v < min_idx)
+					min_idx = v;
+				if (v > max_idx)
+					max_idx = v;
 			}
 
 			size_t range = max_idx - min_idx;
@@ -144,19 +221,18 @@ void print_matrix_stats(const struct matrix_t *matrix)
 		}
 	}
 
-	double avg = (n_rows > 0)
-		? (double)total_elements / (double)n_rows
-		: 0.0;
-
-	double avg_range = (valid_range_rows > 0)
-		? (double)total_index_range / (double)valid_range_rows
-		: 0.0;
-
+	double avg = (n_rows > 0) ? (double)total_elements / (double)n_rows : 0.0;
+	double avg_range = (valid_range_rows > 0) ? (double)total_index_range / (double)valid_range_rows : 0.0;
 	double total_gb = (double)total_size / (1024.0 * 1024.0 * 1024.0);
 
 	printf("Matrix stats:\n");
 	printf("  Total rows: %zu\n", n_rows);
 	printf("  Total elements: %zu\n", total_elements);
+
+	printf("  Upper triangle elements: %zu\n", upper_triangle_elements);
+	printf("  Lower triangle elements: %zu\n", lower_triangle_elements);
+	printf("  Diagonal elements: %zu\n", diagonal_elements);
+
 	printf("  Average elements per row: %.2f\n", avg);
 	printf("  Max elements in row: %zu\n", max_row);
 	printf("  Min elements in row: %zu\n", min_row);
@@ -166,5 +242,10 @@ void print_matrix_stats(const struct matrix_t *matrix)
 	printf("  Min index range: %zu\n", min_index_range);
 	printf("  Avg index range: %.2f\n", avg_range);
 
-	printf("Total size: %zu bytes (%.6f GB)\n", total_size, total_gb);
+	fprintf(stderr, "  BANDWIDTH: ");
+	for (size_t i = 0; i < NUMBER_OF_BLOCKS; ++i) {
+		fprintf(stderr, "%zu ", matrix->bandwith[i]);
+	}
+
+	printf("\nTotal size: %zu bytes (%.6f GB)\n", total_size, total_gb);
 }

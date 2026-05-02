@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 	Octree octree = {};
 	create_octree(&octree, &points);
 	create_neighbourhood_matrix(&matrix, &octree);
-	//print_matrix_stats(&matrix);
+	print_matrix_stats(&matrix);
 
 	Points new_points = {};
 	struct timespec start, end;

@@ -103,7 +103,7 @@ void neighborhoods_tfg_bench(const struct matrix_t *matrix)
 	#pragma omp parallel for
 	for (size_t i = 0; i < matrix->points->num_points; ++i) {
 		RadiusResult res = {};
-		tfg_radius_search(matrix, i, bandwidth, &res);
+		tfg_radius_search(matrix, i, matrix->bandwith[get_block_index(i, matrix->points->num_points)], &res);
 
 		// Force use to avoid code elimination
 		__asm__ volatile("" : : "r"(res.count) : "memory");
@@ -128,7 +128,7 @@ void neighborhoods_tfg_opt_bench(const struct matrix_t *matrix)
 	#pragma omp parallel for
 	for (size_t i = 0; i < matrix->points->num_points; ++i) {
 		RadiusResult res = {};
-		tfg_radius_search_opt(matrix, i, bandwidth, &res);
+		tfg_radius_search_opt(matrix, i, matrix->bandwith[get_block_index(i, matrix->points->num_points)], &res);
 
 		// Force use to avoid code elimination
 		__asm__ volatile("" : : "r"(res.count) : "memory");

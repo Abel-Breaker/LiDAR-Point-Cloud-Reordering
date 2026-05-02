@@ -176,7 +176,7 @@ void check_neighborhoods_tfg(const struct matrix_t *matrix)
 		size_t index = (size_t)rand() % matrix->points->num_points;
 
 		RadiusResult res = {};
-		tfg_radius_search(matrix, index, bandwidth, &res);
+		tfg_radius_search(matrix, index, matrix->bandwith[get_block_index(i, matrix->points->num_points)], &res);
 
 		RadiusResult resbf = {};
 		find_radius_neighbors(matrix->points, index, &resbf);
@@ -213,14 +213,12 @@ void check_neighborhoods_tfg(const struct matrix_t *matrix)
 void check_neighborhoods_tfg_opt(const struct matrix_t *matrix)
 {
 
-	size_t bandwidth = get_matrix_bandwidth(matrix);
-
 	// #pragma omp parallel for
 	for (size_t i = 0; i < ITER; ++i) {
 		size_t index = (size_t)rand() % matrix->points->num_points;
 
 		RadiusResult res = {};
-		tfg_radius_search_opt(matrix, index, bandwidth, &res);
+		tfg_radius_search_opt(matrix, index, matrix->bandwith[get_block_index(i, matrix->points->num_points)], &res);
 
 		RadiusResult resbf = {};
 		find_radius_neighbors(matrix->points, index, &resbf);
