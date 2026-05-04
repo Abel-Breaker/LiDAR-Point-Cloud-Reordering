@@ -13,6 +13,7 @@ static struct option long_options[] = {{"filename", required_argument, NULL, 'f'
 				       {"test", no_argument, NULL, 't'},
 				       {"radius_search", required_argument, NULL, 'r'},
 				       {"max_num_of_points", required_argument, NULL, 'n'},
+					   {"number_of_blocks", required_argument, NULL, 'm'},
 				       {"help", no_argument, NULL, 'h'},
 				       {NULL, 0, NULL, 0}};
 
@@ -20,8 +21,12 @@ void parse_args(int argc, char **argv)
 {
 	memset(&args, 0, sizeof(args)); // Inicialization default
 
+	// Tmp variables for parse size_t
+	char *endptr;
+	unsigned long long val;
+
 	int option;
-	while ((option = getopt_long(argc, argv, "f:btr:n:h", long_options, NULL)) != -1) {
+	while ((option = getopt_long(argc, argv, "f:btr:n:m:h", long_options, NULL)) != -1) {
 		switch (option) {
 		case 'f':
 			args.cloud_points_file_name = optarg;
@@ -35,10 +40,17 @@ void parse_args(int argc, char **argv)
 		case 'r':
 			args.radius_search = atof(optarg);
 			break;
-		case 'n':
-			char *endptr;
+		case 'm':
+			val = strtoull(optarg, &endptr, 10);
 
-			unsigned long long val = strtoull(optarg, &endptr, 10);
+			if (*endptr != '\0') {
+				perror("Error al convertir");
+			}
+
+			args.number_of_blocks = (size_t)val;
+			break;
+		case 'n':
+			val = strtoull(optarg, &endptr, 10);
 
 			if (*endptr != '\0') {
 				perror("Error al convertir");
@@ -57,6 +69,9 @@ void parse_args(int argc, char **argv)
 	// Check for obligatory arguments
 	if (!args.cloud_points_file_name) {
 		handle_error(ERROR_PARSE_ARG, ERR_FATAL, "You must specify the required option --filename or -f\n");
+	}
+	if (args.number_of_blocks == 0) {
+		handle_error(ERROR_PARSE_ARG, ERR_FATAL, "You must specify a number of blocks with option -m different of 0\n");
 	}
 }
 

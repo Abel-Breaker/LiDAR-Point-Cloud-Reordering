@@ -5,8 +5,6 @@
 #include "../../utils/auxiliar_structures/radius_result.h"
 #include "row.h"
 
-#define NUMBER_OF_BLOCKS 200
-
 struct matrix_t {
 	const Points *points;
 	struct row_t **rows;

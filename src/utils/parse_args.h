@@ -10,6 +10,7 @@ typedef struct {
     bool do_test;
     double radius_search;
     size_t max_num_of_points;
+    size_t number_of_blocks;
 } Args;
 
 /**
