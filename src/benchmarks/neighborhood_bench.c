@@ -128,6 +128,7 @@ void neighborhoods_tfg_opt_bench(const struct matrix_t *matrix)
 
 		// Force use to avoid code elimination
 		__asm__ volatile("" : : "r"(res.count) : "memory");
+		
 		destroy_radius_result(&res);
 	}
 	clock_gettime(CLOCK_MONOTONIC_RAW, &end);

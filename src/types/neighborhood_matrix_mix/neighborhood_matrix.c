@@ -191,11 +191,6 @@ void print_matrix_stats(const struct matrix_t *matrix)
 	size_t total_index_range = 0;
 	size_t valid_range_rows = 0;
 
-	// Triángulos superior / inferior
-	size_t upper_triangle_elements = 0;
-	size_t lower_triangle_elements = 0;
-	size_t diagonal_elements = 0;
-
 	for (size_t i = 0; i < n_rows; i++) {
 
 		const struct row_t *row = matrix->rows[i];
@@ -215,18 +210,6 @@ void print_matrix_stats(const struct matrix_t *matrix)
 
 		// Clasificación triangular basada en índices (i, j)
 		if (row->num_elements > 0 && row->indices) {
-
-			for (size_t j = 0; j < row->num_elements; j++) {
-
-				size_t col = row->indices[j];
-
-				if (col > i)
-					upper_triangle_elements++;
-				else if (col < i)
-					lower_triangle_elements++;
-				else
-					diagonal_elements++;
-			}
 
 			// Bandwidth (rango de índices en la fila)
 			size_t min_idx = row->indices[0];
@@ -259,10 +242,6 @@ void print_matrix_stats(const struct matrix_t *matrix)
 	printf("Matrix stats:\n");
 	printf("  Total rows: %zu\n", n_rows);
 	printf("  Total elements: %zu\n", total_elements);
-
-	printf("  Upper triangle elements: %zu\n", upper_triangle_elements);
-	printf("  Lower triangle elements: %zu\n", lower_triangle_elements);
-	printf("  Diagonal elements: %zu\n", diagonal_elements);
 
 	printf("  Average elements per row: %.2f\n", avg);
 	printf("  Max elements in row: %zu\n", max_row);

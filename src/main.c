@@ -19,6 +19,7 @@
 #include <string.h>
 #include <time.h>
 
+//Use: save_matrix(&matrix, "../R/reorder/data/reorder_4.txt");
 void save_matrix(const struct matrix_t *matrix, const char *filename)
 {
 	FILE *fd;
@@ -44,9 +45,9 @@ void save_matrix(const struct matrix_t *matrix, const char *filename)
 	fclose(fd);
 }
 
-typedef void (*SortFunc)(const void *structure, const Points *points, Points *new_points);
+typedef void (*SortFunc)(const void *structure, Points *new_points);
 
-void test_idea(const char *name, SortFunc sort_fun, const void *structure, Points *points)
+void test_idea(const char *name, SortFunc sort_fun, const void *structure, const Points *points)
 {
 	printf("\n\x1b[34m\033[1m%s\033[0m\x1b[0m\n", name);
 
@@ -66,7 +67,7 @@ void test_idea(const char *name, SortFunc sort_fun, const void *structure, Point
 	Points points_reordered = {0};
 
 	clock_gettime(CLOCK_MONOTONIC, &start);
-	sort_fun(structure, points, &points_reordered);
+	sort_fun(structure, &points_reordered);
 	clock_gettime(CLOCK_MONOTONIC, &end);
 
 	double total = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1e9;
@@ -85,62 +86,36 @@ int main(int argc, char **argv)
 
 	// Arguments parse
 	parse_args(argc, argv);
-	printf("\033[1mFilename\033[0m: %s\n", get_args()->cloud_points_file_name);
 
 	// Read and save points
 	Points points = {};
 	if (read_las_points(get_args()->cloud_points_file_name, &points) == false) {
 		handle_error(ERROR_PARSE_POINTS, ERR_FATAL, nullptr);
 	}
+
+	// Print some info
+	printf("\033[1mFilename\033[0m: %s\n", get_args()->cloud_points_file_name);
 	printf("\033[1mNumber of points: \033[0m%zu\n", points.num_points);
-	printf("\033[1mNumber of neighbours calculated: \033[0m%zu\n", (size_t)K);
+	printf("\033[1mNumber of KNN neighbours: \033[0m%zu\n", (size_t)K);
 	printf("\033[1mRadius: \033[0m%f\n", get_args()->radius_search);
 
-	/*if (get_args()->do_benchmark)
-		bench(&points);
-	if (get_args()->do_test)
-		test(&points);*/
+	{
+		// Create necesary structures
+		struct matrix_t matrix = {};
+		Octree octree = {};
+		create_octree(&octree, &points);
+		create_neighbourhood_matrix(&matrix, &octree);
+		print_matrix_stats(&matrix);
 
-	
-	struct matrix_t matrix = {};
-	Octree octree = {};
-	create_octree(&octree, &points);
-	create_neighbourhood_matrix(&matrix, &octree);
-	print_matrix_stats(&matrix);
+		destroy_octree(&octree);
 
-	Points new_points = {};
-	struct timespec start, end;
-	double total = 0;
-	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-	reorder_cuthill_mckee(&matrix, &new_points);
-	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
-	printf("\tReorder neighbours: %.6f s\n", total);
-	printf("\n\n");
+		// Test
+		//test_idea("DEFAULT", nullptr, &matrix, matrix.points);
+		test_idea("CUTHILL-MCKEE", (SortFunc)reorder_cuthill_mckee, &matrix, matrix.points);
 
-	destroy_neighbourhood_matrix(&matrix);
-	destroy_octree(&octree);
-	/*
-	create_octree(&octree, &new_points);
-	create_neighbourhood_matrix(&matrix, &octree);
-
-
-	save_matrix(&matrix, "../R/reorder/data/reorder_4.txt");
-
-	destroy_neighbourhood_matrix(&matrix);
-	destroy_octree(&octree);*/
-
-	if (get_args()->do_benchmark)
-		bench(&new_points);
-	if (get_args()->do_test)
-		test(&new_points);
-
-	
-	destroy_points(&new_points);
-
-	// test_idea("DEFAULT", nullptr, &tree, &points);
-
-	destroy_points(&points);
+		destroy_points(&points);
+		destroy_neighbourhood_matrix(&matrix);
+	}
 
 	return 0;
 }
