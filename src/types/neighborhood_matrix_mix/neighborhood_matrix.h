@@ -5,12 +5,13 @@
 #include "../../utils/auxiliar_structures/radius_result.h"
 #include "row.h"
 
-#define NUMBER_OF_BLOCKS 100
+#define NUMBER_OF_BLOCKS 200
 
 struct matrix_t {
 	const Points *points;
 	struct row_t **rows;
-	size_t *bandwith;
+	size_t *bandwith_left;
+	size_t *bandwith_right;
 };
 
 void create_neighbourhood_matrix(struct matrix_t *matrix, const Octree *octree);

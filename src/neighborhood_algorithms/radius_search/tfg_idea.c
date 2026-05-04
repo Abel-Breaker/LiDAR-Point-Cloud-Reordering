@@ -17,7 +17,7 @@ static inline double diff_us(struct timespec a, struct timespec b)
 	return (b.tv_sec - a.tv_sec) * 1e6 + (b.tv_nsec - a.tv_nsec) / 1e3;
 }
 
-void tfg_radius_search(const struct matrix_t *matrix, size_t index, size_t bandwith, RadiusResult *result)
+void tfg_radius_search(const Points *points, size_t index, size_t bandwith_left, size_t bandwith_right, RadiusResult *result)
 {
 	struct timespec t0, tb, tc, t1, t2, t3;
 
@@ -27,17 +27,21 @@ void tfg_radius_search(const struct matrix_t *matrix, size_t index, size_t bandw
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &tb);
 
-	// Obtain coordinates of the point to compare
-	const double x = matrix->points->x[index];
-	const double y = matrix->points->y[index];
-	const double z = matrix->points->z[index];
-	// Calculate search range
-	size_t search_start_index = (index > bandwith) ? (index - bandwith) : 0;
-	size_t search_end_index = index + bandwith;
-	if (search_end_index > matrix->points->num_points) {
-		search_end_index = matrix->points->num_points;
+	// Coordenadas del punto central
+	const double x = points->x[index];
+	const double y = points->y[index];
+	const double z = points->z[index];
+
+	// Rango de búsqueda: [index - bandwith, index + bandwith]
+	size_t search_start_index = (index > bandwith_left) ? (index - bandwith_left) : 0;
+
+	size_t search_end_index = index + bandwith_right;
+	if (search_end_index >= points->num_points) {
+		search_end_index = points->num_points - 1;
 	}
-	const size_t window = search_end_index - search_start_index;
+
+	// Número total de puntos incluyendo ambos extremos
+	const size_t window = search_end_index - search_start_index + 1;
 
 	reserves_memory_radius_result(result, window);
 
@@ -45,13 +49,14 @@ void tfg_radius_search(const struct matrix_t *matrix, size_t index, size_t bandw
 
 	size_t *restrict indices = result->indices;
 	double *restrict distances = result->distances;
-	const double *restrict xs = matrix->points->x + search_start_index;
-	const double *restrict ys = matrix->points->y + search_start_index;
-	const double *restrict zs = matrix->points->z + search_start_index;
+
+	const double *restrict xs = points->x + search_start_index;
+	const double *restrict ys = points->y + search_start_index;
+	const double *restrict zs = points->z + search_start_index;
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t1);
 
-// Search neighbours - SIMD loop
+	// Calcular distancia para todos los puntos del rango
 #pragma omp simd
 	for (size_t i = 0; i < window; i++) {
 		distances[i] = euclidian_distance_3d(xs[i], ys[i], zs[i], x, y, z);
@@ -59,13 +64,16 @@ void tfg_radius_search(const struct matrix_t *matrix, size_t index, size_t bandw
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t2);
 
-	// Compaction loop
+	// Compactación de vecinos válidos dentro del radio
 	size_t local_count = 0;
 	for (size_t i = 0; i < window; i++) {
-		indices[local_count] = search_start_index + i;
-		distances[local_count] = distances[i];
-		local_count += (distances[i] <= radius);
+		if (distances[i] <= radius) {
+			indices[local_count] = search_start_index + i;
+			distances[local_count] = distances[i];
+			local_count++;
+		}
 	}
+
 	result->count = local_count;
 
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t3);

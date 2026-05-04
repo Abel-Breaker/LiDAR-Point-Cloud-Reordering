@@ -2,16 +2,22 @@
 #include "../../neighborhood_algorithms/radius_search/octree.h"
 #include "row.h"
 #include <limits.h> // for SIZE_MAX
+#ifdef _OPENMP
 #include <omp.h>
+#else
+static inline int omp_get_max_threads(void) { return 1; }
+static inline int omp_get_thread_num(void) { return 0; }
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 size_t get_block_index(size_t i, size_t num_points)
 {
-	size_t block_size = num_points / NUMBER_OF_BLOCKS;
-	size_t block = i / block_size;
-	return (block >= NUMBER_OF_BLOCKS) ? NUMBER_OF_BLOCKS - 1 : block;
+    if (num_points == 0) return 0;
+    size_t block_size = (num_points + NUMBER_OF_BLOCKS - 1) / NUMBER_OF_BLOCKS; // ceil
+    size_t block = i / block_size;
+    return (block >= NUMBER_OF_BLOCKS) ? NUMBER_OF_BLOCKS - 1 : block;
 }
 
 void create_neighbourhood_matrix(struct matrix_t *matrix, const Octree *octree)
@@ -20,12 +26,15 @@ void create_neighbourhood_matrix(struct matrix_t *matrix, const Octree *octree)
 
 	matrix->points = octree->pts;
 	matrix->rows = malloc(sizeof(*matrix->rows) * n);
-	matrix->bandwith = calloc(NUMBER_OF_BLOCKS, sizeof(size_t));
+
+	matrix->bandwith_left = calloc(NUMBER_OF_BLOCKS, sizeof(size_t));
+	matrix->bandwith_right = calloc(NUMBER_OF_BLOCKS, sizeof(size_t));
 
 	int max_threads = omp_get_max_threads();
 
-	// bandwidth local por thread
-	size_t (*local_bw)[NUMBER_OF_BLOCKS] = calloc(max_threads, sizeof(*local_bw));
+	// Bandwidth local por thread y bloque
+	size_t (*local_bw_left)[NUMBER_OF_BLOCKS] = calloc((size_t)max_threads, sizeof(*local_bw_left));
+	size_t (*local_bw_right)[NUMBER_OF_BLOCKS] = calloc((size_t)max_threads, sizeof(*local_bw_right));
 
 #pragma omp parallel
 	{
@@ -41,23 +50,33 @@ void create_neighbourhood_matrix(struct matrix_t *matrix, const Octree *octree)
 
 			if (res.count > 0 && res.indices) {
 
-				size_t min_idx = res.indices[0];
-				size_t max_idx = res.indices[0];
+				size_t min_idx = i;
+				size_t max_idx = i;
 
-				for (size_t j = 1; j < res.count; ++j) {
+				// Buscar límites inferior y superior reales
+				for (size_t j = 0; j < res.count; ++j) {
 					size_t v = res.indices[j];
-					if (v < min_idx)
+
+					if (v < min_idx) {
 						min_idx = v;
-					if (v > max_idx)
+					}
+
+					if (v > max_idx) {
 						max_idx = v;
+					}
 				}
 
-				size_t range = max_idx - min_idx;
+				size_t bw_left = i - min_idx;
+				size_t bw_right = max_idx - i;
 
 				size_t block = get_block_index(i, n);
 
-				if (range > local_bw[tid][block]) {
-					local_bw[tid][block] = range;
+				if (bw_left > local_bw_left[tid][block]) {
+					local_bw_left[tid][block] = bw_left;
+				}
+
+				if (bw_right > local_bw_right[tid][block]) {
+					local_bw_right[tid][block] = bw_right;
 				}
 			}
 
@@ -65,16 +84,22 @@ void create_neighbourhood_matrix(struct matrix_t *matrix, const Octree *octree)
 		}
 	}
 
-	// REDUCCIÓN FINAL
+	// Reducción final
 	for (int t = 0; t < max_threads; ++t) {
 		for (size_t b = 0; b < NUMBER_OF_BLOCKS; ++b) {
-			if (local_bw[t][b] > matrix->bandwith[b]) {
-				matrix->bandwith[b] = local_bw[t][b];
+
+			if (local_bw_left[t][b] > matrix->bandwith_left[b]) {
+				matrix->bandwith_left[b] = local_bw_left[t][b];
+			}
+
+			if (local_bw_right[t][b] > matrix->bandwith_right[b]) {
+				matrix->bandwith_right[b] = local_bw_right[t][b];
 			}
 		}
 	}
 
-	free(local_bw);
+	free(local_bw_left);
+	free(local_bw_right);
 }
 
 void get_neighbours_matrix(const struct matrix_t *matrix, size_t index, RadiusResult *result)
@@ -96,7 +121,8 @@ void destroy_neighbourhood_matrix(struct matrix_t *matrix)
 	for (size_t i = 0; i < matrix->points->num_points; ++i) {
 		destroy_row(matrix->rows[i]);
 	}
-	free(matrix->bandwith);
+	free(matrix->bandwith_left);
+	free(matrix->bandwith_right);
 	free(matrix->rows);
 }
 
@@ -242,9 +268,13 @@ void print_matrix_stats(const struct matrix_t *matrix)
 	printf("  Min index range: %zu\n", min_index_range);
 	printf("  Avg index range: %.2f\n", avg_range);
 
-	fprintf(stderr, "  BANDWIDTH: ");
+	fprintf(stderr, "  BANDWIDTH LEFT: ");
 	for (size_t i = 0; i < NUMBER_OF_BLOCKS; ++i) {
-		fprintf(stderr, "%zu ", matrix->bandwith[i]);
+		//fprintf(stderr, "%zu ", matrix->bandwith_left[i]);
+	}
+	fprintf(stderr, "\n  BANDWIDTH RIGH: ");
+	for (size_t i = 0; i < NUMBER_OF_BLOCKS; ++i) {
+		//fprintf(stderr, "%zu ", matrix->bandwith_right[i]);
 	}
 
 	printf("\nTotal size: %zu bytes (%.6f GB)\n", total_size, total_gb);
