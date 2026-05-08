@@ -12,26 +12,29 @@
 static size_t *degrees;
 static size_t *indices;
 
+int compare(const void *a, const void *b)
+{
+	size_t ia = *(const size_t *)a;
+	size_t ib = *(const size_t *)b;
 
-int compare(const void *a, const void *b) {
-    size_t ia = *(const size_t *)a;
-    size_t ib = *(const size_t *)b;
-
-    if (degrees[ia] < degrees[ib]) return -1;
-    if (degrees[ia] > degrees[ib]) return 1;
-    return 0;
+	if (degrees[ia] < degrees[ib])
+		return -1;
+	if (degrees[ia] > degrees[ib])
+		return 1;
+	return 0;
 }
 
-static inline void sort_matrix(struct matrix_t *matrix){
+static inline void sort_matrix(struct matrix_t *matrix)
+{
 
-	#pragma omp parallel for schedule(static)
-	for (size_t i = 0; i < matrix->points->num_points; ++i){
+#pragma omp parallel for schedule(static)
+	for (size_t i = 0; i < matrix->points->num_points; ++i) {
 		qsort(matrix->rows[i]->indices, matrix->rows[i]->num_elements, sizeof(size_t), compare);
 	}
-
 }
 
-static inline size_t get_point_index_lowest_degree(const bool *restrict visited, size_t num_points){
+static inline size_t get_point_index_lowest_degree(const bool *restrict visited, size_t num_points)
+{
 	static size_t counter = 0;
 	for (; counter < num_points; ++counter) {
 		if (!visited[indices[counter]]) {
@@ -62,7 +65,7 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 	}
 
 	// Precalculate all degrees
-	for (size_t i = 0; i < matrix->points->num_points; ++i){
+	for (size_t i = 0; i < matrix->points->num_points; ++i) {
 		degrees[i] = matrix->rows[i]->num_elements;
 		indices[i] = i;
 	}
@@ -83,7 +86,7 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 		// buscar el siguiente nodo no visitado de menor grado
 		if (is_queue_empty(queue)) {
 			min_grade_point_index = get_point_index_lowest_degree(visited, num_points);
-			if(visited[min_grade_point_index] == true){ // Case where all nodes visited (return 0)
+			if (visited[min_grade_point_index] == true) { // Case where all nodes visited (return 0)
 				break;
 			}
 			visited[min_grade_point_index] = true;
@@ -104,10 +107,8 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 				visited[neighbors[i]] = true;
 			}
 		}
-
 	}
 
-	
 	if (!reserve_memory_points(new_points, num_points)) {
 		destroyQueue(queue);
 		free(permutations);
@@ -117,9 +118,14 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 		return;
 	}
 
-	for (size_t i = 0; i < points_visited; ++i) { // points_visited == points->num_points
+	/*for (size_t i = 0; i < points_visited; ++i) { // points_visited == points->num_points
 		add_point(new_points, i, matrix->points->x[permutations[i]], matrix->points->y[permutations[i]],
 			  matrix->points->z[permutations[i]]);
+	}*/
+
+	for (size_t i = 0; i < points_visited; ++i) {
+		size_t idx = permutations[points_visited - 1 - i];
+		add_point(new_points, i, matrix->points->x[idx], matrix->points->y[idx], matrix->points->z[idx]);
 	}
 
 	destroyQueue(queue);
@@ -127,5 +133,4 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 	free(visited);
 	free(degrees);
 	free(indices);
-
 }

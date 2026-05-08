@@ -8,7 +8,8 @@
 #include <immintrin.h>
 #endif
 
-void tfg_radius_search_opt(const Points *points, size_t index, size_t bandwith_left, size_t bandwith_right, RadiusResult *result)
+void tfg_radius_search_opt(const Points *points, size_t index, size_t bandwith_left, size_t bandwith_right,
+			   RadiusResult *result)
 {
 	const double radius = get_args()->radius_search;
 
@@ -19,7 +20,7 @@ void tfg_radius_search_opt(const Points *points, size_t index, size_t bandwith_l
 
 	// Rango de búsqueda: [index - bandwith, index + bandwith]
 	size_t search_start_index = (index > bandwith_left) ? (index - bandwith_left) : 0;
-
+	search_start_index = search_start_index & ~(size_t)63; // redondear hacia abajo al múltiplo de 64
 	size_t search_end_index = index + bandwith_right;
 	if (search_end_index >= points->num_points) {
 		search_end_index = points->num_points - 1;
@@ -50,12 +51,9 @@ void tfg_radius_search_opt(const Points *points, size_t index, size_t bandwith_l
 	__m512d radius_vector = _mm512_set1_pd(radius);
 
 	// Create base index (where search starts)
-	__m512i base_idx = _mm512_set_epi64(
-		search_start_index + 7, search_start_index + 6,
-		search_start_index + 5, search_start_index + 4,
-		search_start_index + 3, search_start_index + 2,
-		search_start_index + 1, search_start_index + 0
-	);
+	__m512i base_idx = _mm512_set_epi64(search_start_index + 7, search_start_index + 6, search_start_index + 5,
+					    search_start_index + 4, search_start_index + 3, search_start_index + 2,
+					    search_start_index + 1, search_start_index + 0);
 
 	__m512i increment = _mm512_set1_epi64(8);
 
@@ -63,9 +61,9 @@ void tfg_radius_search_opt(const Points *points, size_t index, size_t bandwith_l
 	for (; i + 7 < window; i += 8) {
 
 		// Load data from point cloud
-		__m512d x1_vector = _mm512_loadu_pd(xs + i);
-		__m512d y1_vector = _mm512_loadu_pd(ys + i);
-		__m512d z1_vector = _mm512_loadu_pd(zs + i);
+		__m512d x1_vector = _mm512_load_pd(xs + i);
+		__m512d y1_vector = _mm512_load_pd(ys + i);
+		__m512d z1_vector = _mm512_load_pd(zs + i);
 
 		// Differences
 		__m512d x_vector_result = _mm512_sub_pd(x1_vector, x0_vector);
@@ -80,6 +78,8 @@ void tfg_radius_search_opt(const Points *points, size_t index, size_t bandwith_l
 		// Compare distance <= radius
 		__mmask8 mask = _mm512_cmp_pd_mask(result_vec, radius_vector, _CMP_LE_OQ);
 
+		if (mask == 0)
+			continue;
 		// Save matching results
 		_mm512_mask_compressstoreu_epi64(indices + elements_count, mask, base_idx);
 		_mm512_mask_compressstoreu_pd(distances + elements_count, mask, result_vec);
@@ -104,4 +104,8 @@ void tfg_radius_search_opt(const Points *points, size_t index, size_t bandwith_l
 	}
 
 	result->count = elements_count;
+}
+
+void tfg_print_timing_stats_opt(void)
+{
 }
