@@ -9,7 +9,7 @@ struct Queue{
 };
 
 // Crear cola
-Queue *createQueue(size_t size) {
+Queue *create_queue(size_t size) {
     Queue* q = calloc(1, sizeof(*q)); // Set head and tail to 0
     if(!q){
         handle_error(ERROR_MALLOC, ERR_FATAL, "Can not allocate memory for queue");
@@ -44,7 +44,7 @@ bool is_queue_empty(const Queue* q){
     return q->tail == q->head;
 }
 
-void destroyQueue(Queue *q) {
+void destroy_queue(Queue *q) {
     q->head = q->tail = 0;
     free(q->indices);
     free(q);

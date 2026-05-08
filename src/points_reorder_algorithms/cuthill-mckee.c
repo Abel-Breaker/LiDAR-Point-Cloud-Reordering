@@ -9,13 +9,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+static size_t *degrees_original;
 static size_t *degrees;
 static size_t *indices;
+static size_t counter;
 
 int compare(const void *a, const void *b)
 {
-	size_t ia = *(const size_t *)a;
-	size_t ib = *(const size_t *)b;
+	const size_t ia = *(const size_t *)a;
+	const size_t ib = *(const size_t *)b;
 
 	if (degrees[ia] < degrees[ib])
 		return -1;
@@ -24,18 +26,20 @@ int compare(const void *a, const void *b)
 	return 0;
 }
 
-static inline void sort_matrix(struct matrix_t *matrix)
+int compare_original(const void *a, const void *b)
 {
+	const size_t ia = *(const size_t *)a;
+	const size_t ib = *(const size_t *)b;
 
-#pragma omp parallel for schedule(static)
-	for (size_t i = 0; i < matrix->points->num_points; ++i) {
-		qsort(matrix->rows[i]->indices, matrix->rows[i]->num_elements, sizeof(size_t), compare);
-	}
+	if (degrees_original[ia] < degrees_original[ib])
+		return -1;
+	if (degrees_original[ia] > degrees_original[ib])
+		return 1;
+	return 0;
 }
 
 static inline size_t get_point_index_lowest_degree(const bool *restrict visited, size_t num_points)
 {
-	static size_t counter = 0;
 	for (; counter < num_points; ++counter) {
 		if (!visited[indices[counter]]) {
 			return indices[counter];
@@ -44,73 +48,91 @@ static inline size_t get_point_index_lowest_degree(const bool *restrict visited,
 	return 0;
 }
 
-void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
+void reorder_cuthill_mckee(const Octree *octree, Points *new_points)
 {
-	const size_t num_points = matrix->points->num_points;
+	// Reset counter between calls
+	counter = 0;
+
+	// Prepare some constant values
+	const size_t num_points = octree->points->num_points;
+	const double radius = get_args()->radius_search;
+
+	// Create/Reserve auxiliar structures for reorder
+	Queue *queue = create_queue(num_points); // Maximun posible size
 	bool *visited = calloc(num_points, sizeof(*visited));
 	size_t *permutations = malloc(sizeof(*permutations) * num_points);
-	Queue *queue = createQueue(num_points);
-	size_t points_visited = 0;
-	indices = malloc(matrix->points->num_points * sizeof(*indices));
+	indices = malloc(sizeof(*indices) * num_points);
+	degrees = malloc(sizeof(*degrees) * num_points);
+	degrees_original = malloc(sizeof(*degrees_original) * num_points);
 
-	degrees = malloc(matrix->points->num_points * sizeof(*degrees));
-
-	if (!visited || !permutations || !degrees || !indices) {
+	// Check allocations
+	if (!queue || !visited || !permutations || !degrees || !indices || !degrees_original) {
+		destroy_queue(queue);
 		free(visited);
 		free(permutations);
 		free(degrees);
 		free(indices);
-		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot allocate CK buffers");
+		free(degrees_original);
+		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot allocate auxiliar structures for reorder RCM");
 		return;
 	}
 
-	// Precalculate all degrees
-	for (size_t i = 0; i < matrix->points->num_points; ++i) {
-		degrees[i] = matrix->rows[i]->num_elements;
+	// Precalculate all points degrees
+	#pragma omp parallel for schedule(static) // TODO: Test with schedule(dynamic)
+	for (size_t i = 0; i < num_points; ++i) {
+		degrees_original[i] = octree_radius_neighbor_count(octree, i, radius); // Mantain a copy of the array without reorder
+		degrees[i] = degrees_original[i];
 		indices[i] = i;
 	}
 
-	sort_matrix(matrix);
+	// Preorder all indices depending of the degrees
+	qsort(indices, num_points, sizeof(*indices), compare);
 
-	qsort(indices, matrix->points->num_points, sizeof(size_t), compare);
-
-	// Get point with lowest grade
+	// Get the first point to visit and prepare for start the algorithm
 	size_t min_grade_point_index = get_point_index_lowest_degree(visited, num_points);
-
 	visited[min_grade_point_index] = true;
 	enqueue(queue, min_grade_point_index);
 
-	while (points_visited < num_points) {
+	// Start the algorithm RCM to obtain permutations vector
+	size_t points_visited = 0;
+	while (points_visited < num_points) { // Make sure to visit all the points
 
-		// Si la cola está vacía, el grafo está desconectado:
-		// buscar el siguiente nodo no visitado de menor grado
+		// If queue is empty, graph is disconnected so pick next unvisited node with lowest degree
 		if (is_queue_empty(queue)) {
 			min_grade_point_index = get_point_index_lowest_degree(visited, num_points);
-			if (visited[min_grade_point_index] == true) { // Case where all nodes visited (return 0)
+
+			// Check if all nodes where visited
+			if (min_grade_point_index == 0 && visited[min_grade_point_index] == true) {
 				break;
 			}
+			
 			visited[min_grade_point_index] = true;
 			enqueue(queue, min_grade_point_index);
 		}
 
+		// Obtain next point
 		size_t index = dequeue(queue);
 		permutations[points_visited] = index;
 		++points_visited;
 
-		// Optimized access to the row directly (violating opaquing)
-		const size_t *neighbors = get_neighbours_row(matrix->rows[index]);
-		size_t num_elements = degrees[index];
+		// Get points neighbors
+		RadiusResultOctree result = {};
+		octree_radius_search(octree, index, radius, &result);
+		qsort(result.indices, result.count, sizeof(size_t), compare_original);
 
-		for (size_t i = 0; i < num_elements; ++i) {
-			if (visited[neighbors[i]] == false) {
-				enqueue(queue, neighbors[i]);
-				visited[neighbors[i]] = true;
+		// Process next point searching for new points to enqueue
+		for (size_t i = 0; i < result.count; ++i) {
+			if (visited[result.indices[i]] == false) {
+				enqueue(queue, result.indices[i]);
+				visited[result.indices[i]] = true;
 			}
 		}
+		radius_result_destroy(&result);
 	}
 
+	// Reserves memory for new points
 	if (!reserve_memory_points(new_points, num_points)) {
-		destroyQueue(queue);
+		destroy_queue(queue);
 		free(permutations);
 		free(visited);
 		free(degrees);
@@ -118,17 +140,14 @@ void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points)
 		return;
 	}
 
-	/*for (size_t i = 0; i < points_visited; ++i) { // points_visited == points->num_points
-		add_point(new_points, i, matrix->points->x[permutations[i]], matrix->points->y[permutations[i]],
-			  matrix->points->z[permutations[i]]);
-	}*/
-
+	// Save the points in the new order
 	for (size_t i = 0; i < points_visited; ++i) {
 		size_t idx = permutations[points_visited - 1 - i];
-		add_point(new_points, i, matrix->points->x[idx], matrix->points->y[idx], matrix->points->z[idx]);
+		add_point(new_points, i, octree->points->x[idx], octree->points->y[idx], octree->points->z[idx]);
 	}
 
-	destroyQueue(queue);
+	// Free memory
+	destroy_queue(queue);
 	free(permutations);
 	free(visited);
 	free(degrees);

@@ -37,7 +37,7 @@ static void neighborhoods_knn_bench(NeighborFunc neighbor_fun, const void *struc
 
 void neighborhoods_octree_knn_bench(const Octree *structure)
 {
-	neighborhoods_knn_bench((NeighborFunc)start_octree_knearest, structure, structure->pts->num_points);
+	neighborhoods_knn_bench((NeighborFunc)start_octree_knearest, structure, structure->points->num_points);
 }
 
 void neighborhoods_matrix_bench(const struct matrix_t *matrix)
@@ -71,7 +71,7 @@ void neighborhoods_octree_radius_bench(const Octree *structure)
 	// Test neighborhood
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 #pragma omp parallel for
-	for (size_t i = 0; i < structure->pts->num_points; ++i) {
+	for (size_t i = 0; i < structure->points->num_points; ++i) {
 		RadiusResultOctree res = {};
 		octree_radius_search(structure, i, get_args()->radius_search, &res);
 		

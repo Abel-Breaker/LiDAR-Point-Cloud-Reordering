@@ -26,10 +26,10 @@ size_t get_block_index(size_t i, size_t num_points)
 
 void create_neighbourhood_matrix(struct matrix_t *matrix, const Octree *octree)
 {
-	const size_t n = octree->pts->num_points;
+	const size_t n = octree->points->num_points;
 	const size_t number_of_blocks = get_args()->number_of_blocks;
 
-	matrix->points = octree->pts;
+	matrix->points = octree->points;
 	matrix->rows = malloc(sizeof(*matrix->rows) * n);
 
 	matrix->bandwith_left = calloc(number_of_blocks, sizeof(size_t));

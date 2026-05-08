@@ -19,7 +19,7 @@ void reorder_bfs_sort_by_distance(const KDTree *tree, const Points *points, Poin
 {
 	unsigned int number_of_points = (unsigned int)tree->pts->num_points;
 
-	Queue *queue = createQueue(number_of_points);
+	Queue *queue = create_queue(number_of_points);
 
 	unsigned int *permutations;
 	bool *visited;
@@ -57,7 +57,7 @@ void reorder_bfs_sort_by_distance(const KDTree *tree, const Points *points, Poin
 	}
 
 	if (!reserve_memory_points(new_points, points->num_points)) {
-		destroyQueue(queue);
+		destroy_queue(queue);
 		free(permutations);
 		free(visited);
 		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot reserve memory for points");
@@ -74,7 +74,7 @@ void reorder_bfs_sort_by_distance(const KDTree *tree, const Points *points, Poin
 			  points->z[permutations[i]]);
 	}
 
-	destroyQueue(queue);
+	destroy_queue(queue);
 	free(permutations);
 	free(visited);
 }
@@ -83,7 +83,7 @@ void reorder_bfs_sort_by_distance_reverse(const KDTree *tree, const Points *poin
 {
 	unsigned int number_of_points = (unsigned int)tree->pts->num_points;
 
-	Queue *queue = createQueue(number_of_points);
+	Queue *queue = create_queue(number_of_points);
 
 	unsigned int *permutations;
 	bool *visited;
@@ -121,7 +121,7 @@ void reorder_bfs_sort_by_distance_reverse(const KDTree *tree, const Points *poin
 	}
 
 	if (!reserve_memory_points(new_points, points->num_points)) {
-		destroyQueue(queue);
+		destroy_queue(queue);
 		free(permutations);
 		free(visited);
 		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot reserve memory for points");
@@ -133,7 +133,7 @@ void reorder_bfs_sort_by_distance_reverse(const KDTree *tree, const Points *poin
 			  points->z[permutations[points_visited-i-1]]);
 	}
 
-	destroyQueue(queue);
+	destroy_queue(queue);
 	free(permutations);
 	free(visited);
 }
@@ -152,7 +152,7 @@ void reorder_bfs_sort_by_index(const KDTree *tree, const Points *points, Points 
 {
 	unsigned int number_of_points = (unsigned int)tree->pts->num_points;
 
-	Queue *queue = createQueue(number_of_points);
+	Queue *queue = create_queue(number_of_points);
 
 	unsigned int *permutations;
 	bool *visited;
@@ -192,7 +192,7 @@ void reorder_bfs_sort_by_index(const KDTree *tree, const Points *points, Points 
 	}
 
 	if (!reserve_memory_points(new_points, points->num_points)) {
-		destroyQueue(queue);
+		destroy_queue(queue);
 		free(permutations);
 		free(visited);
 		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot reserve memory for points");
@@ -204,7 +204,7 @@ void reorder_bfs_sort_by_index(const KDTree *tree, const Points *points, Points 
 			  points->z[permutations[i]]);
 	}
 
-	destroyQueue(queue);
+	destroy_queue(queue);
 	free(permutations);
 	free(visited);
 }*/

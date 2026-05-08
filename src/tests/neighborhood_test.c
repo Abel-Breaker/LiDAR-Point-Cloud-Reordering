@@ -38,7 +38,7 @@ static void sort_neighbors(size_t *idx, double *dist, size_t k)
 	}
 }
 
-static void check_neighborhoods_knn(NeighborFunc function, const void *structure, const Points *pts)
+static void check_neighborhoods_knn(NeighborFunc function, const void *structure, const Points *points)
 {
 	size_t neighbours[K];
 	double neighbours_distances[K];
@@ -46,12 +46,12 @@ static void check_neighborhoods_knn(NeighborFunc function, const void *structure
 	// #pragma omp parallel for
 	for (size_t i = 0; i < ITER; ++i) {
 
-		size_t index = (size_t)rand() % pts->num_points;
+		size_t index = (size_t)rand() % points->num_points;
 		size_t neighbours_2[K];
 		double neighbours_distances_2[K];
 
 		function(structure, index, neighbours, neighbours_distances);
-		find_knn_neighbors(pts, index, neighbours_2, neighbours_distances_2);
+		find_knn_neighbors(points, index, neighbours_2, neighbours_distances_2);
 
 		// Ordenar ambos resultados
 		sort_neighbors(neighbours, neighbours_distances, K);
@@ -77,7 +77,7 @@ static void check_neighborhoods_knn(NeighborFunc function, const void *structure
 
 void check_neighborhoods_octree_knn(const Octree *octree)
 {
-	check_neighborhoods_knn((NeighborFunc)start_octree_knearest, octree, octree->pts);
+	check_neighborhoods_knn((NeighborFunc)start_octree_knearest, octree, octree->points);
 }
 
 void check_neighborhoods_octree_radius(const Octree *octree)
@@ -87,10 +87,10 @@ void check_neighborhoods_octree_radius(const Octree *octree)
 
 	// #pragma omp parallel for
 	for (size_t i = 0; i < ITER; ++i) {
-		size_t index = (size_t)rand() % octree->pts->num_points;
+		size_t index = (size_t)rand() % octree->points->num_points;
 
 		RadiusResult resbf = {};
-		find_radius_neighbors(octree->pts, index, &resbf);
+		find_radius_neighbors(octree->points, index, &resbf);
 
 		// Octree
 		RadiusResultOctree res = {};

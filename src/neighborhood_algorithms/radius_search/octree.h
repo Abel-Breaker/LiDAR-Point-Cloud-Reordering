@@ -20,4 +20,6 @@ typedef struct {
 void octree_radius_search(const Octree *octree, size_t point_index, double radius,
                           RadiusResultOctree *result);
 
+size_t octree_radius_neighbor_count(const Octree *octree, size_t point_index, double radius);
+
 void radius_result_destroy(RadiusResultOctree *result);

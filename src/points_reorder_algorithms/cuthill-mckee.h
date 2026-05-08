@@ -1,5 +1,14 @@
 #pragma once
 #include "../types/lidar_points.h"
-#include "../types/neighborhood_matrix_mix/neighborhood_matrix.h"
+#include "../points_structures/octree.h"
 
-void reorder_cuthill_mckee(struct matrix_t *matrix, Points *new_points);
+
+/**
+ * @brief Reorder points.
+ *
+ * @param[in] octree
+ * @param[out] new_points
+ * 
+ * @note Not thread-safe.
+ */
+void reorder_cuthill_mckee(const Octree *octree, Points *new_points);

@@ -7,7 +7,7 @@
 
 typedef struct Queue Queue;
 
-Queue *createQueue(size_t size);
+Queue *create_queue(size_t size);
 
 void enqueue(Queue *q, size_t index);
 
@@ -15,4 +15,4 @@ size_t dequeue(Queue *q);
 
 bool is_queue_empty(const Queue *q);
 
-void destroyQueue(Queue *q);
+void destroy_queue(Queue *q);

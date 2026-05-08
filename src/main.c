@@ -107,14 +107,16 @@ int main(int argc, char **argv)
 		create_neighbourhood_matrix(&matrix, &octree);
 		print_matrix_stats(&matrix);
 
-		destroy_octree(&octree);
+		
 
 		// Test
 		//test_idea("DEFAULT", nullptr, &matrix, matrix.points);
-		test_idea("CUTHILL-MCKEE", (SortFunc)reorder_cuthill_mckee, &matrix, matrix.points);
+		test_idea("CUTHILL-MCKEE", (SortFunc)reorder_cuthill_mckee, &octree, octree.points);
 
-		destroy_points(&points);
+		
 		destroy_neighbourhood_matrix(&matrix);
+		destroy_octree(&octree);
+		destroy_points(&points);
 	}
 
 	return 0;

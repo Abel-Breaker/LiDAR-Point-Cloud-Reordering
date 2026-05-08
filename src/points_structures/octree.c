@@ -7,20 +7,20 @@
 /** 
  * Calculate the bounding box that encompasses all the points
 */
-static AABB compute_global_aabb(const Points *pts)
+static AABB compute_global_aabb(const Points *points)
 {
 	AABB bb = {
 		.min = { DBL_MAX,  DBL_MAX,  DBL_MAX},
 		.max = {-DBL_MAX, -DBL_MAX, -DBL_MAX}
 	};
 
-	for (size_t i = 0; i < pts->num_points; i++) {
-		if (pts->x[i] < bb.min[0]) bb.min[0] = pts->x[i];
-		if (pts->y[i] < bb.min[1]) bb.min[1] = pts->y[i];
-		if (pts->z[i] < bb.min[2]) bb.min[2] = pts->z[i];
-		if (pts->x[i] > bb.max[0]) bb.max[0] = pts->x[i];
-		if (pts->y[i] > bb.max[1]) bb.max[1] = pts->y[i];
-		if (pts->z[i] > bb.max[2]) bb.max[2] = pts->z[i];
+	for (size_t i = 0; i < points->num_points; i++) {
+		if (points->x[i] < bb.min[0]) bb.min[0] = points->x[i];
+		if (points->y[i] < bb.min[1]) bb.min[1] = points->y[i];
+		if (points->z[i] < bb.min[2]) bb.min[2] = points->z[i];
+		if (points->x[i] > bb.max[0]) bb.max[0] = points->x[i];
+		if (points->y[i] > bb.max[1]) bb.max[1] = points->y[i];
+		if (points->z[i] > bb.max[2]) bb.max[2] = points->z[i];
 	}
 
 	return bb;
@@ -34,12 +34,12 @@ static AABB compute_global_aabb(const Points *pts)
  * 	bit 1 → Y (0 = down, 1 = up)
  * 	bit 2 → Z (0 = back, 1 = front)
 */
-static int get_octant(const Points *pts, size_t idx, const double center[3])
+static int get_octant(const Points *points, size_t idx, const double center[3])
 {
 	int octant = 0;
-	if (pts->x[idx] >= center[0]) octant |= 1;
-	if (pts->y[idx] >= center[1]) octant |= 2;
-	if (pts->z[idx] >= center[2]) octant |= 4;
+	if (points->x[idx] >= center[0]) octant |= 1;
+	if (points->y[idx] >= center[1]) octant |= 2;
+	if (points->z[idx] >= center[2]) octant |= 4;
 	return octant;
 }
 
@@ -104,7 +104,7 @@ static Octant *create_internal(const AABB *bounds)
 /**
  * Recursive construction of the octree
 */
-static Octant *octree_build(const Points *pts,
+static Octant *octree_build(const Points *points,
                                 const AABB *bounds,
                                 const size_t *indices,
                                 size_t num_points,
@@ -130,7 +130,7 @@ static Octant *octree_build(const Points *pts,
 	// Count points per octant to avoid reallocs
 	size_t counts[8] = {0};
 	for (size_t i = 0; i < num_points; i++) {
-		int oct = get_octant(pts, indices[i], center);
+		int oct = get_octant(points, indices[i], center);
 		counts[oct]++;
 	}
 
@@ -151,7 +151,7 @@ static Octant *octree_build(const Points *pts,
 
 	// Distribute indices to the corresponding buckets
 	for (size_t i = 0; i < num_points; i++) {
-		int oct = get_octant(pts, indices[i], center);
+		int oct = get_octant(points, indices[i], center);
 		buckets[oct][offsets[oct]++] = indices[i];
 	}
 
@@ -159,7 +159,7 @@ static Octant *octree_build(const Points *pts,
 	for (int c = 0; c < 8; c++) {
 		if (counts[c] > 0) {
 			AABB cb = child_bounds(bounds, c);
-			octant->children[c] = octree_build(pts, &cb, buckets[c], counts[c], depth + 1);
+			octant->children[c] = octree_build(points, &cb, buckets[c], counts[c], depth + 1);
 		}
 		free(buckets[c]);
 	}
@@ -168,23 +168,23 @@ static Octant *octree_build(const Points *pts,
 }
 
 
-void create_octree(Octree *octree, const Points *pts)
+void create_octree(Octree *octree, const Points *points)
 {
-	octree->pts = pts;
+	octree->points = points;
 
-	AABB global_bb = compute_global_aabb(pts);
+	AABB global_bb = compute_global_aabb(points);
 
 	// Array with all indices [0, num_points)
-	size_t *all_indices = malloc(pts->num_points * sizeof(*all_indices));
+	size_t *all_indices = malloc(points->num_points * sizeof(*all_indices));
 	if (!all_indices) {
 		octree->root = NULL;
 		return;
 	}
-	for (size_t i = 0; i < pts->num_points; i++) {
+	for (size_t i = 0; i < points->num_points; i++) {
 		all_indices[i] = i;
 	}
 
-	octree->root = octree_build(pts, &global_bb, all_indices, pts->num_points, 0);
+	octree->root = octree_build(points, &global_bb, all_indices, points->num_points, 0);
 
 	free(all_indices);
 }
@@ -208,7 +208,7 @@ void destroy_octree(Octree *octree)
 	if(!octree) return;
 	octree_free_octant(octree->root);
 	octree->root = NULL;
-	octree->pts  = NULL;
+	octree->points  = NULL;
 }
 
 

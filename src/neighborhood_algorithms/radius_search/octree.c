@@ -71,7 +71,7 @@ static void octree_knearest(const Octree *octree, const Octant *octant,
 		for (size_t i = 0; i < octant->num_points; ++i) {
 			size_t idx = octant->point_indices[i];
 			double dist = euclidian_distance_3d(
-			    octree->pts->x[idx], octree->pts->y[idx], octree->pts->z[idx],
+			    octree->points->x[idx], octree->points->y[idx], octree->points->z[idx],
 			    px, py, pz);
 			update_kbest(idx, dist, neighbours_index, neighbours_distances);
 		}
@@ -110,9 +110,9 @@ void start_octree_knearest(const Octree *octree, size_t point_index,
 		neighbours_index[i]     = 0;
 	}
 
-	double px = octree->pts->x[point_index];
-	double py = octree->pts->y[point_index];
-	double pz = octree->pts->z[point_index];
+	double px = octree->points->x[point_index];
+	double py = octree->points->y[point_index];
+	double pz = octree->points->z[point_index];
 
 	octree_knearest(octree, octree->root, px, py, pz,
 	                point_index, neighbours_index, neighbours_distances);
@@ -155,7 +155,7 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 		for (size_t i = 0; i < octant->num_points; ++i) {
 			size_t idx = octant->point_indices[i];
 			double dist = euclidian_distance_3d(
-			    octree->pts->x[idx], octree->pts->y[idx], octree->pts->z[idx],
+			    octree->points->x[idx], octree->points->y[idx], octree->points->z[idx],
 			    px, py, pz);
 			if (dist <= radius)
 				radius_result_push(result, idx, dist);
@@ -187,11 +187,63 @@ void octree_radius_search(const Octree *octree, size_t point_index, double radiu
 	result->count     = 0;
 	result->capacity  = 0;
 
-	double px = octree->pts->x[point_index];
-	double py = octree->pts->y[point_index];
-	double pz = octree->pts->z[point_index];
+	double px = octree->points->x[point_index];
+	double py = octree->points->y[point_index];
+	double pz = octree->points->z[point_index];
 
 	radius_traverse(octree, octree->root, px, py, pz, radius, result);
+}
+
+static void radius_traverse_neighbor_count(const Octree *octree, const Octant *octant,
+                            double px, double py, double pz,
+                            double radius, size_t *neighbor_count)
+{
+	if (!octant) return;
+
+	/* Poda: si la esquina más cercana del AABB ya supera el radio, no hay
+	 * ningún punto de este subárbol que pueda estar dentro. */
+	if (aabb_min_dist(&octant->bounds, px, py, pz) > radius) return;
+
+	/* Nodo hoja: evaluar todos los puntos del bucket. */
+	if (octant->point_indices) {
+		for (size_t i = 0; i < octant->num_points; ++i) {
+			size_t idx = octant->point_indices[i];
+			double dist = euclidian_distance_3d(
+			    octree->points->x[idx], octree->points->y[idx], octree->points->z[idx],
+			    px, py, pz);
+			if (dist <= radius)
+				++(*neighbor_count);
+		}
+		return;
+	}
+
+	/* Nodo interno: visitar primero el hijo que contiene la consulta. */
+	int containing_child = -1;
+	for (int c = 0; c < 8; ++c) {
+		if (!octant->children[c]) continue;
+		if (aabb_contains(&octant->children[c]->bounds, px, py, pz)) {
+			containing_child = c;
+			radius_traverse_neighbor_count(octree, octant->children[c], px, py, pz, radius, neighbor_count);
+			break;
+		}
+	}
+	for (int c = 0; c < 8; ++c) {
+		if (!octant->children[c] || c == containing_child) continue;
+		radius_traverse_neighbor_count(octree, octant->children[c], px, py, pz, radius, neighbor_count);
+	}
+}
+
+size_t octree_radius_neighbor_count(const Octree *octree, size_t point_index, double radius)
+{
+	double px = octree->points->x[point_index];
+	double py = octree->points->y[point_index];
+	double pz = octree->points->z[point_index];
+
+	size_t neighbor_count = 0;
+
+	radius_traverse_neighbor_count(octree, octree->root, px, py, pz, radius, &neighbor_count);
+
+	return neighbor_count;
 }
 
 void radius_result_destroy(RadiusResultOctree *result)

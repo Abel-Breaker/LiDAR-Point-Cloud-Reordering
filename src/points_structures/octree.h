@@ -25,18 +25,18 @@ typedef struct Octant {
 
 typedef struct Octree {
 	Octant *root;
-	const Points *pts;
+	const Points *points;
 } Octree;
 
 /**
  * Creates an octree from a given collection of points.
  *
  * @param[out] octree Pointer to the Octree structure to initialize.
- * @param[in] pts Pointer to the Points structure used to build the octree.
+ * @param[in] points Pointer to the Points structure used to build the octree.
  *
- * @note The point collection `pts` must be initialized before calling this function.
+ * @note The point collection `points` must be initialized before calling this function.
  */
-void create_octree(Octree *octree, const Points *pts);
+void create_octree(Octree *octree, const Points *points);
 
 /**
  * Destroys an octree, releasing all associated resources.
