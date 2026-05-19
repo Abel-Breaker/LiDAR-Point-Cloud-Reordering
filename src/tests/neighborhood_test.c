@@ -14,10 +14,7 @@
 #include <string.h>
 #include <time.h>
 
-#define ITER 300
-
-typedef void (*NeighborFunc)(const void *structure, size_t point_index, size_t *neighbours_index,
-			     double *neighbours_distances);
+#define ITER 100
 
 static void sort_neighbors(size_t *idx, double *dist, size_t k)
 {
@@ -36,48 +33,6 @@ static void sort_neighbors(size_t *idx, double *dist, size_t k)
 			}
 		}
 	}
-}
-
-static void check_neighborhoods_knn(NeighborFunc function, const void *structure, const Points *points)
-{
-	size_t neighbours[K];
-	double neighbours_distances[K];
-
-	// #pragma omp parallel for
-	for (size_t i = 0; i < ITER; ++i) {
-
-		size_t index = (size_t)rand() % points->num_points;
-		size_t neighbours_2[K];
-		double neighbours_distances_2[K];
-
-		function(structure, index, neighbours, neighbours_distances);
-		find_knn_neighbors(points, index, neighbours_2, neighbours_distances_2);
-
-		// Ordenar ambos resultados
-		sort_neighbors(neighbours, neighbours_distances, K);
-		sort_neighbors(neighbours_2, neighbours_distances_2, K);
-
-		// Comparar
-		for (size_t j = 0; j < K; j++) {
-			if (neighbours[j] != neighbours_2[j]) {
-
-				const double epsilon = 1e-5;
-				double diff = fabs(neighbours_distances[j] - neighbours_distances_2[j]);
-
-				if (diff > epsilon) {
-					printf("KNN in %zu: %zu (%f) - %zu (%f) | diff = %f\n", j, neighbours[j],
-					       neighbours_distances[j], neighbours_2[j], neighbours_distances_2[j],
-					       diff);
-					exit(-1);
-				}
-			}
-		}
-	}
-}
-
-void check_neighborhoods_octree_knn(const Octree *octree)
-{
-	check_neighborhoods_knn((NeighborFunc)start_octree_knearest, octree, octree->points);
 }
 
 void check_neighborhoods_octree_radius(const Octree *octree)

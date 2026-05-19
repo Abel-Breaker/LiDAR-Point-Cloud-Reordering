@@ -33,91 +33,6 @@ static inline double aabb_min_dist(const AABB *box,
 	return (dx * dx + dy * dy + dz * dz);
 }
 
-/* Inserta (idx, dist) en la lista ordenada de K mejores vecinos. */
-static inline void update_kbest(size_t idx, double dist,
-                                size_t neighbours_index[K],
-                                double neighbours_distances[K])
-{
-	if (dist >= neighbours_distances[K - 1]) return;
-
-	for (size_t j = 0; j < K; ++j) {
-		if (neighbours_distances[j] > dist) {
-			memmove(neighbours_index + j + 1, neighbours_index + j,
-			        (K - j - 1) * sizeof(*neighbours_index));
-			memmove(neighbours_distances + j + 1, neighbours_distances + j,
-			        (K - j - 1) * sizeof(*neighbours_distances));
-			neighbours_distances[j] = dist;
-			neighbours_index[j]     = idx;
-			break;
-		}
-	}
-}
-
-/* Traversal recursivo del octree:
- *   - En hoja: evalúa todos los puntos del bucket.
- *   - En nodo interno: visita primero al hijo que contiene la consulta
- *     (distancia AABB = 0) y luego los demás siempre que su distancia
- *     mínima al AABB sea menor que la K-ésima mejor distancia acumulada. */
-static void octree_knearest(const Octree *octree, const Octant *octant,
-                            double px, double py, double pz,
-                            size_t query_index,
-                            size_t neighbours_index[K],
-                            double neighbours_distances[K])
-{
-	if (!octant) return;
-
-	/* Nodo hoja: point_indices != NULL */
-	if (octant->point_indices) {
-		for (size_t i = 0; i < octant->num_points; ++i) {
-			size_t idx = octant->point_indices[i];
-			double dist = euclidian_distance_3d(
-			    octree->points->x[idx], octree->points->y[idx], octree->points->z[idx],
-			    px, py, pz);
-			update_kbest(idx, dist, neighbours_index, neighbours_distances);
-		}
-		return;
-	}
-
-	/* Nodo interno: ordena implícitamente visitando primero el hijo más cercano. */
-	/* Fase 1 – visitar el hijo que contiene la consulta. */
-	int containing_child = -1;
-	for (int c = 0; c < 8; ++c) {
-		if (!octant->children[c]) continue;
-		if (aabb_contains(&octant->children[c]->bounds, px, py, pz)) {
-			containing_child = c;
-			octree_knearest(octree, octant->children[c], px, py, pz,
-			                query_index, neighbours_index, neighbours_distances);
-			break;
-		}
-	}
-
-	/* Fase 2 – visitar el resto, podando por distancia AABB. */
-	for (int c = 0; c < 8; ++c) {
-		if (!octant->children[c] || c == containing_child) continue;
-		double dist_to_box = aabb_min_dist(&octant->children[c]->bounds, px, py, pz);
-		if (dist_to_box >= neighbours_distances[K - 1]) continue;
-		octree_knearest(octree, octant->children[c], px, py, pz,
-		                query_index, neighbours_index, neighbours_distances);
-	}
-}
-
-void start_octree_knearest(const Octree *octree, size_t point_index,
-                           size_t neighbours_index[K],
-                           double neighbours_distances[K])
-{
-	for (size_t i = 0; i < K; ++i) {
-		neighbours_distances[i] = INFINITY;
-		neighbours_index[i]     = 0;
-	}
-
-	double px = octree->points->x[point_index];
-	double py = octree->points->y[point_index];
-	double pz = octree->points->z[point_index];
-
-	octree_knearest(octree, octree->root, px, py, pz,
-	                point_index, neighbours_index, neighbours_distances);
-}
-
 /* Añade un punto al resultado, redoblando capacidad si es necesario. */
 static bool radius_result_push(RadiusResultOctree *res, size_t idx, double dist)
 {
@@ -182,10 +97,10 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 void octree_radius_search(const Octree *octree, size_t point_index, double radius,
                           RadiusResultOctree *result)
 {
-	result->indices   = nullptr;
-	result->distances = nullptr;
+	//result->indices   = nullptr;
+	//result->distances = nullptr;
 	result->count     = 0;
-	result->capacity  = 0;
+	//result->capacity  = 0;
 
 	double px = octree->points->x[point_index];
 	double py = octree->points->y[point_index];

@@ -50,6 +50,7 @@ void reorder_cuthill_mckee(const Octree *octree, Points *new_points)
 	size_t *permutations = malloc(sizeof(*permutations) * num_points);
 	indices = malloc(sizeof(*indices) * num_points);
 	degrees = malloc(sizeof(*degrees) * num_points);
+	RadiusResultOctree result = {}; // Reutilice
 
 	// Check allocations
 	if (!queue || !visited || !permutations || !degrees || !indices) {
@@ -95,7 +96,6 @@ void reorder_cuthill_mckee(const Octree *octree, Points *new_points)
 		++points_visited;
 
 		// Get points neighbors
-		RadiusResultOctree result = {};
 		octree_radius_search(octree, index, radius, &result);
 		qsort(result.indices, result.count, sizeof(size_t), compare);
 
@@ -106,8 +106,9 @@ void reorder_cuthill_mckee(const Octree *octree, Points *new_points)
 				visited[result.indices[i]] = true;
 			}
 		}
-		radius_result_destroy(&result);
 	}
+
+	radius_result_destroy(&result);
 
 	// Reserves memory for new points
 	if (!reserve_memory_points(new_points, num_points)) {

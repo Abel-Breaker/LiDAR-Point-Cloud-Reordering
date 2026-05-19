@@ -3,10 +3,6 @@
 #include "../../utils/parse_args.h"
 #include <stddef.h>
 
-void start_octree_knearest(const Octree *octree, size_t point_index,
-                           size_t neighbours_index[K],
-                           double neighbours_distances[K]);
-
 /* Resultados de búsqueda por radio: array dinámico de índices y distancias. */
 typedef struct {
 	size_t *indices;
@@ -16,7 +12,8 @@ typedef struct {
 } RadiusResultOctree;
 
 /* Rellena 'result' con todos los puntos a distancia <= radius del punto dado.
- * Inicializa el struct internamente; llamar radius_result_destroy al terminar. */
+ * Si  RadiusResultOctree es la primera vez que se usa tiene que estar correctamente inicializado a 0 (={})
+ * Las siguientes llamadas puede reutilizar RadiusResultOctree sin problema para evitar malloc/free*/
 void octree_radius_search(const Octree *octree, size_t point_index, double radius,
                           RadiusResultOctree *result);
 

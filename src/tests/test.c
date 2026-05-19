@@ -13,7 +13,6 @@ static void test_points_for_octree(const Points *points)
 	create_octree(&octree, points);
 
 	// Checks
-	//check_neighborhoods_octree_knn(&octree);
 	check_neighborhoods_octree_radius(&octree);
 
 	destroy_octree(&octree);
