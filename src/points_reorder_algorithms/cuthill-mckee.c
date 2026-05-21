@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #ifdef _OPENMP
 #include <omp.h>
 #else
@@ -26,17 +27,17 @@ static inline int omp_get_thread_num(void)
 typedef struct {
 	size_t *degrees;
 	size_t *indices;
-	size_t cursor;
+	size_t num_points;
 } DegreeIndex;
 
 typedef struct {
 	Queue *queue;
 	bool *visited;
 	size_t *permutations;
-	size_t num_points;
-	DegreeIndex di;
-	RadiusResultOctree result; // Reutilice RadiusResultOctree during RCM to avoid several allocations
 	size_t points_visited;
+	RadiusResultOctree result; // Reutilice RadiusResultOctree during RCM to avoid several allocations
+	const DegreeIndex *di;
+	size_t cursor;
 	/*
 	 * Approximate reordered matrix bandwidth without explicitly building it.
 	 * Uses queue length as a heuristic metric during traversal.
@@ -62,39 +63,58 @@ static int compare(const void *a, const void *b, void *context)
 }
 
 /**
+ * @brief Reserves memory for struct DegreeIndex
+ */
+static bool create_degree_index(DegreeIndex *di, size_t num_points)
+{
+	di->degrees = malloc(sizeof(*(di->degrees)) * num_points);
+	di->indices = malloc(sizeof(*(di->indices)) * num_points);
+
+	return di->degrees && di->indices;
+}
+
+/**
  * @brief Precalculate all points degrees and inicializate an ordered by degree index array
  */
 static void setup_degree_index(DegreeIndex *di, const Octree *octree)
 {
-	const size_t num_points = octree->points->num_points;
+	di->num_points = octree->points->num_points;
 	const double radius = get_args()->radius_search;
 
 #pragma omp parallel for schedule(static) // TODO: Test with schedule(dynamic)
-	for (size_t i = 0; i < num_points; ++i) {
+	for (size_t i = 0; i < di->num_points; ++i) {
 		di->degrees[i] = octree_radius_neighbor_count(octree, i, radius);
 		di->indices[i] = i;
 	}
 
-	qsort_r(di->indices, num_points, sizeof(*(di->indices)), compare, di->degrees);
+	qsort_r(di->indices, di->num_points, sizeof(*(di->indices)), compare, di->degrees);
 }
 
 /**
  * @brief Reserves memory for struct RcmWorkspace and clean values
  */
-static bool create_rcm_workspace(RcmWorkspace *ws, size_t num_points)
+static bool create_rcm_workspace(RcmWorkspace *ws, const DegreeIndex *di_ref)
 {
-	ws->queue = create_queue(num_points);
-	ws->visited = calloc(num_points, sizeof(*(ws->visited)));
-	ws->permutations = malloc(sizeof(*(ws->permutations)) * num_points);
-	ws->di.degrees = malloc(sizeof(*(ws->di.degrees)) * num_points);
-	ws->di.indices = malloc(sizeof(*(ws->di.indices)) * num_points);
+	ws->queue = create_queue();
+	ws->visited = calloc(di_ref->num_points, sizeof(*(ws->visited)));
+	ws->permutations = malloc(sizeof(*(ws->permutations)) * di_ref->num_points);
+	ws->di= di_ref;
 	ws->result = (RadiusResultOctree){0};
-	ws->num_points = num_points;
-	ws->di.cursor = 0;
+	ws->cursor = 0;
 	ws->aprox_bw = 0;
 	ws->points_visited = 0;
 
-	return ws->queue && ws->visited && ws->permutations && ws->di.degrees && ws->di.indices;
+	return ws->queue && ws->visited && ws->permutations;
+}
+
+/**
+ * @brief Free memory for struct DegreeIndex and clean values
+ */
+static void destroy_degree_index(DegreeIndex *di)
+{
+	free(di->degrees);
+	free(di->indices);
+	di->num_points = 0;
 }
 
 /**
@@ -105,11 +125,8 @@ static void destroy_rcm_workspace(RcmWorkspace *ws)
 	destroy_queue(ws->queue);
 	free(ws->visited);
 	free(ws->permutations);
-	free(ws->di.degrees);
-	free(ws->di.indices);
 	radius_result_destroy(&(ws->result));
-	ws->num_points = 0;
-	ws->di.cursor = 0;
+	ws->cursor = 0;
 	ws->aprox_bw = 0;
 	ws->points_visited = 0;
 }
@@ -119,16 +136,14 @@ static void destroy_rcm_workspace(RcmWorkspace *ws)
  */
 static void clone_rcm_workspace(RcmWorkspace *dst, const RcmWorkspace *src)
 {
-	const size_t num_points = src->num_points;
+	const size_t num_points = src->di->num_points;
 
 	memcpy(dst->visited, src->visited, num_points * sizeof(*src->visited));
 	memcpy(dst->permutations, src->permutations, num_points * sizeof(*src->permutations));
-	memcpy(dst->di.degrees, src->di.degrees, num_points * sizeof(*src->di.degrees));
-	memcpy(dst->di.indices, src->di.indices, num_points * sizeof(*src->di.indices));
-	dst->num_points = src->num_points;
-	dst->di.cursor = src->di.cursor;
+	dst->di = src->di;
 	dst->aprox_bw = src->aprox_bw;
 	dst->points_visited = src->points_visited;
+	dst->cursor = src->cursor;
 }
 
 /**
@@ -154,11 +169,11 @@ static void build_reordered_points(const size_t *permutations, const Points *old
  */
 static inline size_t get_next_point_index_lowest_degree(RcmWorkspace *ws)
 {
-	const size_t num_points = ws->num_points;
+	const size_t num_points = ws->di->num_points;
 
-	for (; ws->di.cursor < num_points; ++(ws->di.cursor)) {
-		if (!ws->visited[ws->di.indices[ws->di.cursor]]) {
-			return ws->di.indices[ws->di.cursor];
+	for (; ws->cursor < num_points; ++(ws->cursor)) {
+		if (!ws->visited[ws->di->indices[ws->cursor]]) {
+			return ws->di->indices[ws->cursor];
 		}
 	}
 	return SIZE_MAX;
@@ -175,6 +190,7 @@ static inline size_t get_next_point_index_lowest_degree(RcmWorkspace *ws)
  */
 static void get_candidates(const Points *points, size_t *candidates, size_t num_candidates, RcmWorkspace *ws)
 {
+	srand(time(NULL));
 	double min[DIMENSIONS] = {DBL_MAX, DBL_MAX, DBL_MAX};
 	double max[DIMENSIONS] = {-DBL_MAX, -DBL_MAX, -DBL_MAX};
 	size_t candidates_aux[6];
@@ -206,7 +222,7 @@ static void get_candidates(const Points *points, size_t *candidates, size_t num_
 		}
 	}
 
-	candidates[0] = ws->di.indices[0];
+	candidates[0] = ws->di->indices[0];
 
 	for (size_t i = 1; i < num_candidates; i++) {
 		if (i <= 6)
@@ -252,7 +268,7 @@ static void run_rcm_thread(const Octree *octree, RcmWorkspace *local_ws, size_t 
 		// Get points neighbors and order by degree
 		octree_radius_search(octree, index, radius, &(local_ws->result));
 		qsort_r(local_ws->result.indices, local_ws->result.count, sizeof(*(local_ws->result.indices)), compare,
-			local_ws->di.degrees);
+			local_ws->di->degrees);
 
 		// Enqueue points not visited
 		for (size_t i = 0; i < local_ws->result.count; ++i) {
@@ -292,14 +308,17 @@ static size_t *get_best_permutation(const RcmWorkspace *ws)
 
 void reorder_cuthill_mckee(const Octree *octree, Points *new_points)
 {
+	// Common to all threads to avoid innecesary copies and memory usage
+	DegreeIndex di = {};
+	create_degree_index(&di, octree->points->num_points);
+	setup_degree_index(&di, octree);
+
 	RcmWorkspace *ws = calloc(omp_get_max_threads(), sizeof(*ws));
-	if (!create_rcm_workspace(&(ws[0]), octree->points->num_points)) {
+	if (!create_rcm_workspace(&(ws[0]), &di)) {
 		destroy_rcm_workspace(&(ws[0]));
 		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot allocate auxiliar structures for reorder RCM");
 		return;
 	}
-
-	setup_degree_index(&(ws[0].di), octree);
 
 	// Calculate candidates for each thread to start RCM
 	size_t *candidates = malloc(sizeof(*candidates) * omp_get_max_threads());
@@ -310,7 +329,7 @@ void reorder_cuthill_mckee(const Octree *octree, Points *new_points)
 	{
 		int tid = omp_get_thread_num();
 		if (tid != 0) {
-			if (!create_rcm_workspace(&(ws[tid]), octree->points->num_points)) {
+			if (!create_rcm_workspace(&(ws[tid]), &di)) {
 				destroy_rcm_workspace(&(ws[tid]));
 				handle_error(ERROR_MALLOC, ERR_FATAL,
 					     "Cannot allocate auxiliar structures for reorder RCM");
@@ -328,6 +347,7 @@ void reorder_cuthill_mckee(const Octree *octree, Points *new_points)
 		destroy_rcm_workspace(&(ws[i]));
 	}
 
+	destroy_degree_index(&di);
 	free(ws);
 	free(candidates);
 }

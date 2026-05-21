@@ -7,7 +7,7 @@
 
 typedef struct Queue Queue;
 
-Queue *create_queue(size_t size);
+Queue *create_queue();
 
 void enqueue(Queue *q, size_t index);
 

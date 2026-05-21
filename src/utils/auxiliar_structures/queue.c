@@ -2,57 +2,76 @@
 #include "../error_handler.h"
 #include <stdlib.h>
 
-struct Queue{
-    size_t head;
-    size_t tail;
-    size_t *indices;
-    size_t num_elements;
+#define QUEUE_INITIAL_SIZE 10000
+#define QUEUE_GROWTH_SIZE 10000
+
+struct Queue {
+	size_t head;
+	size_t tail;
+	size_t *indices;
+	size_t num_elements;
+	size_t capacity;
 };
 
 // Crear cola
-Queue *create_queue(size_t size) {
-    Queue* q = calloc(1, sizeof(*q)); // Set head and tail to 0
-    if(!q){
-        handle_error(ERROR_MALLOC, ERR_FATAL, "Can not allocate memory for queue");
-        return NULL; // Only to avoid warning, never reached
-    }
-    q->indices = malloc(sizeof(*(q->indices)) * size);
-    if(!q->indices){
-        free(q); 
-        handle_error(ERROR_MALLOC, ERR_FATAL, "Can not allocate memory for queue");
-        return NULL; // Only to avoid warning, never reached
-    }
-
-    return q;
+Queue *create_queue(void)
+{
+	Queue *q = calloc(1, sizeof(*q));
+	if (!q) {
+		handle_error(ERROR_MALLOC, ERR_FATAL, "Can not allocate memory for queue");
+		return NULL;
+	}
+	q->indices = malloc(sizeof(*(q->indices)) * QUEUE_INITIAL_SIZE);
+	if (!q->indices) {
+		free(q);
+		handle_error(ERROR_MALLOC, ERR_FATAL, "Can not allocate memory for queue");
+		return NULL;
+	}
+	q->capacity = QUEUE_INITIAL_SIZE;
+	return q;
 }
 
-// Encolar (push)
-void enqueue(Queue* q, size_t index) {
-    q->indices[q->tail++] = index;
-    q->num_elements++;
+static void resize_queue(Queue *q)
+{
+	size_t new_capacity = q->capacity + QUEUE_GROWTH_SIZE;
+	size_t *new_indices = realloc(q->indices, sizeof(*(q->indices)) * new_capacity);
+	if (!new_indices) {
+		handle_error(ERROR_MALLOC, ERR_FATAL, "Can not reallocate memory for queue");
+		return;
+	}
+	q->indices = new_indices;
+	q->capacity = new_capacity;
 }
 
-// TODO: Test to reallocate each X dequeues to reduce memory usage and check impact on rendimiento
-size_t dequeue(Queue* q) {
-    /*
-    if(q->tail % 100000 == 0){ // Each 100000 dequeues
-        reallocate
-    }
-    */
-   q->num_elements--;
-   return q->indices[q->head++];
+void enqueue(Queue *q, size_t index)
+{
+	if (q->tail >= q->capacity) {
+        resize_queue(q);
+	}
+
+	q->indices[q->tail++] = index;
+	q->num_elements++;
 }
 
-size_t get_num_elements(const Queue *q){
-    return q->num_elements;
+size_t dequeue(Queue *q)
+{
+	q->num_elements--;
+	return q->indices[q->head++];
 }
 
-bool is_queue_empty(const Queue* q){
-    return q->tail == q->head;
+size_t get_num_elements(const Queue *q)
+{
+	return q->num_elements;
 }
 
-void destroy_queue(Queue *q) {
-    q->head = q->tail = 0;
-    free(q->indices);
-    free(q);
+bool is_queue_empty(const Queue *q)
+{
+	return q->tail == q->head;
+}
+
+void destroy_queue(Queue *q)
+{
+	q->head = q->tail = 0;
+	free(q->indices);
+	free(q);
 }
