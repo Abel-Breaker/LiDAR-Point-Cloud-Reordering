@@ -1,10 +1,7 @@
 #define _POSIX_C_SOURCE 199309L
 #include "benchmarks/bench.h"
-#include "neighborhood_algorithms/knn/bruteforce.h"
 #include "neighborhood_algorithms/radius_search/octree.h"
-#include "points_reorder_algorithms/BFS.h"
 #include "points_reorder_algorithms/cuthill-mckee.h"
-#include "points_reorder_algorithms/random.h"
 #include "points_structures/octree.h"
 #include "tests/test.h"
 #include "types/lidar_points.h"

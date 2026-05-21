@@ -1,5 +1,4 @@
 #include "neighborhood_test.h"
-#include "../neighborhood_algorithms/knn/bruteforce.h"
 #include "../neighborhood_algorithms/radius_search/bruteforce.h"
 #include "../neighborhood_algorithms/radius_search/octree.h"
 #include "../neighborhood_algorithms/radius_search/tfg_idea.h"
