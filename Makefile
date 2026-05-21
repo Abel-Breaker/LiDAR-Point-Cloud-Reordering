@@ -42,7 +42,7 @@ SANITIZE_DEBUG_THREADS = -fsanitize=thread,undefined
 
 CFLAGS_DEBUG         = $(CFLAGS_DEBUG_BASE) $(SANITIZE_DEBUG)
 CFLAGS_DEBUG_THREADS = $(CFLAGS_DEBUG_BASE) $(SANITIZE_DEBUG_THREADS) -fopenmp
-CFLAGS_RELEASE       = -O2 -march=native -fopenmp -ftree-vectorize -fomit-frame-pointer -flto -ffast-math  #-funroll-loops #-fopt-info-vec -fopt-info-vec-missed -D_FORTIFY_SOURCE=2 3 
+CFLAGS_RELEASE       = -O2 -march=native -fopenmp -ftree-vectorize -fomit-frame-pointer -flto #-ffast-math #-fno-math-errno #-ffinite-math-only#-ffast-math  #-funroll-loops #-fopt-info-vec -fopt-info-vec-missed -D_FORTIFY_SOURCE=2 3 
 CFLAGS_VALGRIND 	 = $(CFLAGS_DEBUG_BASE)
 
 

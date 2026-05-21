@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 		create_octree(&octree, &points);
 		create_neighbourhood_matrix(&matrix, &octree);
 		print_matrix_stats(&matrix);
-
+		destroy_neighbourhood_matrix(&matrix);
 		
 
 		// Test
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 		test_idea("CUTHILL-MCKEE", (SortFunc)reorder_cuthill_mckee, &octree, octree.points);
 
 		
-		destroy_neighbourhood_matrix(&matrix);
+		
 		destroy_octree(&octree);
 		destroy_points(&points);
 	}
