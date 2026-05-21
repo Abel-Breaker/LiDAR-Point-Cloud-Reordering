@@ -30,7 +30,7 @@ void create_neighbourhood_matrix(struct matrix_t *matrix, const Octree *octree)
 	const size_t number_of_blocks = get_args()->number_of_blocks;
 
 	matrix->points = octree->points;
-	matrix->rows = malloc(sizeof(*matrix->rows) * n);
+	matrix->rows = malloc(n * sizeof(struct row_t *)); // sizeof(*(matrix->rows)) shows a Clan-Tidy false positive warn
 
 	matrix->bandwith_left = calloc(number_of_blocks, sizeof(size_t));
 	matrix->bandwith_right = calloc(number_of_blocks, sizeof(size_t));

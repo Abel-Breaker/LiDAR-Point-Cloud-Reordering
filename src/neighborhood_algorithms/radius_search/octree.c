@@ -38,20 +38,28 @@ static bool radius_result_push(RadiusResultOctree *res, size_t idx, double dist)
 {
 	if (res->count == res->capacity) {
 		size_t new_cap = res->capacity == 0 ? 64u : res->capacity * 2u;
-		size_t *ni = realloc(res->indices,  new_cap * sizeof(*res->indices));
-		double *nd = realloc(res->distances, new_cap * sizeof(*res->distances));
-		if (!ni || !nd) {
-			free(ni);
-			free(nd);
+
+		size_t *ni = realloc(res->indices, new_cap * sizeof(*res->indices));
+		if (!ni) {
 			return false;
 		}
-		res->indices   = ni;
+		res->indices = ni;
+
+		double *nd = realloc(res->distances, new_cap * sizeof(*res->distances));
+		if (!nd) {
+			//free(ni);
+			return false;
+		}
+
+		
 		res->distances = nd;
-		res->capacity  = new_cap;
+		res->capacity = new_cap;
 	}
+
 	res->indices[res->count]   = idx;
 	res->distances[res->count] = dist;
 	res->count++;
+
 	return true;
 }
 

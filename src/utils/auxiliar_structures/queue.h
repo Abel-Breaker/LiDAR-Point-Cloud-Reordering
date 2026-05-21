@@ -15,4 +15,6 @@ size_t dequeue(Queue *q);
 
 bool is_queue_empty(const Queue *q);
 
+size_t get_num_elements(const Queue *q);
+
 void destroy_queue(Queue *q);

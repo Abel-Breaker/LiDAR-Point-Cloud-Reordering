@@ -6,6 +6,7 @@ struct Queue{
     size_t head;
     size_t tail;
     size_t *indices;
+    size_t num_elements;
 };
 
 // Crear cola
@@ -28,6 +29,7 @@ Queue *create_queue(size_t size) {
 // Encolar (push)
 void enqueue(Queue* q, size_t index) {
     q->indices[q->tail++] = index;
+    q->num_elements++;
 }
 
 // TODO: Test to reallocate each X dequeues to reduce memory usage and check impact on rendimiento
@@ -37,7 +39,12 @@ size_t dequeue(Queue* q) {
         reallocate
     }
     */
+   q->num_elements--;
    return q->indices[q->head++];
+}
+
+size_t get_num_elements(const Queue *q){
+    return q->num_elements;
 }
 
 bool is_queue_empty(const Queue* q){
