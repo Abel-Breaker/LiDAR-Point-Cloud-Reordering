@@ -5,14 +5,14 @@ Q ?= @
 # Nombre del ejecutable
 TARGET = build/program
 
-# Rutas de librerías estáticas opcionales
+# Rutas de librerías estáticas
 LASLIB     = third_party/LAStools/LASlib/lib/libLASlib.a
-LASPARSE   = src/utils/parse_lidar_points.a
-LASWRITER   = src/utils/lidar_points_writer.a
+LASPARSE   = utils/io/lidar/points_reader.a
+LASWRITER   = utils/io/lidar/points_writer.a
 
 
 # Busca todos los archivos .c en el proyecto (incluyendo subcarpetas)
-C_SRCS = $(shell find ./src -name "*.c")
+C_SRCS = $(shell find ./src ./bench ./tests ./utils -name "*.c")
 C_OBJS = $(C_SRCS:.c=.o)
 
 # Busca todos los archivos .a en el proyecto
@@ -77,26 +77,26 @@ $(LASPARSE):
 	@echo "[LASparse] Building libparse_lidar_points.a & lidar_points_writer.a..."
 	$(Q)$(CXX) -std=c++23 -O2 \
 		-I./third_party/LAStools/LASlib/inc \
-		-I./src/types \
+		-I./src/points \
 		-I./third_party/LAStools/LASzip/src \
 		-I./third_party/LAStools/LASzip/include/laszip \
-		-c ./src/utils/parse_lidar_points.cpp \
-		-o ./src/utils/parse_lidar_points.o
-	$(Q)ar rcs $(LASPARSE) ./src/utils/parse_lidar_points.o
-	$(Q)rm ./src/utils/parse_lidar_points.o
+		-c ./utils/io/lidar/points_reader.cpp \
+		-o ./utils/io/lidar/points_reader.o
+	$(Q)ar rcs $(LASPARSE) ./utils/io/lidar/points_reader.o
+	$(Q)rm ./utils/io/lidar/points_reader.o
 
 # ── Wrapper parse_lidar_points: compilar solo si no existe la librería ────────
 $(LASWRITER):
 	@echo "[LASwriter] Building lidar_points_writer.a..."
 	$(Q)$(CXX) -std=c++23 -O2 \
 		-I./third_party/LAStools/LASlib/inc \
-		-I./src/types \
+		-I./src/points \
 		-I./third_party/LAStools/LASzip/src \
 		-I./third_party/LAStools/LASzip/include/laszip \
-		-c ./src/utils/lidar_points_writer.cpp \
-		-o ./src/utils/lidar_points_writer.o
-	$(Q)ar rcs $(LASWRITER) ./src/utils/lidar_points_writer.o
-	$(Q)rm ./src/utils/lidar_points_writer.o
+		-c ./utils/io/lidar/points_writer.cpp \
+		-o ./utils/io/lidar/points_writer.o
+	$(Q)ar rcs $(LASWRITER) ./utils/io/lidar/points_writer.o
+	$(Q)rm ./utils/io/lidar/points_writer.o
 
 # ── Ejecutable principal ──────────────────────────────────────────────────────
 $(TARGET): $(C_OBJS)
