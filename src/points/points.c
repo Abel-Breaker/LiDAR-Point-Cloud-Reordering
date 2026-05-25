@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-bool reserve_memory_points(Points *points, size_t number_of_points)
+bool reserve_memory_points(Points *points, index_t number_of_points)
 {
     // Convert number_of_points to a multple of 64
-    size_t size = number_of_points * sizeof(double);
-    size_t aligned_size = (size + 63) & ~63ULL;
+    index_t size = number_of_points * sizeof(double);
+   index_t aligned_size = (size + (index_t)63) & ~(index_t)63; //
 
     points->x = aligned_alloc(64, aligned_size);
     points->y = aligned_alloc(64, aligned_size);
@@ -21,7 +21,7 @@ bool reserve_memory_points(Points *points, size_t number_of_points)
     return true;
 }
 
-void add_point(Points *points, size_t index, double x, double y, double z)
+void add_point(Points *points, index_t index, double x, double y, double z)
 {
 	points->x[index] = x;
 	points->y[index] = y;

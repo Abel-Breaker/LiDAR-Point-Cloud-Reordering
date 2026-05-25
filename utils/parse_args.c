@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "types.h"
 
 static Args args;
 
@@ -48,7 +49,8 @@ void parse_args(int argc, char **argv)
 				perror("Error al convertir");
 			}
 
-			args.number_of_blocks = (size_t)val;
+			args.number_of_blocks = (index_t)val;
+			
 			break;
 		case 'n':
 			val = strtoull(optarg, &endptr, 10);
@@ -57,7 +59,7 @@ void parse_args(int argc, char **argv)
 				perror("Error al convertir");
 			}
 
-			args.max_num_of_points = (size_t)val;
+			args.max_num_of_points = (index_t)val;
 			break;
 		case 'h':
 			printf("Use: %s --filename archivo.las\n", argv[0]);

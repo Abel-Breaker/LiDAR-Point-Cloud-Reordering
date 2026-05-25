@@ -1,12 +1,12 @@
 #pragma once
-#include <stddef.h>
+#include "../types.h"
 
 typedef struct {
-	size_t *indices;
+	index_t *indices;
 	double *distances;
-	size_t  count;
+	index_t  count;
 } RadiusResult;
 
-void reserves_memory_radius_result(RadiusResult *result, size_t num_elements);
+void reserves_memory_radius_result(RadiusResult *result, index_t num_elements);
 
 void destroy_radius_result(RadiusResult *result);

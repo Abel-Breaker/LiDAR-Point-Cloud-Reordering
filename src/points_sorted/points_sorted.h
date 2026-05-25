@@ -2,19 +2,20 @@
 #include "../points/points.h"
 #include "../reorder/cuthill-mckee.h"
 #include "../../utils/auxiliar_structures/radius_result.h"
+#include "../../utils/types.h"
 #include <math.h>
-#include <stddef.h>
+
 
 
 
 typedef struct{
     Points *points;
-    size_t *bandwith_left;
-	size_t *bandwith_right;
+    index_t *bandwith_left;
+	index_t *bandwith_right;
 } Points_TFG;
 
 
-size_t get_block_index(size_t i, size_t num_points);
+index_t get_block_index(index_t i, index_t num_points);
 
 /**
  * Calculate bandwith_left and bandwith_right to do optimized search.
@@ -33,4 +34,4 @@ void build_sorted_points(Points_TFG *points, const Points *old_points, const Sol
  */
 void destroy_points_sorted(Points_TFG *points);
 
-void tfg_radius_search(const Points_TFG *points, size_t index, RadiusResult *result);
+void tfg_radius_search(const Points_TFG *points, index_t index, RadiusResult *result);

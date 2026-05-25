@@ -14,10 +14,10 @@
 
 #define ITER 1000
 
-static void sort_neighbors(size_t *idx, double *dist, size_t k)
+static void sort_neighbors(index_t *idx, double *dist, index_t k)
 {
-	for (size_t i = 0; i < k - 1; i++) {
-		for (size_t j = i + 1; j < k; j++) {
+	for (index_t i = 0; i < k - 1; i++) {
+		for (index_t j = i + 1; j < k; j++) {
 			if (idx[j] < idx[i]) {
 				// swap dist
 				double dtmp = dist[i];
@@ -25,7 +25,7 @@ static void sort_neighbors(size_t *idx, double *dist, size_t k)
 				dist[j] = dtmp;
 
 				// swap idx
-				size_t itmp = idx[i];
+				index_t itmp = idx[i];
 				idx[i] = idx[j];
 				idx[j] = itmp;
 			}
@@ -39,8 +39,8 @@ void check_neighborhoods_octree_radius(const Octree *octree)
 	// Usamos como radio la distancia al K-ésimo vecino del punto 0
 
 	// #pragma omp parallel for
-	for (size_t i = 0; i < ITER; ++i) {
-		size_t index = (size_t)rand() % octree->points->num_points;
+	for (index_t i = 0; i < ITER; ++i) {
+		index_t index = (index_t)rand() % octree->points->num_points;
 
 		RadiusResult resbf = {};
 		find_radius_neighbors(octree->points, index, &resbf);
@@ -50,8 +50,8 @@ void check_neighborhoods_octree_radius(const Octree *octree)
 		octree_radius_search(octree, index, get_args()->radius_search, &res);
 
 		if (resbf.count != res.count) {
-			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", i, index,
-			       resbf.count, res.count);
+			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", (size_t) i, (size_t) index,
+			       (size_t) resbf.count, (size_t) res.count);
 			exit(-1);
 		}
 
@@ -63,15 +63,15 @@ void check_neighborhoods_octree_radius(const Octree *octree)
 		sort_neighbors(res.indices, res.distances, res.count);
 
 		// Comparar
-		for (size_t j = 0; j < res.count; j++) {
+		for (index_t j = 0; j < res.count; j++) {
 			if (resbf.indices[j] != res.indices[j]) {
 
 				const double epsilon = 1e-5;
 				double diff = fabs(resbf.distances[j] - res.distances[j]);
 
 				if (diff > epsilon) {
-					printf("%zu (%f) - %zu (%f) | diff = %f\n", resbf.indices[j],
-					       resbf.distances[j], res.indices[j], res.distances[j], diff);
+					printf("%zu (%f) - %zu (%f) | diff = %f\n", (size_t) resbf.indices[j],
+					       resbf.distances[j], (size_t) res.indices[j], res.distances[j], diff);
 					exit(-1);
 				}
 			}
@@ -86,8 +86,8 @@ void check_neighborhoods_tfg(const Points_TFG *points)
 {
 
 	// #pragma omp parallel for
-	for (size_t i = 0; i < ITER; ++i) {
-		size_t index = (size_t)rand() % points->points->num_points;
+	for (index_t i = 0; i < ITER; ++i) {
+		index_t index = (index_t)rand() % points->points->num_points;
 
 		RadiusResult res = {};
 		tfg_radius_search(points, index, &res);
@@ -100,20 +100,20 @@ void check_neighborhoods_tfg(const Points_TFG *points)
 		sort_neighbors(resbf.indices, resbf.distances, resbf.count);
 
 		if (resbf.count != res.count) {
-			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", i, index,
-			       resbf.count, res.count);
+			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", (size_t) i, (size_t) index,
+			       (size_t) resbf.count, (size_t) res.count);
 			//exit(-1);
 		}
 
 		// Comparar
-		for (size_t j = 0; j < res.count; j++) {
+		for (index_t j = 0; j < res.count; j++) {
 			if (res.indices[j] != resbf.indices[j]) {
 				const double epsilon = 1e-5;
 				double diff = fabs(resbf.distances[j] - res.distances[j]);
 
 				if (diff > epsilon) {
 
-					size_t block = get_block_index(index, points->points->num_points);
+					index_t block = get_block_index(index, points->points->num_points);
 
 					printf("\nMismatch iteration %zu\n"
 					       "Point index: %zu\n"
@@ -125,12 +125,12 @@ void check_neighborhoods_tfg(const Points_TFG *points)
 					       "Brutef. -> neighbor: %zu  distance: %f\n"
 					       "Diff: %f\n",
 
-					       i, index, block, points->bandwith_left[block],
-					       points->bandwith_right[block],
+					       (size_t) i, (size_t) index, (size_t) block, (size_t) points->bandwith_left[block],
+					       (size_t) points->bandwith_right[block],
 
-					       res.indices[j], res.distances[j],
+					       (size_t) res.indices[j], res.distances[j],
 
-					       resbf.indices[j], resbf.distances[j],
+					       (size_t) resbf.indices[j], resbf.distances[j],
 
 					       diff);
 

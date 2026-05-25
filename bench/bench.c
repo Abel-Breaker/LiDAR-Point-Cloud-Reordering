@@ -1,42 +1,40 @@
-#define _POSIX_C_SOURCE 199309L
 #include "bench.h"
 #include "../src/octree/octree.h"
 #include "../src/points_sorted/points_sorted.h"
 #include "../src/reorder/cuthill-mckee.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
+#include "../utils/timer.h"
 #include "neighborhood_bench.h"
 #include "points_structures_bench.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 void bench(const Points *points)
 {
 
-	// Create necesary structures
+	// Create base structure
 	Octree octree = {};
 	create_octree(&octree, points);
 
 	{
-		printf("\n\033[1mOCTREE\033[0m\n");
+		printf("\n\033[1;34mOCTREE\033[0m\n");
 		neighborhoods_octree_radius_bench(&octree);
 	}
 
 	{
-		printf("\n\033[1mTFG\033[0m\n");
-		Points_TFG points_sorted = {};
+		printf("\n\033[1;34mTFG\033[0m\n");
 
-		struct timespec start, end;
-		double total = 0;
-
-		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+		timer_start();
 		Solution *sol = reorder_cuthill_mckee(&octree);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-		total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
-		printf("\nReorder radius: %.6f s\n", total);
+		timer_stop_and_print("Reorder");
 
+		timer_start();
+		Points_TFG points_sorted = {};
 		build_sorted_points(&points_sorted, octree.points, sol);
+		timer_stop_and_print("Build sorted points");
+
+		print_solution_stats(sol, octree.points->num_points);
 		destroy_solution(sol);
 
 		neighborhoods_tfg_bench(&points_sorted);

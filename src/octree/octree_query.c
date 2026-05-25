@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../../utils/types.h"
 
 /* Comprueba si el punto está dentro del bounding box (inclusivo). */
 static inline bool aabb_contains(const AABB *box,
@@ -34,12 +35,12 @@ static inline double aabb_min_dist(const AABB *box,
 }
 
 /* Añade un punto al resultado, redoblando capacidad si es necesario. */
-static bool radius_result_push(RadiusResultOctree *res, size_t idx, double dist)
+static bool radius_result_push(RadiusResultOctree *res, index_t idx, double dist)
 {
 	if (res->count == res->capacity) {
-		size_t new_cap = res->capacity == 0 ? 64u : res->capacity * 2u;
+		index_t new_cap = res->capacity == 0 ? 64u : res->capacity * 2u;
 
-		size_t *ni = realloc(res->indices, new_cap * sizeof(*res->indices));
+		index_t *ni = realloc(res->indices, new_cap * sizeof(*res->indices));
 		if (!ni) {
 			return false;
 		}
@@ -75,8 +76,8 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 
 	/* Nodo hoja: evaluar todos los puntos del bucket. */
 	if (octant->point_indices) {
-		for (size_t i = 0; i < octant->num_points; ++i) {
-			size_t idx = octant->point_indices[i];
+		for (index_t i = 0; i < octant->num_points; ++i) {
+			index_t idx = octant->point_indices[i];
 			double dist = euclidian_distance_3d(
 			    octree->points->x[idx], octree->points->y[idx], octree->points->z[idx],
 			    px, py, pz);
@@ -102,7 +103,7 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 	}
 }
 
-void octree_radius_search(const Octree *octree, size_t point_index, double radius,
+void octree_radius_search(const Octree *octree, index_t point_index, double radius,
                           RadiusResultOctree *result)
 {
 	//result->indices   = nullptr;
@@ -119,7 +120,7 @@ void octree_radius_search(const Octree *octree, size_t point_index, double radiu
 
 static void radius_traverse_neighbor_count(const Octree *octree, const Octant *octant,
                             double px, double py, double pz,
-                            double radius, size_t *neighbor_count)
+                            double radius, index_t *neighbor_count)
 {
 	if (!octant) return;
 
@@ -129,8 +130,8 @@ static void radius_traverse_neighbor_count(const Octree *octree, const Octant *o
 
 	/* Nodo hoja: evaluar todos los puntos del bucket. */
 	if (octant->point_indices) {
-		for (size_t i = 0; i < octant->num_points; ++i) {
-			size_t idx = octant->point_indices[i];
+		for (index_t i = 0; i < octant->num_points; ++i) {
+			index_t idx = octant->point_indices[i];
 			double dist = euclidian_distance_3d(
 			    octree->points->x[idx], octree->points->y[idx], octree->points->z[idx],
 			    px, py, pz);
@@ -156,13 +157,13 @@ static void radius_traverse_neighbor_count(const Octree *octree, const Octant *o
 	}
 }
 
-size_t octree_radius_neighbor_count(const Octree *octree, size_t point_index, double radius)
+index_t octree_radius_neighbor_count(const Octree *octree, index_t point_index, double radius)
 {
 	double px = octree->points->x[point_index];
 	double py = octree->points->y[point_index];
 	double pz = octree->points->z[point_index];
 
-	size_t neighbor_count = 0;
+	index_t neighbor_count = 0;
 
 	radius_traverse_neighbor_count(octree, octree->root, px, py, pz, radius, &neighbor_count);
 

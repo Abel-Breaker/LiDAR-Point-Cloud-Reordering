@@ -6,11 +6,11 @@
 #define QUEUE_GROWTH_SIZE 10000
 
 struct Queue {
-	size_t head;
-	size_t tail;
-	size_t *indices;
-	size_t num_elements;
-	size_t capacity;
+	index_t head;
+	index_t tail;
+	index_t *indices;
+	index_t num_elements;
+	index_t capacity;
 };
 
 // Crear cola
@@ -33,8 +33,8 @@ Queue *create_queue(void)
 
 static void resize_queue(Queue *q)
 {
-	size_t new_capacity = q->capacity + QUEUE_GROWTH_SIZE;
-	size_t *new_indices = realloc(q->indices, sizeof(*(q->indices)) * new_capacity);
+	index_t new_capacity = q->capacity + QUEUE_GROWTH_SIZE;
+	index_t *new_indices = realloc(q->indices, sizeof(*(q->indices)) * new_capacity);
 	if (!new_indices) {
 		handle_error(ERROR_MALLOC, ERR_FATAL, "Can not reallocate memory for queue");
 		return;
@@ -43,7 +43,7 @@ static void resize_queue(Queue *q)
 	q->capacity = new_capacity;
 }
 
-void enqueue(Queue *q, size_t index)
+void enqueue(Queue *q, index_t index)
 {
 	if (q->tail >= q->capacity) {
         resize_queue(q);
@@ -53,13 +53,13 @@ void enqueue(Queue *q, size_t index)
 	q->num_elements++;
 }
 
-size_t dequeue(Queue *q)
+index_t dequeue(Queue *q)
 {
 	q->num_elements--;
 	return q->indices[q->head++];
 }
 
-size_t get_num_elements(const Queue *q)
+index_t get_num_elements(const Queue *q)
 {
 	return q->num_elements;
 }

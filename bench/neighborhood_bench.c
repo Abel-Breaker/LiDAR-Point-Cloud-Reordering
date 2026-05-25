@@ -4,25 +4,20 @@
 #include "../src/points_sorted/points_sorted.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
+#include "../utils/timer.h"
+#include "../utils/types.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 void neighborhoods_octree_radius_bench(const Octree *structure)
 {
-	struct timespec start, end;
-	double total = 0;
-
-	// Test neighborhood
-	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
-	
+	timer_start();
 #pragma omp parallel
 	{
 		RadiusResultOctree res = {};
 
 #pragma omp for
-		for (size_t i = 0; i < structure->points->num_points; ++i) {
-
+		for (index_t i = 0; i < structure->points->num_points; ++i) {
 			octree_radius_search(structure, i, get_args()->radius_search, &res);
 
 			// Force use to avoid code elimination
@@ -31,20 +26,15 @@ void neighborhoods_octree_radius_bench(const Octree *structure)
 
 		radius_result_destroy(&res);
 	}
-	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
-	printf("\tNeighborhood radius: %.6f s\n", total);
+	timer_stop_and_print("Neighborhood radius");
 }
 
 void neighborhoods_tfg_bench(const Points_TFG *points)
 {
-	struct timespec start, end;
-	double total = 0;
-
 	// Test neighborhood
-	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	timer_start();
 #pragma omp parallel for
-	for (size_t i = 0; i < points->points->num_points; ++i) {
+	for (index_t i = 0; i < points->points->num_points; ++i) {
 		RadiusResult res = {};
 		tfg_radius_search(points, i, &res);
 
@@ -52,9 +42,7 @@ void neighborhoods_tfg_bench(const Points_TFG *points)
 		__asm__ volatile("" : : "r"(res.count) : "memory");
 		destroy_radius_result(&res);
 	}
-	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
-	total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
-	printf("\tNeighborhood radius: %.6f s\n", total);
+	timer_stop_and_print("Neighborhood radius");
 }
 
 /*
@@ -66,7 +54,7 @@ void neighborhoods_tfg_opt_bench(const Points_TFG_opt *points)
 	// Test neighborhood
 	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 	#pragma omp parallel for
-	for (size_t i = 0; i < points->points->num_points; ++i) {
+	for (index_t i = 0; i < points->points->num_points; ++i) {
 		RadiusResult res = {};
 		tfg_radius_search_opt(points, i, &res);
 

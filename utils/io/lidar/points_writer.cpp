@@ -41,7 +41,7 @@ void write_las_points(const char *filename, const Points *pts)
 	}
 
 	// Write points
-	for (size_t i = 0; i < pts->num_points; ++i) {
+	for (index_t i = 0; i < pts->num_points; ++i) {
 		lasPoint.set_X(pts->x[i] * 100);
 		lasPoint.set_Y(pts->y[i] * 100);
 		lasPoint.set_Z(pts->z[i] * 100);

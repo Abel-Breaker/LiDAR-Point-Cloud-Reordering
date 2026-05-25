@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
 	// Print some info
 	printf("\n\n\033[1mFilename\033[0m: %s\n", get_args()->cloud_points_file_name);
-	printf("\033[1mNumber of points: \033[0m%zu\n", points.num_points);
+	printf("\033[1mNumber of points: \033[0m%zu\n", (size_t) points.num_points);
 	printf("\033[1mNumber of KNN neighbours: \033[0m%zu\n", (size_t)K);
 	printf("\033[1mRadius: \033[0m%f\n", get_args()->radius_search);
 

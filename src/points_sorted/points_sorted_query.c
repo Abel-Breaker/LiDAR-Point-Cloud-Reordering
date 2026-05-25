@@ -8,13 +8,13 @@
 #include <immintrin.h>
 #endif
 
-void tfg_radius_search(const Points_TFG *points, size_t index, RadiusResult *result)
+void tfg_radius_search(const Points_TFG *points, index_t index, RadiusResult *result)
 {
 	const double radius = get_args()->radius_search;
 	
-	const size_t block_index = get_block_index(index, points->points->num_points);
-	const size_t bandwith_left = points->bandwith_left[block_index];
-	const size_t bandwith_right = points->bandwith_right[block_index];
+	const index_t block_index = get_block_index(index, points->points->num_points);
+	const index_t bandwith_left = points->bandwith_left[block_index];
+	const index_t bandwith_right = points->bandwith_right[block_index];
 
 	// Obtain coordinates of the point to compare
 	const double x = points->points->x[index];
@@ -22,26 +22,26 @@ void tfg_radius_search(const Points_TFG *points, size_t index, RadiusResult *res
 	const double z = points->points->z[index];
 
 	// Rango de búsqueda: [index - bandwith, index + bandwith]
-	size_t search_start_index = (index > bandwith_left) ? (index - bandwith_left) : 0;
-	search_start_index = search_start_index & ~(size_t)63;  // redondear hacia abajo al múltiplo de 64
-	size_t search_end_index = index + bandwith_right;
+	index_t search_start_index = (index > bandwith_left) ? (index - bandwith_left) : 0;
+	search_start_index = search_start_index & ~(index_t)63;  // redondear hacia abajo al múltiplo de 64
+	index_t search_end_index = index + bandwith_right;
 	if (search_end_index >= points->points->num_points) {
 		search_end_index = points->points->num_points - 1;
 	}
 
 	// Número total de puntos incluyendo ambos extremos
-	const size_t window = search_end_index - search_start_index + 1;
+	const index_t window = search_end_index - search_start_index + 1;
 
 	reserves_memory_radius_result(result, window);
 
-	size_t *restrict indices = result->indices;
+	index_t *restrict indices = result->indices;
 	double *restrict distances = result->distances;
 	const double *restrict xs = points->points->x + search_start_index;
 	const double *restrict ys = points->points->y + search_start_index;
 	const double *restrict zs = points->points->z + search_start_index;
 
-	size_t elements_count = 0;
-	size_t i = 0;
+	index_t elements_count = 0;
+	index_t i = 0;
 
 #if defined(__AVX512F__)
 

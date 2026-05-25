@@ -25,7 +25,7 @@ OBJS = $(C_OBJS) $(STATIC_LIBRARIES)
 COMMON_FLAGS = -std=c2x -lstdc++ -lm
 
 # Base de flags de debug (sin sanitizers) -Wpedantic
-CFLAGS_DEBUG_BASE = -O0 -g3 -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 \
+CFLAGS_DEBUG_BASE = -O0 -g3 -Wall -Wextra -Wpedantic -Wshadow -Wformat=2\
 -Wconversion -Wsign-conversion -Wuninitialized -Wlogical-op -Wduplicated-cond \
 -Wunused -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wstrict-overflow=5 \
 -Wnull-dereference -Wdouble-promotion -Wstack-protector -Wstrict-aliasing=3 \
@@ -33,7 +33,7 @@ CFLAGS_DEBUG_BASE = -O0 -g3 -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 \
 -Wshift-overflow -Wundef -Wbad-function-cast -Wcast-align -Wwrite-strings \
 --strict-flex-arrays=3 -Wshift-negative-value -Walloc-zero -fno-common \
 -Wno-unknown-pragmas
-#-Wunsuffixed-float-constants
+#-Wunsuffixed-float-constants #-Wformat=1
 
 # Sanitizers: incompatibles entre sí, se seleccionan por modo
 SANITIZE_DEBUG         = -fsanitize=address,undefined,leak,bounds,alignment,object-size

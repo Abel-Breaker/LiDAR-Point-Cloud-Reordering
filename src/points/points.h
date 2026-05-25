@@ -2,10 +2,9 @@
 #include <math.h>
 #include <stddef.h>
 #include "../../utils/auxiliar_structures/radius_result.h"
+#include "../../utils/types.h"
 
 #define DIMENSIONS 3
-
-typedef size_t index_type;
 
 enum axis { X = 0, Y = 1, Z = 2 };
 
@@ -25,7 +24,7 @@ typedef struct{
     double *x;
     double *y;
     double *z;
-    size_t num_points;
+    index_t num_points;
 } Points;
 
 /**
@@ -35,7 +34,7 @@ typedef struct{
  * @param[in] number_of_points Number of points to reserve space for.
  * @return true if memory allocation was successful, false otherwise.
  */
-bool reserve_memory_points(Points *points, size_t number_of_points);
+bool reserve_memory_points(Points *points, index_t number_of_points);
 
 /**
  * @brief Adds a point to a set of points at a specified index.
@@ -44,7 +43,7 @@ bool reserve_memory_points(Points *points, size_t number_of_points);
  * @param[in] index Index at which the point will be added.
  * @param[in] x, y, z Coordinates of the point to add.
  */
-void add_point(Points *points, size_t index, double x, double y, double z);
+void add_point(Points *points, index_t index, double x, double y, double z);
 
 /**
  * @brief Finds the neighbors of a point in a certain radio of a point collection.
@@ -56,7 +55,7 @@ void add_point(Points *points, size_t index, double x, double y, double z);
  * 
  * @note The point collection `points` must be initialized before calling this function.
  */
-void find_radius_neighbors(const Points *points, size_t point_index, RadiusResult *result);
+void find_radius_neighbors(const Points *points, index_t point_index, RadiusResult *result);
 
 /**
  * @brief Frees the memory allocated for a set of points.

@@ -3,9 +3,9 @@
 #include "../../utils/auxiliar_structures/queue.h"
 #include "../../utils/error_handler.h"
 #include "../../utils/parse_args.h"
+#include "../../utils/types.h"
 #include "../octree/octree.h"
 #include <float.h>
-#include <stdint.h> // for SIZE_MAX
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,20 +20,20 @@ static inline int omp_get_thread_num(void)
 #endif
 
 typedef struct {
-	size_t *degrees;
-	size_t *indices;
-	size_t num_points;
+	index_t *degrees;
+	index_t *indices;
+	index_t num_points;
 } RcmWorkspaceCommonData;
 
 typedef struct {
 	Queue *queue;
 	bool *visited;
-	size_t *positions;
+	index_t *positions;
 	Solution *solution;
-	size_t points_visited;
+	index_t points_visited;
 	const RcmWorkspaceCommonData *di;
-	size_t cursor;
-	size_t max_bw;
+	index_t cursor;
+	index_t max_bw;
 } RcmWorkspace;
 
 /**
@@ -41,9 +41,9 @@ typedef struct {
  */
 static int compare(const void *a, const void *b, void *context)
 {
-	const size_t ia = *(const size_t *)a;
-	const size_t ib = *(const size_t *)b;
-	size_t *degrees = (size_t *)context;
+	const index_t ia = *(const index_t *)a;
+	const index_t ib = *(const index_t *)b;
+	index_t *degrees = (index_t *)context;
 	(void)degrees[0]; // Only to avoid cppcheck warnings
 
 	if (degrees[ia] < degrees[ib])
@@ -56,7 +56,7 @@ static int compare(const void *a, const void *b, void *context)
 /**
  * @brief Reserves memory for struct RcmWorkspaceCommonData
  */
-static bool create_degree_index(RcmWorkspaceCommonData *di, size_t num_points)
+static bool create_degree_index(RcmWorkspaceCommonData *di, index_t num_points)
 {
 	di->degrees = malloc(sizeof(*(di->degrees)) * num_points);
 	di->indices = malloc(sizeof(*(di->indices)) * num_points);
@@ -73,7 +73,7 @@ static void setup_degree_index(RcmWorkspaceCommonData *di, const Octree *octree)
 	const double radius = get_args()->radius_search;
 
 #pragma omp parallel for schedule(static) // TODO: Test with schedule(dynamic)
-	for (size_t i = 0; i < di->num_points; ++i) {
+	for (index_t i = 0; i < di->num_points; ++i) {
 		di->degrees[i] = octree_radius_neighbor_count(octree, i, radius);
 		di->indices[i] = i;
 	}
@@ -84,13 +84,15 @@ static void setup_degree_index(RcmWorkspaceCommonData *di, const Octree *octree)
 /**
  * @brief Reserves memory for struct Solution
  */
-static Solution *create_solution(size_t num_points)
+static Solution *create_solution(index_t num_points)
 {
 	Solution *solution = malloc(sizeof(*solution) * num_points);
 
 	solution->permutations = malloc(sizeof(*(solution->permutations)) * num_points);
 	solution->bandwith_left = calloc(num_points, sizeof(*(solution->bandwith_left)));
 	solution->bandwith_right = calloc(num_points, sizeof(*(solution->bandwith_right)));
+	solution->avg_neighbours = 0;
+	solution->total_neighours = 0;
 
 	return solution;
 }
@@ -114,8 +116,8 @@ static bool create_rcm_workspace(RcmWorkspace *ws, const RcmWorkspaceCommonData 
 	ws->queue = create_queue();
 	ws->visited = calloc(di_ref->num_points, sizeof(*(ws->visited)));
 	ws->positions = malloc(sizeof(*(ws->positions)) * di_ref->num_points);
-	for(size_t i=0; i<di_ref->num_points; ++i){
-		ws->positions[i] = SIZE_MAX;
+	for (index_t i = 0; i < di_ref->num_points; ++i) {
+		ws->positions[i] = INDEX_MAX;
 	}
 	ws->solution = create_solution(di_ref->num_points);
 	ws->di = di_ref;
@@ -168,18 +170,18 @@ static Solution *destroy_rcm_workspace_except_solution(RcmWorkspace *ws)
 }
 
 /**
- * @brief Return the next point with lowest degree. If there isn't any left return SIZE_MAX
+ * @brief Return the next point with lowest degree. If there isn't any left return INDEX_MAX
  */
-static inline size_t get_next_point_index_lowest_degree(RcmWorkspace *ws)
+static inline index_t get_next_point_index_lowest_degree(RcmWorkspace *ws)
 {
-	const size_t num_points = ws->di->num_points;
+	const index_t num_points = ws->di->num_points;
 
 	for (; ws->cursor < num_points; ++(ws->cursor)) {
 		if (!ws->visited[ws->di->indices[ws->cursor]]) {
 			return ws->di->indices[ws->cursor];
 		}
 	}
-	return SIZE_MAX;
+	return INDEX_MAX;
 }
 
 /**
@@ -191,37 +193,55 @@ static inline size_t get_next_point_index_lowest_degree(RcmWorkspace *ws)
  * @note - The next 6 are the points with the min and max values for each dimesion
  * @note - The rest of candidates are random points of the cloud
  */
-static void get_candidates(const Points *points, size_t *candidates, RcmWorkspaceCommonData *ws)
+static void get_candidates(const Points *points, index_t *candidates, RcmWorkspaceCommonData *ws)
 {
-    srand((unsigned int) time(NULL));
-    double min[DIMENSIONS] = {DBL_MAX, DBL_MAX, DBL_MAX};
-    double max[DIMENSIONS] = {-DBL_MAX, -DBL_MAX, -DBL_MAX};
-    size_t candidates_aux[6];
+	srand((unsigned int)time(NULL));
+	double min[DIMENSIONS] = {DBL_MAX, DBL_MAX, DBL_MAX};
+	double max[DIMENSIONS] = {-DBL_MAX, -DBL_MAX, -DBL_MAX};
+	index_t candidates_aux[6];
 
-    for (size_t i = 0; i < points->num_points; i++) {
-        if (points->x[i] < min[0]) { candidates_aux[0] = i; min[0] = points->x[i]; }
-        if (points->y[i] < min[1]) { candidates_aux[1] = i; min[1] = points->y[i]; }
-        if (points->z[i] < min[2]) { candidates_aux[2] = i; min[2] = points->z[i]; }
-        if (points->x[i] > max[0]) { candidates_aux[3] = i; max[0] = points->x[i]; }
-        if (points->y[i] > max[1]) { candidates_aux[4] = i; max[1] = points->y[i]; }
-        if (points->z[i] > max[2]) { candidates_aux[5] = i; max[2] = points->z[i]; }
-    }
+	for (index_t i = 0; i < points->num_points; i++) {
+		if (points->x[i] < min[0]) {
+			candidates_aux[0] = i;
+			min[0] = points->x[i];
+		}
+		if (points->y[i] < min[1]) {
+			candidates_aux[1] = i;
+			min[1] = points->y[i];
+		}
+		if (points->z[i] < min[2]) {
+			candidates_aux[2] = i;
+			min[2] = points->z[i];
+		}
+		if (points->x[i] > max[0]) {
+			candidates_aux[3] = i;
+			max[0] = points->x[i];
+		}
+		if (points->y[i] > max[1]) {
+			candidates_aux[4] = i;
+			max[1] = points->y[i];
+		}
+		if (points->z[i] > max[2]) {
+			candidates_aux[5] = i;
+			max[2] = points->z[i];
+		}
+	}
 
-    // Slot 0: always ws->indices[0]
-    candidates[0] = ws->indices[0];
+	// Slot 0: always ws->indices[0]
+	candidates[0] = ws->indices[0];
 
-    // Slots 1..6: extremes, but random if degree == 1
-    for (size_t i = 1; i < NUM_PARALLEL_RUNS && i <= 6; i++) {
-        if (ws->degrees[candidates_aux[i - 1]] == 1)
-            candidates[i] = (size_t) rand() % points->num_points;
-        else
-            candidates[i] = candidates_aux[i - 1];
-    }
+	// Slots 1..6: extremes, but random if degree == 1
+	for (index_t i = 1; i < NUM_PARALLEL_RUNS && i <= 6; i++) {
+		if (ws->degrees[candidates_aux[i - 1]] == 1)
+			candidates[i] = (index_t)rand() % points->num_points;
+		else
+			candidates[i] = candidates_aux[i - 1];
+	}
 
-    // Slots 7+: random
-    for (size_t i = 7; i < NUM_PARALLEL_RUNS; i++) {
-        candidates[i] = (size_t)rand() % points->num_points;
-    }
+	// Slots 7+: random
+	for (index_t i = 7; i < NUM_PARALLEL_RUNS; i++) {
+		candidates[i] = (index_t)rand() % points->num_points;
+	}
 }
 
 /**
@@ -232,8 +252,8 @@ static void get_candidates(const Points *points, size_t *candidates, RcmWorkspac
  */
 static void process_result(RadiusResultOctree *result, RcmWorkspace *ws)
 {
-	for (size_t i = 0; i < result->count; ++i) {
-		size_t nb = result->indices[i];
+	for (index_t i = 0; i < result->count; ++i) {
+		index_t nb = result->indices[i];
 		if (!ws->visited[nb]) {
 			enqueue(ws->queue, nb);
 			ws->visited[nb] = true;
@@ -243,7 +263,7 @@ static void process_result(RadiusResultOctree *result, RcmWorkspace *ws)
 			// Bandwidth izquierdo: distancia al vecino ya visitado más lejano
 			if (ws->positions[nb] <
 			    ws->points_visited) { // Evita underflow por vecinos encolados pero no procesados
-				size_t bw_l = ws->points_visited - ws->positions[nb];
+				index_t bw_l = ws->points_visited - ws->positions[nb];
 				if (bw_l > ws->solution->bandwith_left[ws->points_visited])
 					ws->solution->bandwith_left[ws->points_visited] = bw_l;
 			}
@@ -254,7 +274,7 @@ static void process_result(RadiusResultOctree *result, RcmWorkspace *ws)
 
 static void update_max_bandwith(RcmWorkspace *ws)
 {
-	size_t total_bw =
+	index_t total_bw =
 	    ws->solution->bandwith_right[ws->points_visited] + ws->solution->bandwith_left[ws->points_visited];
 	if (total_bw > ws->max_bw)
 		ws->max_bw = total_bw;
@@ -263,7 +283,7 @@ static void update_max_bandwith(RcmWorkspace *ws)
 /**
  * @brief Reverse Cuthill-Mckee algorithm function to run for each thread
  */
-static void run_rcm_thread(const Octree *octree, RcmWorkspace *ws, size_t start_index)
+static void run_rcm_thread(const Octree *octree, RcmWorkspace *ws, index_t start_index)
 {
 	const double radius = get_args()->radius_search;
 	RadiusResultOctree result = {};
@@ -273,12 +293,12 @@ static void run_rcm_thread(const Octree *octree, RcmWorkspace *ws, size_t start_
 	ws->positions[start_index] = 0;
 
 	while (true) {
-		size_t index;
+		index_t index;
 
 		if (is_queue_empty(ws->queue)) {
 			index = get_next_point_index_lowest_degree(ws);
 
-			if (index == SIZE_MAX)
+			if (index == INDEX_MAX)
 				break;
 
 			ws->visited[index] = true;
@@ -296,8 +316,14 @@ static void run_rcm_thread(const Octree *octree, RcmWorkspace *ws, size_t start_
 
 		update_max_bandwith(ws);
 
+		// DEBUG: for stats
+		ws->solution->total_neighours += result.count;
+
 		++(ws->points_visited);
 	}
+
+	// DEBUG: for stats
+	ws->solution->avg_neighbours = ws->solution->avg_neighbours / ws->points_visited;
 
 	radius_result_destroy(&result);
 }
@@ -308,10 +334,10 @@ static void run_rcm_thread(const Octree *octree, RcmWorkspace *ws, size_t start_
 static int get_best_permutation(const RcmWorkspace *ws)
 {
 	int tid_best_result = 0;
-	size_t aprox_bw_best_result = SIZE_MAX;
+	index_t aprox_bw_best_result = INDEX_MAX;
 
 	for (int i = 0; i < NUM_PARALLEL_RUNS; i++) {
-		printf("Max Bandwith Aproximation of thread %d: %zu\n", i, ws[i].max_bw);
+		printf("Max Bandwith Aproximation of thread %d: %zu\n", i, (size_t) ws[i].max_bw);
 		if (ws[i].max_bw < aprox_bw_best_result) {
 			aprox_bw_best_result = ws[i].max_bw;
 			tid_best_result = i;
@@ -329,7 +355,7 @@ Solution *reorder_cuthill_mckee(const Octree *octree)
 	setup_degree_index(&di, octree);
 
 	// Calculate candidates for each thread to start RCM
-	size_t *candidates = malloc(sizeof(*candidates) * NUM_PARALLEL_RUNS);
+	index_t *candidates = malloc(sizeof(*candidates) * NUM_PARALLEL_RUNS);
 	get_candidates(octree->points, candidates, &di);
 
 	RcmWorkspace *ws = calloc(NUM_PARALLEL_RUNS, sizeof(*ws));
@@ -359,4 +385,33 @@ Solution *reorder_cuthill_mckee(const Octree *octree)
 	free(candidates);
 
 	return sol;
+}
+
+
+void print_solution_stats(const Solution *solution, index_t num_points){
+	index_t max_one_side = 0;
+	index_t max_total = 0;
+	double avg_total = 0.0;
+
+	for (index_t i = 0; i < num_points; ++i) {
+		index_t total = solution->bandwith_left[i] + solution->bandwith_right[i];
+
+		// Is symetric
+		if (solution->bandwith_left[i] > max_one_side)
+			max_one_side = solution->bandwith_left[i];
+
+		if (total > max_total)
+			max_total = total;
+
+		avg_total += (double)total;
+	}
+
+	avg_total /= (double)num_points;
+
+	printf("\n\033[1;33mSTATS\033[0m\n");
+	printf("\tTotal neighbours: %zu\n", (size_t) solution->total_neighours);
+	printf("\tAvg neighbours: %f\n", (double)solution->total_neighours/(double)num_points);
+	printf("\tMax bandwidth   : %zu\n", (size_t) max_total);
+	printf("\tMax one side        : %zu\n", (size_t) max_one_side);
+	printf("\tAverage bandwidth   : %.2f\n", avg_total);
 }

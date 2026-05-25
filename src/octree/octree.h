@@ -1,5 +1,6 @@
 #pragma once
 #include "../../utils/parse_args.h"
+#include "../../utils/types.h"
 #include "../points/points.h"
 #include <stddef.h>
 
@@ -18,8 +19,8 @@ typedef struct {
 
 typedef struct Octant {
 	struct Octant *children[8]; // NULL in leafs
-	size_t *point_indices;	    // Indices (only leafs)
-	size_t num_points;	    // Points on this leaf
+	index_t *point_indices;	    // Indices (only leafs)
+	index_t num_points;	    // Points on this leaf
 	AABB bounds;
 } Octant;
 
@@ -54,17 +55,17 @@ void octree_print_stats(const Octree *octree);
 
 /* Resultados de búsqueda por radio: array dinámico de índices y distancias. */
 typedef struct {
-	size_t *indices;
+	index_t *indices;
 	double *distances;
-	size_t count;
-	size_t capacity;
+	index_t count;
+	index_t capacity;
 } RadiusResultOctree;
 
 /* Rellena 'result' con todos los puntos a distancia <= radius del punto dado.
  * Si  RadiusResultOctree es la primera vez que se usa tiene que estar correctamente inicializado a 0 (={})
  * Las siguientes llamadas puede reutilizar RadiusResultOctree sin problema para evitar malloc/free*/
-void octree_radius_search(const Octree *octree, size_t point_index, double radius, RadiusResultOctree *result);
+void octree_radius_search(const Octree *octree, index_t point_index, double radius, RadiusResultOctree *result);
 
-size_t octree_radius_neighbor_count(const Octree *octree, size_t point_index, double radius);
+index_t octree_radius_neighbor_count(const Octree *octree, index_t point_index, double radius);
 
 void radius_result_destroy(RadiusResultOctree *result);

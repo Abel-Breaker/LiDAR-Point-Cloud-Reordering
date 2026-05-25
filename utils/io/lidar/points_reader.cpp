@@ -18,7 +18,7 @@ bool read_las_points(const char *filename, Points *pts)
 		return false;
 
 	// Get the number of points from the header
-	size_t point_count = static_cast<size_t>(lasReader->header.number_of_point_records);
+	index_t point_count = static_cast<index_t>(lasReader->header.number_of_point_records);
 
 	if (get_args()->max_num_of_points != 0) {
 		if (get_args()->max_num_of_points < point_count) {
@@ -44,7 +44,7 @@ bool read_las_points(const char *filename, Points *pts)
 	}
 
 	// Read and copy points
-	for (size_t i = 0; i < point_count; ++i) {
+	for (index_t i = 0; i < point_count; ++i) {
 		lasReader->read_point();
 		add_point(pts, i, lasReader->point.get_x(), lasReader->point.get_y(), lasReader->point.get_z());
 	}

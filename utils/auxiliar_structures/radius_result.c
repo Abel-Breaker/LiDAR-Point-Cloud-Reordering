@@ -1,7 +1,7 @@
 #include "radius_result.h"
 #include <stdlib.h>
 
-void reserves_memory_radius_result(RadiusResult *result, size_t num_elements){
+void reserves_memory_radius_result(RadiusResult *result, index_t num_elements){
     result->count = num_elements;
     result->indices = malloc(sizeof(*(result->indices)) * result->count);
     result->distances = malloc(sizeof(*(result->distances)) * result->count);
