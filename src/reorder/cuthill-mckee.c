@@ -13,10 +13,6 @@
 #ifdef _OPENMP
 #include <omp.h>
 #else
-static inline int omp_get_max_threads(void)
-{
-	return 1;
-}
 static inline int omp_get_thread_num(void)
 {
 	return 0;
@@ -172,24 +168,6 @@ static Solution *destroy_rcm_workspace_except_solution(RcmWorkspace *ws)
 }
 
 /**
- * @brief Builds a new Points structure with the permutations order
- */
-static void build_reordered_points(const size_t *permutations, const Points *old_points, Points *new_points)
-{
-	const size_t num_points = old_points->num_points;
-
-	if (!reserve_memory_points(new_points, num_points)) {
-		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot reserve memory for points");
-		return;
-	}
-
-	for (size_t i = 0; i < num_points; ++i) { // TODO: parallelize?
-		size_t idx = permutations[num_points - 1 - i];
-		add_point(new_points, i, old_points->x[idx], old_points->y[idx], old_points->z[idx]);
-	}
-}
-
-/**
  * @brief Return the next point with lowest degree. If there isn't any left return SIZE_MAX
  */
 static inline size_t get_next_point_index_lowest_degree(RcmWorkspace *ws)
@@ -213,48 +191,37 @@ static inline size_t get_next_point_index_lowest_degree(RcmWorkspace *ws)
  * @note - The next 6 are the points with the min and max values for each dimesion
  * @note - The rest of candidates are random points of the cloud
  */
-static void get_candidates(const Points *points, size_t *candidates, size_t num_candidates, RcmWorkspaceCommonData *ws)
+static void get_candidates(const Points *points, size_t *candidates, RcmWorkspaceCommonData *ws)
 {
-	srand(time(NULL));
-	double min[DIMENSIONS] = {DBL_MAX, DBL_MAX, DBL_MAX};
-	double max[DIMENSIONS] = {-DBL_MAX, -DBL_MAX, -DBL_MAX};
-	size_t candidates_aux[6];
+    srand((unsigned int) time(NULL));
+    double min[DIMENSIONS] = {DBL_MAX, DBL_MAX, DBL_MAX};
+    double max[DIMENSIONS] = {-DBL_MAX, -DBL_MAX, -DBL_MAX};
+    size_t candidates_aux[6];
 
-	for (size_t i = 0; i < points->num_points; i++) {
-		if (points->x[i] < min[0]) {
-			candidates_aux[0] = i;
-			min[0] = points->x[i];
-		}
-		if (points->y[i] < min[1]) {
-			candidates_aux[1] = i;
-			min[1] = points->y[i];
-		}
-		if (points->z[i] < min[2]) {
-			candidates_aux[2] = i;
-			min[2] = points->z[i];
-		}
-		if (points->x[i] > max[0]) {
-			candidates_aux[3] = i;
-			max[0] = points->x[i];
-		}
-		if (points->y[i] > max[1]) {
-			candidates_aux[4] = i;
-			max[1] = points->y[i];
-		}
-		if (points->z[i] > max[2]) {
-			candidates_aux[5] = i;
-			max[2] = points->z[i];
-		}
-	}
+    for (size_t i = 0; i < points->num_points; i++) {
+        if (points->x[i] < min[0]) { candidates_aux[0] = i; min[0] = points->x[i]; }
+        if (points->y[i] < min[1]) { candidates_aux[1] = i; min[1] = points->y[i]; }
+        if (points->z[i] < min[2]) { candidates_aux[2] = i; min[2] = points->z[i]; }
+        if (points->x[i] > max[0]) { candidates_aux[3] = i; max[0] = points->x[i]; }
+        if (points->y[i] > max[1]) { candidates_aux[4] = i; max[1] = points->y[i]; }
+        if (points->z[i] > max[2]) { candidates_aux[5] = i; max[2] = points->z[i]; }
+    }
 
-	candidates[0] = ws->indices[0];
+    // Slot 0: always ws->indices[0]
+    candidates[0] = ws->indices[0];
 
-	for (size_t i = 1; i < num_candidates; i++) {
-		if (i <= 6)
-			candidates[i] = candidates_aux[i - 1];
-		else
-			candidates[i] = rand() % points->num_points;
-	}
+    // Slots 1..6: extremes, but random if degree == 1
+    for (size_t i = 1; i < NUM_PARALLEL_RUNS && i <= 6; i++) {
+        if (ws->degrees[candidates_aux[i - 1]] == 1)
+            candidates[i] = (size_t) rand() % points->num_points;
+        else
+            candidates[i] = candidates_aux[i - 1];
+    }
+
+    // Slots 7+: random
+    for (size_t i = 7; i < NUM_PARALLEL_RUNS; i++) {
+        candidates[i] = (size_t)rand() % points->num_points;
+    }
 }
 
 /**
@@ -343,7 +310,7 @@ static int get_best_permutation(const RcmWorkspace *ws)
 	int tid_best_result = 0;
 	size_t aprox_bw_best_result = SIZE_MAX;
 
-	for (int i = 0; i < omp_get_max_threads(); i++) {
+	for (int i = 0; i < NUM_PARALLEL_RUNS; i++) {
 		printf("Max Bandwith Aproximation of thread %d: %zu\n", i, ws[i].max_bw);
 		if (ws[i].max_bw < aprox_bw_best_result) {
 			aprox_bw_best_result = ws[i].max_bw;
@@ -362,31 +329,27 @@ Solution *reorder_cuthill_mckee(const Octree *octree)
 	setup_degree_index(&di, octree);
 
 	// Calculate candidates for each thread to start RCM
-	size_t *candidates = malloc(sizeof(*candidates) * omp_get_max_threads());
-	get_candidates(octree->points, candidates, omp_get_max_threads(), &di);
+	size_t *candidates = malloc(sizeof(*candidates) * NUM_PARALLEL_RUNS);
+	get_candidates(octree->points, candidates, &di);
 
-	RcmWorkspace *ws = calloc(omp_get_max_threads(), sizeof(*ws));
+	RcmWorkspace *ws = calloc(NUM_PARALLEL_RUNS, sizeof(*ws));
 
-#pragma omp parallel
+#pragma omp parallel num_threads(NUM_PARALLEL_RUNS)
 	{
 		int tid = omp_get_thread_num();
 
 		if (!create_rcm_workspace(&(ws[tid]), &di)) {
-			destroy_rcm_workspace(&(ws[tid]));
 			handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot allocate auxiliar structures for reorder RCM");
 		}
-
-#pragma omp barrier
 
 		run_rcm_thread(octree, &(ws[tid]), candidates[tid]);
 	}
 
-	size_t best_tid = get_best_permutation(ws);
-	best_tid = 0;
+	int best_tid = get_best_permutation(ws);
 	Solution *sol = destroy_rcm_workspace_except_solution(&(ws[best_tid]));
 
-	for (int i = 0; i < omp_get_max_threads(); i++) {
-		if (best_tid != (size_t)i) {
+	for (int i = 0; i < NUM_PARALLEL_RUNS; i++) {
+		if (best_tid != i) {
 			destroy_rcm_workspace(&(ws[i]));
 		}
 	}

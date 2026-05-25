@@ -1,7 +1,12 @@
 #pragma once
 #include "../points/points.h"
 #include "../octree/octree.h"
+#ifdef _OPENMP
+#define NUM_PARALLEL_RUNS 7
+#else
+#define NUM_PARALLEL_RUNS 1
 
+#endif
 typedef struct {
 	size_t *permutations;
 	size_t *bandwith_left;

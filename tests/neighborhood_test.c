@@ -144,7 +144,7 @@ void check_neighborhoods_tfg(const Points_TFG *points)
 		destroy_radius_result(&res);
 	}
 }
-
+/*
 void check_neighborhoods_tfg_opt(const Points_TFG_opt *points)
 {
 
@@ -186,4 +186,4 @@ void check_neighborhoods_tfg_opt(const Points_TFG_opt *points)
 		destroy_radius_result(&resbf);
 		destroy_radius_result(&res);
 	}
-}
+}*/
