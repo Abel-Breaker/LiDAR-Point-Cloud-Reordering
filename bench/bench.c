@@ -27,12 +27,20 @@ void bench(const Points *points)
 		printf("\n\033[1mTFG\033[0m\n");
 		Points_TFG points_sorted = {};
 
+		struct timespec start, end;
+		double total = 0;
+
+		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
 		Solution *sol = reorder_cuthill_mckee(&octree);
+		clock_gettime(CLOCK_MONOTONIC_RAW, &end);
+		total += (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec) / 1000000000;
+		printf("\nReorder radius: %.6f s\n", total);
+
 		build_sorted_points(&points_sorted, octree.points, sol);
 		destroy_solution(sol);
 
 		neighborhoods_tfg_bench(&points_sorted);
-		
+
 		destroy_points_sorted(&points_sorted);
 	}
 
