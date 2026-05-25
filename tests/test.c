@@ -30,14 +30,16 @@ static void test_points_for_tfg(const Points *points)
 	{
 		printf("\n\033[1mTFG\033[0m\n");
 		Points_TFG points_sorted = {};
-		size_t *permutations = malloc(sizeof(*permutations) * points->num_points);
-		reorder_cuthill_mckee(&octree, permutations);
-		build_sorted_points(&points_sorted, &octree, permutations);
+
+		Solution *sol = reorder_cuthill_mckee(&octree);
+		build_sorted_points(&points_sorted, octree.points, sol);
+		destroy_solution(sol);
+
 		check_neighborhoods_tfg(&points_sorted);
 		//check_neighborhoods_tfg_opt(&points_sorted);
 		destroy_points_sorted(&points_sorted);
-		free(permutations);
 	}
+	destroy_octree(&octree);
 }
 
 

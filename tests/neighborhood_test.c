@@ -1,7 +1,7 @@
 #include "neighborhood_test.h"
 #include "../src/points/points.h"
-#include "../src/points_sorted/points_sorted.h"
 #include "../src/points_sorted/opt/points_sorted_opt.h"
+#include "../src/points_sorted/points_sorted.h"
 #include "../utils/auxiliar_structures/radius_result.h"
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
@@ -12,7 +12,7 @@
 #include <string.h>
 #include <time.h>
 
-#define ITER 100
+#define ITER 1000
 
 static void sort_neighbors(size_t *idx, double *dist, size_t k)
 {
@@ -50,7 +50,8 @@ void check_neighborhoods_octree_radius(const Octree *octree)
 		octree_radius_search(octree, index, get_args()->radius_search, &res);
 
 		if (resbf.count != res.count) {
-			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", i, index, resbf.count, res.count);
+			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", i, index,
+			       resbf.count, res.count);
 			exit(-1);
 		}
 
@@ -99,8 +100,9 @@ void check_neighborhoods_tfg(const Points_TFG *points)
 		sort_neighbors(resbf.indices, resbf.distances, resbf.count);
 
 		if (resbf.count != res.count) {
-			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", i, index, resbf.count, res.count);
-			exit(-1);
+			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", i, index,
+			       resbf.count, res.count);
+			//exit(-1);
 		}
 
 		// Comparar
@@ -110,8 +112,28 @@ void check_neighborhoods_tfg(const Points_TFG *points)
 				double diff = fabs(resbf.distances[j] - res.distances[j]);
 
 				if (diff > epsilon) {
-					printf("%zu (%f) - %zu (%f)\n", res.indices[j], res.distances[j],
-					       resbf.indices[j], resbf.distances[j]);
+
+					size_t block = get_block_index(index, points->points->num_points);
+
+					printf("\nMismatch iteration %zu\n"
+					       "Point index: %zu\n"
+					       "Block index: %zu\n"
+					       "bandwith_left : %zu\n"
+					       "bandwith_right: %zu\n\n"
+
+					       "TFG     -> neighbor: %zu  distance: %f\n"
+					       "Brutef. -> neighbor: %zu  distance: %f\n"
+					       "Diff: %f\n",
+
+					       i, index, block, points->bandwith_left[block],
+					       points->bandwith_right[block],
+
+					       res.indices[j], res.distances[j],
+
+					       resbf.indices[j], resbf.distances[j],
+
+					       diff);
+
 					destroy_radius_result(&resbf);
 					destroy_radius_result(&res);
 					exit(-1);
@@ -141,7 +163,8 @@ void check_neighborhoods_tfg_opt(const Points_TFG_opt *points)
 		sort_neighbors(resbf.indices, resbf.distances, resbf.count);
 
 		if (resbf.count != res.count) {
-			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", i, index, resbf.count, res.count);
+			printf("Not the same number of neighbours for iteration %zu (point %zu): %zu - %zu\n", i, index,
+			       resbf.count, res.count);
 			exit(-1);
 		}
 

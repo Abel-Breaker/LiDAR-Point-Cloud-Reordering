@@ -2,6 +2,11 @@
 #include "../points/points.h"
 #include "../octree/octree.h"
 
+typedef struct {
+	size_t *permutations;
+	size_t *bandwith_left;
+	size_t *bandwith_right;
+} Solution;
 
 /**
  * @brief Reorder points.
@@ -11,4 +16,6 @@
  * 
  * @note Not thread-safe.
  */
-void reorder_cuthill_mckee(const Octree *octree, size_t *permutations);
+Solution *reorder_cuthill_mckee(const Octree *octree);
+
+void destroy_solution(Solution *solution);

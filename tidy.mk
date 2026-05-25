@@ -23,7 +23,7 @@ TIDY_CHECKS = \
 NPROC ?= $(shell nproc)
 
 tidy:
-	$(Q)find ./src ./bench ./test ./utils \( -name "*.c" -o -name "*.h" \) -print0 | \
+	$(Q)find ./src ./bench ./tests ./utils \( -name "*.c" -o -name "*.h" \) -print0 | \
 	    xargs -0 -P$(NPROC) -I{} clang-tidy {} \
 	        -checks="$(TIDY_CHECKS)" \
 	        -- -std=c2x

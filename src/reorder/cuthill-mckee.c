@@ -1,9 +1,9 @@
 #define _GNU_SOURCE
 #include "cuthill-mckee.h"
-#include "../octree/octree.h"
 #include "../../utils/auxiliar_structures/queue.h"
 #include "../../utils/error_handler.h"
 #include "../../utils/parse_args.h"
+#include "../octree/octree.h"
 #include <float.h>
 #include <stdint.h> // for SIZE_MAX
 #include <stdio.h>
@@ -27,25 +27,21 @@ typedef struct {
 	size_t *degrees;
 	size_t *indices;
 	size_t num_points;
-} DegreeIndex;
+} RcmWorkspaceCommonData;
 
 typedef struct {
 	Queue *queue;
 	bool *visited;
-	size_t *permutations;
+	size_t *positions;
+	Solution *solution;
 	size_t points_visited;
-	RadiusResultOctree result; // Reutilice RadiusResultOctree during RCM to avoid several allocations
-	const DegreeIndex *di;
+	const RcmWorkspaceCommonData *di;
 	size_t cursor;
-	/*
-	 * Approximate reordered matrix bandwidth without explicitly building it.
-	 * Uses queue length as a heuristic metric during traversal.
-	 */
-	size_t aprox_bw;
+	size_t max_bw;
 } RcmWorkspace;
 
 /**
- * @brief Compare function for qsort_r. It uses degrees to order indices of struct DegreeIndex
+ * @brief Compare function for qsort_r. It uses degrees to order indices of struct RcmWorkspaceCommonData
  */
 static int compare(const void *a, const void *b, void *context)
 {
@@ -62,9 +58,9 @@ static int compare(const void *a, const void *b, void *context)
 }
 
 /**
- * @brief Reserves memory for struct DegreeIndex
+ * @brief Reserves memory for struct RcmWorkspaceCommonData
  */
-static bool create_degree_index(DegreeIndex *di, size_t num_points)
+static bool create_degree_index(RcmWorkspaceCommonData *di, size_t num_points)
 {
 	di->degrees = malloc(sizeof(*(di->degrees)) * num_points);
 	di->indices = malloc(sizeof(*(di->indices)) * num_points);
@@ -75,7 +71,7 @@ static bool create_degree_index(DegreeIndex *di, size_t num_points)
 /**
  * @brief Precalculate all points degrees and inicializate an ordered by degree index array
  */
-static void setup_degree_index(DegreeIndex *di, const Octree *octree)
+static void setup_degree_index(RcmWorkspaceCommonData *di, const Octree *octree)
 {
 	di->num_points = octree->points->num_points;
 	const double radius = get_args()->radius_search;
@@ -90,26 +86,54 @@ static void setup_degree_index(DegreeIndex *di, const Octree *octree)
 }
 
 /**
- * @brief Reserves memory for struct RcmWorkspace and clean values
+ * @brief Reserves memory for struct Solution
  */
-static bool create_rcm_workspace(RcmWorkspace *ws, const DegreeIndex *di_ref)
+static Solution *create_solution(size_t num_points)
 {
-	ws->queue = create_queue();
-	ws->visited = calloc(di_ref->num_points, sizeof(*(ws->visited)));
-	ws->permutations = malloc(sizeof(*(ws->permutations)) * di_ref->num_points);
-	ws->di = di_ref;
-	ws->result = (RadiusResultOctree){0};
-	ws->cursor = 0;
-	ws->aprox_bw = 0;
-	ws->points_visited = 0;
+	Solution *solution = malloc(sizeof(*solution) * num_points);
 
-	return ws->queue && ws->visited && ws->permutations;
+	solution->permutations = malloc(sizeof(*(solution->permutations)) * num_points);
+	solution->bandwith_left = calloc(num_points, sizeof(*(solution->bandwith_left)));
+	solution->bandwith_right = calloc(num_points, sizeof(*(solution->bandwith_right)));
+
+	return solution;
 }
 
 /**
- * @brief Free memory for struct DegreeIndex and clean values
+ * @brief Free memory for struct RcmWorkspaceCommonData and clean values
  */
-static void destroy_degree_index(DegreeIndex *di)
+void destroy_solution(Solution *solution)
+{
+	free(solution->permutations);
+	free(solution->bandwith_left);
+	free(solution->bandwith_right);
+	free(solution);
+}
+
+/**
+ * @brief Reserves memory for struct RcmWorkspace and clean values
+ */
+static bool create_rcm_workspace(RcmWorkspace *ws, const RcmWorkspaceCommonData *di_ref)
+{
+	ws->queue = create_queue();
+	ws->visited = calloc(di_ref->num_points, sizeof(*(ws->visited)));
+	ws->positions = malloc(sizeof(*(ws->positions)) * di_ref->num_points);
+	for(size_t i=0; i<di_ref->num_points; ++i){
+		ws->positions[i] = SIZE_MAX;
+	}
+	ws->solution = create_solution(di_ref->num_points);
+	ws->di = di_ref;
+	ws->cursor = 0;
+	ws->max_bw = 0;
+	ws->points_visited = 0;
+
+	return ws->queue && ws->visited && ws->positions;
+}
+
+/**
+ * @brief Free memory for struct RcmWorkspaceCommonData and clean values
+ */
+static void destroy_degree_index(RcmWorkspaceCommonData *di)
 {
 	free(di->degrees);
 	free(di->indices);
@@ -123,26 +147,28 @@ static void destroy_rcm_workspace(RcmWorkspace *ws)
 {
 	destroy_queue(ws->queue);
 	free(ws->visited);
-	free(ws->permutations);
-	radius_result_destroy(&(ws->result));
+	free(ws->positions);
+	destroy_solution(ws->solution);
 	ws->cursor = 0;
-	ws->aprox_bw = 0;
+	ws->max_bw = 0;
 	ws->points_visited = 0;
 }
 
 /**
- * @brief Clone all data from struct RcmWorkspace source to RcmWorkspace destination
+ * @brief Free memory for struct RcmWorkspace except Solution
  */
-static void clone_rcm_workspace(RcmWorkspace *dst, const RcmWorkspace *src)
+static Solution *destroy_rcm_workspace_except_solution(RcmWorkspace *ws)
 {
-	const size_t num_points = src->di->num_points;
+	Solution *solution = ws->solution;
 
-	memcpy(dst->visited, src->visited, num_points * sizeof(*src->visited));
-	memcpy(dst->permutations, src->permutations, num_points * sizeof(*src->permutations));
-	dst->di = src->di;
-	dst->aprox_bw = src->aprox_bw;
-	dst->points_visited = src->points_visited;
-	dst->cursor = src->cursor;
+	destroy_queue(ws->queue);
+	free(ws->visited);
+	free(ws->positions);
+	ws->cursor = 0;
+	ws->max_bw = 0;
+	ws->points_visited = 0;
+
+	return solution;
 }
 
 /**
@@ -187,7 +213,7 @@ static inline size_t get_next_point_index_lowest_degree(RcmWorkspace *ws)
  * @note - The next 6 are the points with the min and max values for each dimesion
  * @note - The rest of candidates are random points of the cloud
  */
-static void get_candidates(const Points *points, size_t *candidates, size_t num_candidates, RcmWorkspace *ws)
+static void get_candidates(const Points *points, size_t *candidates, size_t num_candidates, RcmWorkspaceCommonData *ws)
 {
 	srand(time(NULL));
 	double min[DIMENSIONS] = {DBL_MAX, DBL_MAX, DBL_MAX};
@@ -221,7 +247,7 @@ static void get_candidates(const Points *points, size_t *candidates, size_t num_
 		}
 	}
 
-	candidates[0] = ws->di->indices[0];
+	candidates[0] = ws->indices[0];
 
 	for (size_t i = 1; i < num_candidates; i++) {
 		if (i <= 6)
@@ -232,122 +258,142 @@ static void get_candidates(const Points *points, size_t *candidates, size_t num_
 }
 
 /**
- * @brief Reverse Cuthill-Mckee algorithm function to run for each thread
+ * @brief Enqueue points that weren't visited and set bandwith right and left
+ *
+ * Bandwith left corresponds always to visited points
+ * Bandwith right corresponds always to the
  */
-static void run_rcm_thread(const Octree *octree, RcmWorkspace *local_ws, size_t start_index)
+static void process_result(RadiusResultOctree *result, RcmWorkspace *ws)
 {
-	const double radius = get_args()->radius_search;
+	for (size_t i = 0; i < result->count; ++i) {
+		size_t nb = result->indices[i];
+		if (!ws->visited[nb]) {
+			enqueue(ws->queue, nb);
+			ws->visited[nb] = true;
+			ws->positions[nb] = ws->points_visited + get_num_elements(ws->queue);
 
-	local_ws->visited[start_index] = true;
-	enqueue(local_ws->queue, start_index);
-
-	while (true) {
-
-		size_t index;
-
-		// If queue empty, graph is disconnected so pick next unvisited node with lowest degree
-		if (is_queue_empty(local_ws->queue)) {
-
-			index = get_next_point_index_lowest_degree(local_ws);
-
-			// Check if all nodes where visited
-			if (index == SIZE_MAX) {
-				break;
+		} else {
+			// Bandwidth izquierdo: distancia al vecino ya visitado más lejano
+			if (ws->positions[nb] <
+			    ws->points_visited) { // Evita underflow por vecinos encolados pero no procesados
+				size_t bw_l = ws->points_visited - ws->positions[nb];
+				if (bw_l > ws->solution->bandwith_left[ws->points_visited])
+					ws->solution->bandwith_left[ws->points_visited] = bw_l;
 			}
-
-			local_ws->visited[index] = true;
-			enqueue(local_ws->queue, index);
-		}
-
-		// Obtain next point of the queue
-		index = dequeue(local_ws->queue);
-		local_ws->permutations[local_ws->points_visited] = index;
-		++(local_ws->points_visited);
-
-		// Get points neighbors and order by degree
-		octree_radius_search(octree, index, radius, &(local_ws->result));
-		qsort_r(local_ws->result.indices, local_ws->result.count, sizeof(*(local_ws->result.indices)), compare,
-			local_ws->di->degrees);
-
-		// Enqueue points not visited
-		for (size_t i = 0; i < local_ws->result.count; ++i) {
-			if (local_ws->visited[local_ws->result.indices[i]] == false) {
-				enqueue(local_ws->queue, local_ws->result.indices[i]);
-				local_ws->visited[local_ws->result.indices[i]] = true;
-			}
-		}
-
-		// Update max BW
-		if (get_num_elements(local_ws->queue) > local_ws->aprox_bw) {
-			local_ws->aprox_bw = get_num_elements(local_ws->queue);
 		}
 	}
+	ws->solution->bandwith_right[ws->points_visited] = get_num_elements(ws->queue);
+}
+
+static void update_max_bandwith(RcmWorkspace *ws)
+{
+	size_t total_bw =
+	    ws->solution->bandwith_right[ws->points_visited] + ws->solution->bandwith_left[ws->points_visited];
+	if (total_bw > ws->max_bw)
+		ws->max_bw = total_bw;
 }
 
 /**
- * @brief returns the best permutations array between all the thread's solutions
+ * @brief Reverse Cuthill-Mckee algorithm function to run for each thread
  */
-static size_t *get_best_permutation(const RcmWorkspace *ws)
+static void run_rcm_thread(const Octree *octree, RcmWorkspace *ws, size_t start_index)
+{
+	const double radius = get_args()->radius_search;
+	RadiusResultOctree result = {};
+
+	ws->visited[start_index] = true;
+	enqueue(ws->queue, start_index);
+	ws->positions[start_index] = 0;
+
+	while (true) {
+		size_t index;
+
+		if (is_queue_empty(ws->queue)) {
+			index = get_next_point_index_lowest_degree(ws);
+
+			if (index == SIZE_MAX)
+				break;
+
+			ws->visited[index] = true;
+			enqueue(ws->queue, index);
+			ws->positions[index] = ws->points_visited;
+		}
+
+		index = dequeue(ws->queue);
+		ws->solution->permutations[ws->points_visited] = index;
+
+		octree_radius_search(octree, index, radius, &result);
+		qsort_r(result.indices, result.count, sizeof(*(result.indices)), compare, ws->di->degrees);
+
+		process_result(&result, ws);
+
+		update_max_bandwith(ws);
+
+		++(ws->points_visited);
+	}
+
+	radius_result_destroy(&result);
+}
+
+/**
+ * @brief returns the Thread ID of best permutations array between all the thread's solutions
+ */
+static int get_best_permutation(const RcmWorkspace *ws)
 {
 	int tid_best_result = 0;
 	size_t aprox_bw_best_result = SIZE_MAX;
 
 	for (int i = 0; i < omp_get_max_threads(); i++) {
-		printf("Max Bandwith Aproximation of thread %d: %zu\n", i, ws[i].aprox_bw);
-		if (ws[i].aprox_bw < aprox_bw_best_result) {
-			aprox_bw_best_result = ws[i].aprox_bw;
+		printf("Max Bandwith Aproximation of thread %d: %zu\n", i, ws[i].max_bw);
+		if (ws[i].max_bw < aprox_bw_best_result) {
+			aprox_bw_best_result = ws[i].max_bw;
 			tid_best_result = i;
 		}
 	}
 
-	printf("tid: %d\n", tid_best_result);
-
-	return ws[tid_best_result].permutations;
+	return tid_best_result;
 }
 
-void reorder_cuthill_mckee(const Octree *octree, size_t *permutations)
+Solution *reorder_cuthill_mckee(const Octree *octree)
 {
 	// Common to all threads to avoid innecesary copies and memory usage
-	DegreeIndex di = {};
+	RcmWorkspaceCommonData di = {};
 	create_degree_index(&di, octree->points->num_points);
 	setup_degree_index(&di, octree);
 
-	RcmWorkspace *ws = calloc(omp_get_max_threads(), sizeof(*ws));
-	if (!create_rcm_workspace(&(ws[0]), &di)) {
-		destroy_rcm_workspace(&(ws[0]));
-		handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot allocate auxiliar structures for reorder RCM");
-		return;
-	}
-
 	// Calculate candidates for each thread to start RCM
 	size_t *candidates = malloc(sizeof(*candidates) * omp_get_max_threads());
-	get_candidates(octree->points, candidates, omp_get_max_threads(), &(ws[0]));
+	get_candidates(octree->points, candidates, omp_get_max_threads(), &di);
 
-	// Prepare and start RCM for each thread with different seeds
+	RcmWorkspace *ws = calloc(omp_get_max_threads(), sizeof(*ws));
+
 #pragma omp parallel
 	{
 		int tid = omp_get_thread_num();
-		if (tid != 0) {
-			if (!create_rcm_workspace(&(ws[tid]), &di)) {
-				destroy_rcm_workspace(&(ws[tid]));
-				handle_error(ERROR_MALLOC, ERR_FATAL,
-					     "Cannot allocate auxiliar structures for reorder RCM");
-			}
-			clone_rcm_workspace(&(ws[tid]), &(ws[0]));
+
+		if (!create_rcm_workspace(&(ws[tid]), &di)) {
+			destroy_rcm_workspace(&(ws[tid]));
+			handle_error(ERROR_MALLOC, ERR_FATAL, "Cannot allocate auxiliar structures for reorder RCM");
 		}
+
 #pragma omp barrier
 
 		run_rcm_thread(octree, &(ws[tid]), candidates[tid]);
 	}
 
-	
-	memcpy(permutations, get_best_permutation(ws), sizeof(size_t) * octree->points->num_points);
+	size_t best_tid = get_best_permutation(ws);
+	best_tid = 0;
+	Solution *sol = destroy_rcm_workspace_except_solution(&(ws[best_tid]));
 
 	for (int i = 0; i < omp_get_max_threads(); i++) {
-		destroy_rcm_workspace(&(ws[i]));
+		if (best_tid != (size_t)i) {
+			destroy_rcm_workspace(&(ws[i]));
+		}
 	}
 
 	destroy_degree_index(&di);
 	free(ws);
 	free(candidates);
+
+	return sol;
 }
