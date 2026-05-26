@@ -58,6 +58,12 @@ else
 	CFLAGS = $(CFLAGS_DEBUG) $(COMMON_FLAGS)
 endif
 
+# Tipo de dato
+DATA_TYPE ?= double
+ifeq ($(DATA_TYPE),float)
+	CFLAGS += -DUSE_FLOAT
+endif
+
 CC  = gcc
 CXX = g++
 
