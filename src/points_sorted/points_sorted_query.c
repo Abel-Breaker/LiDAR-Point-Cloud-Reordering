@@ -43,13 +43,12 @@ void tfg_radius_search(const Points_TFG *points, index_t index, RadiusResult *re
 #ifdef __AVX512F__
 	elements_count =
 	    tfg_radius_search_avx512(xs, ys, zs, window, search_start_index, x, y, z, radius, indices, distances);
-#elif __AVX2__
-#endif
-
 #ifdef USE_FLOAT
 	i = (window / 16) * 16;
 #else
 	i = (window / 8) * 8;
+#endif
+#elif __AVX2__
 #endif
 
 	// Scalar fallback (always available)
