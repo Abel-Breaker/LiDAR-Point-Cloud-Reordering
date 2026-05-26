@@ -7,7 +7,7 @@
 
 /* Comprueba si el punto está dentro del bounding box (inclusivo). */
 static inline bool aabb_contains(const AABB *box,
-                                  double px, double py, double pz)
+                                  data_t px, data_t py, data_t pz)
 {
 	return px >= box->min[0] && px <= box->max[0]
 	    && py >= box->min[1] && py <= box->max[1]
@@ -16,10 +16,10 @@ static inline bool aabb_contains(const AABB *box,
 
 /* Distancia mínima desde el punto (px,py,pz) al bounding box.
  * Si el punto está dentro, devuelve 0. */
-static inline double aabb_min_dist(const AABB *box,
-                                   double px, double py, double pz)
+static inline data_t aabb_min_dist(const AABB *box,
+                                   data_t px, data_t py, data_t pz)
 {
-	double dx, dy, dz;
+	data_t dx, dy, dz;
 	dx = dy = dz = 0;
 
 	if      (px < box->min[0]) dx = box->min[0] - px;
@@ -35,7 +35,7 @@ static inline double aabb_min_dist(const AABB *box,
 }
 
 /* Añade un punto al resultado, redoblando capacidad si es necesario. */
-static bool radius_result_push(RadiusResultOctree *res, index_t idx, double dist)
+static bool radius_result_push(RadiusResultOctree *res, index_t idx, data_t dist)
 {
 	if (res->count == res->capacity) {
 		index_t new_cap = res->capacity == 0 ? 64u : res->capacity * 2u;
@@ -46,7 +46,7 @@ static bool radius_result_push(RadiusResultOctree *res, index_t idx, double dist
 		}
 		res->indices = ni;
 
-		double *nd = realloc(res->distances, new_cap * sizeof(*res->distances));
+		data_t *nd = realloc(res->distances, new_cap * sizeof(*(res->distances)));
 		if (!nd) {
 			//free(ni);
 			return false;
@@ -65,8 +65,8 @@ static bool radius_result_push(RadiusResultOctree *res, index_t idx, double dist
 }
 
 static void radius_traverse(const Octree *octree, const Octant *octant,
-                            double px, double py, double pz,
-                            double radius, RadiusResultOctree *result)
+                            data_t px, data_t py, data_t pz,
+                            data_t radius, RadiusResultOctree *result)
 {
 	if (!octant) return;
 
@@ -78,7 +78,7 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 	if (octant->point_indices) {
 		for (index_t i = 0; i < octant->num_points; ++i) {
 			index_t idx = octant->point_indices[i];
-			double dist = euclidian_distance_3d(
+			data_t dist = euclidian_distance_3d(
 			    octree->points->x[idx], octree->points->y[idx], octree->points->z[idx],
 			    px, py, pz);
 			if (dist <= radius)
@@ -103,7 +103,7 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 	}
 }
 
-void octree_radius_search(const Octree *octree, index_t point_index, double radius,
+void octree_radius_search(const Octree *octree, index_t point_index, data_t radius,
                           RadiusResultOctree *result)
 {
 	//result->indices   = nullptr;
@@ -111,16 +111,16 @@ void octree_radius_search(const Octree *octree, index_t point_index, double radi
 	result->count     = 0;
 	//result->capacity  = 0;
 
-	double px = octree->points->x[point_index];
-	double py = octree->points->y[point_index];
-	double pz = octree->points->z[point_index];
+	data_t px = octree->points->x[point_index];
+	data_t py = octree->points->y[point_index];
+	data_t pz = octree->points->z[point_index];
 
 	radius_traverse(octree, octree->root, px, py, pz, radius, result);
 }
 
 static void radius_traverse_neighbor_count(const Octree *octree, const Octant *octant,
-                            double px, double py, double pz,
-                            double radius, index_t *neighbor_count)
+                            data_t px, data_t py, data_t pz,
+                            data_t radius, index_t *neighbor_count)
 {
 	if (!octant) return;
 
@@ -132,7 +132,7 @@ static void radius_traverse_neighbor_count(const Octree *octree, const Octant *o
 	if (octant->point_indices) {
 		for (index_t i = 0; i < octant->num_points; ++i) {
 			index_t idx = octant->point_indices[i];
-			double dist = euclidian_distance_3d(
+			data_t dist = euclidian_distance_3d(
 			    octree->points->x[idx], octree->points->y[idx], octree->points->z[idx],
 			    px, py, pz);
 			if (dist <= radius)
@@ -157,11 +157,11 @@ static void radius_traverse_neighbor_count(const Octree *octree, const Octant *o
 	}
 }
 
-index_t octree_radius_neighbor_count(const Octree *octree, index_t point_index, double radius)
+index_t octree_radius_neighbor_count(const Octree *octree, index_t point_index, data_t radius)
 {
-	double px = octree->points->x[point_index];
-	double py = octree->points->y[point_index];
-	double pz = octree->points->z[point_index];
+	data_t px = octree->points->x[point_index];
+	data_t py = octree->points->y[point_index];
+	data_t pz = octree->points->z[point_index];
 
 	index_t neighbor_count = 0;
 

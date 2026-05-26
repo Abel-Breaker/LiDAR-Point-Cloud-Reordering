@@ -13,17 +13,17 @@ enum axis { X = 0, Y = 1, Z = 2 };
  * 
  * @note It avoids sqrt for optimization
  */
-static inline double euclidian_distance_3d(double x2, double y2, double z2,
-                                           double x1, double y1, double z1)
+static inline data_t euclidian_distance_3d(data_t x2, data_t y2, data_t z2,
+                                           data_t x1, data_t y1, data_t z1)
 {
 	//return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
     return (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1);
 }
 
 typedef struct{
-    double *x;
-    double *y;
-    double *z;
+    data_t *x;
+    data_t *y;
+    data_t *z;
     index_t num_points;
 } Points;
 
@@ -43,7 +43,7 @@ bool reserve_memory_points(Points *points, index_t number_of_points);
  * @param[in] index Index at which the point will be added.
  * @param[in] x, y, z Coordinates of the point to add.
  */
-void add_point(Points *points, index_t index, double x, double y, double z);
+void add_point(Points *points, index_t index, data_t x, data_t y, data_t z);
 
 /**
  * @brief Finds the neighbors of a point in a certain radio of a point collection.

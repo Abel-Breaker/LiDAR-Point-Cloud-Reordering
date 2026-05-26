@@ -39,7 +39,7 @@ void parse_args(int argc, char **argv)
 			args.do_test = true;
 			break;
 		case 'r':
-			args.radius_search = atof(optarg);
+			args.radius_search = (data_t)atof(optarg);
 			args.radius_search = args.radius_search * args.radius_search; // Square
 			break;
 		case 'm':

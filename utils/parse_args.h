@@ -8,7 +8,7 @@ typedef struct {
     char *cloud_points_file_name;
     bool do_benchmark;
     bool do_test;
-    double radius_search;
+    data_t radius_search;
     index_t max_num_of_points;
     index_t number_of_blocks;
 } Args;

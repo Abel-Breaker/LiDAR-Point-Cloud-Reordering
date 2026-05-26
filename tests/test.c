@@ -4,18 +4,17 @@
 #include "../src/points_sorted/points_sorted.h"
 #include "../src/reorder/cuthill-mckee.h"
 #include "../utils/terminal_formating.h"
-#include "neighborhood_test.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-static void sort_neighbors(index_t *idx, double *dist, index_t k)
+static void sort_neighbors(index_t *idx, data_t *dist, index_t k)
 {
 	for (index_t i = 0; i < k - 1; i++) {
 		for (index_t j = i + 1; j < k; j++) {
 			if (idx[j] < idx[i]) {
 				// swap dist
-				double dtmp = dist[i];
+				data_t dtmp = dist[i];
 				dist[i] = dist[j];
 				dist[j] = dtmp;
 
@@ -56,13 +55,13 @@ static void test_points_for_octree(const Points *points, index_t indices[NUM_OF_
 			for (index_t j = 0; j < res_2.count; j++) {
 				if (res_1[i].indices[j] != res_2.indices[j]) {
 
-					const double epsilon = 1e-5;
-					double diff = fabs(res_1[i].distances[j] - res_2.distances[j]);
+					const data_t epsilon = (data_t)1e-5;
+					data_t diff = (data_t)fabs(res_1[i].distances[j] - res_2.distances[j]);
 
 					if (diff > epsilon) {
 						printf(RED "%zu (%f) - %zu (%f) | diff = %f\n" COLOR_RESET,
-						       (size_t)res_1[i].indices[j], res_1[i].distances[j],
-						       (size_t)res_2.indices[j], res_2.distances[j], diff);
+						       (size_t)res_1[i].indices[j], (double)res_1[i].distances[j],
+						       (size_t)res_2.indices[j], (double)res_2.distances[j], (double)diff);
 						exit(-1);
 					}
 				}
@@ -94,13 +93,13 @@ static void test_points_for_tfg(const Points_TFG *points, index_t indices[NUM_OF
 		for (index_t j = 0; j < res_2.count; j++) {
 			if (res_1[i].indices[j] != res_2.indices[j]) {
 
-				const double epsilon = 1e-5;
-				double diff = fabs(res_1[i].distances[j] - res_2.distances[j]);
+				const data_t epsilon = (data_t)1e-5;
+				data_t diff = (data_t)fabs(res_1[i].distances[j] - res_2.distances[j]);
 
 				if (diff > epsilon) {
 					printf(RED "%zu (%f) - %zu (%f) | diff = %f\n" COLOR_RESET,
-					       (size_t)res_1[i].indices[j], res_1[i].distances[j],
-					       (size_t)res_2.indices[j], res_2.distances[j], diff);
+					       (size_t)res_1[i].indices[j], (double)res_1[i].distances[j],
+					       (size_t)res_2.indices[j], (double)res_2.distances[j], (double)diff);
 					exit(-1);
 				}
 			}

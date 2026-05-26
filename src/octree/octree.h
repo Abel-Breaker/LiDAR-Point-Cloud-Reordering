@@ -13,8 +13,8 @@
 // Bounding box aligned with the axes
 typedef struct {
 	// x y z
-	double min[DIMENSIONS];
-	double max[DIMENSIONS];
+	data_t min[DIMENSIONS];
+	data_t max[DIMENSIONS];
 } AABB;
 
 typedef struct Octant {
@@ -56,7 +56,7 @@ void octree_print_stats(const Octree *octree);
 /* Resultados de búsqueda por radio: array dinámico de índices y distancias. */
 typedef struct {
 	index_t *indices;
-	double *distances;
+	data_t *distances;
 	index_t count;
 	index_t capacity;
 } RadiusResultOctree;
@@ -64,8 +64,8 @@ typedef struct {
 /* Rellena 'result' con todos los puntos a distancia <= radius del punto dado.
  * Si  RadiusResultOctree es la primera vez que se usa tiene que estar correctamente inicializado a 0 (={})
  * Las siguientes llamadas puede reutilizar RadiusResultOctree sin problema para evitar malloc/free*/
-void octree_radius_search(const Octree *octree, index_t point_index, double radius, RadiusResultOctree *result);
+void octree_radius_search(const Octree *octree, index_t point_index, data_t radius, RadiusResultOctree *result);
 
-index_t octree_radius_neighbor_count(const Octree *octree, index_t point_index, double radius);
+index_t octree_radius_neighbor_count(const Octree *octree, index_t point_index, data_t radius);
 
 void radius_result_destroy(RadiusResultOctree *result);

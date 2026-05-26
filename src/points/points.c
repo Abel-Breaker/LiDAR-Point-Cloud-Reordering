@@ -6,7 +6,7 @@
 bool reserve_memory_points(Points *points, index_t number_of_points)
 {
     // Convert number_of_points to a multple of 64
-    index_t size = number_of_points * sizeof(double);
+    index_t size = number_of_points * sizeof(data_t);
    index_t aligned_size = (size + (index_t)63) & ~(index_t)63; //
 
     points->x = aligned_alloc(64, aligned_size);
@@ -21,7 +21,7 @@ bool reserve_memory_points(Points *points, index_t number_of_points)
     return true;
 }
 
-void add_point(Points *points, index_t index, double x, double y, double z)
+void add_point(Points *points, index_t index, data_t x, data_t y, data_t z)
 {
 	points->x[index] = x;
 	points->y[index] = y;

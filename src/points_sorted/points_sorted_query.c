@@ -10,16 +10,16 @@
 
 void tfg_radius_search(const Points_TFG *points, index_t index, RadiusResult *result)
 {
-	const double radius = get_args()->radius_search;
+	const data_t radius = get_args()->radius_search;
 	
 	const index_t block_index = get_block_index(index, points->points->num_points);
 	const index_t bandwith_left = points->bandwith_left[block_index];
 	const index_t bandwith_right = points->bandwith_right[block_index];
 
 	// Obtain coordinates of the point to compare
-	const double x = points->points->x[index];
-	const double y = points->points->y[index];
-	const double z = points->points->z[index];
+	const data_t x = points->points->x[index];
+	const data_t y = points->points->y[index];
+	const data_t z = points->points->z[index];
 
 	// Rango de búsqueda: [index - bandwith, index + bandwith]
 	index_t search_start_index = (index > bandwith_left) ? (index - bandwith_left) : 0;
@@ -35,10 +35,10 @@ void tfg_radius_search(const Points_TFG *points, index_t index, RadiusResult *re
 	reserves_memory_radius_result(result, window);
 
 	index_t *restrict indices = result->indices;
-	double *restrict distances = result->distances;
-	const double *restrict xs = points->points->x + search_start_index;
-	const double *restrict ys = points->points->y + search_start_index;
-	const double *restrict zs = points->points->z + search_start_index;
+	data_t *restrict distances = result->distances;
+	const data_t *restrict xs = points->points->x + search_start_index;
+	const data_t *restrict ys = points->points->y + search_start_index;
+	const data_t *restrict zs = points->points->z + search_start_index;
 
 	index_t elements_count = 0;
 	index_t i = 0;
@@ -101,7 +101,7 @@ void tfg_radius_search(const Points_TFG *points, index_t index, RadiusResult *re
 
 	// Scalar fallback (always available)
 	for (; i < window; i++) {
-		double d = euclidian_distance_3d(xs[i], ys[i], zs[i], x, y, z);
+		data_t d = euclidian_distance_3d(xs[i], ys[i], zs[i], x, y, z);
 		if (d <= radius) {
 			indices[elements_count] = search_start_index + i;
 			distances[elements_count] = d;

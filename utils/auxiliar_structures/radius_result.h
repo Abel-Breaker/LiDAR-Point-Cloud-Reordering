@@ -3,7 +3,7 @@
 
 typedef struct {
 	index_t *indices;
-	double *distances;
+	data_t *distances;
 	index_t  count;
 } RadiusResult;
 

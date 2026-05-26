@@ -10,8 +10,8 @@
 static AABB compute_global_aabb(const Points *points)
 {
 	AABB bb = {
-		.min = { DBL_MAX,  DBL_MAX,  DBL_MAX},
-		.max = {-DBL_MAX, -DBL_MAX, -DBL_MAX}
+		.min = { DATA_MAX,  DATA_MAX,  DATA_MAX},
+		.max = {-DATA_MAX, -DATA_MAX, -DATA_MAX}
 	};
 
 	for (index_t i = 0; i < points->num_points; i++) {
@@ -34,7 +34,7 @@ static AABB compute_global_aabb(const Points *points)
  * 	bit 1 → Y (0 = down, 1 = up)
  * 	bit 2 → Z (0 = back, 1 = front)
 */
-static int get_octant(const Points *points, index_t idx, const double center[3])
+static int get_octant(const Points *points, index_t idx, const data_t center[3])
 {
 	int octant = 0;
 	if (points->x[idx] >= center[0]) octant |= 1;
@@ -48,9 +48,9 @@ static int get_octant(const Points *points, index_t idx, const double center[3])
 */
 static AABB child_bounds(const AABB *parent, int octant)
 {
-	double cx = (parent->min[0] + parent->max[0]) / 2;
-	double cy = (parent->min[1] + parent->max[1]) / 2;
-	double cz = (parent->min[2] + parent->max[2]) / 2;
+	data_t cx = (parent->min[0] + parent->max[0]) / 2;
+	data_t cy = (parent->min[1] + parent->max[1]) / 2;
+	data_t cz = (parent->min[2] + parent->max[2]) / 2;
 
 	AABB child;
 	child.min[0] = (octant & 1) ? cx : parent->min[0];
@@ -121,7 +121,7 @@ static Octant *octree_build(const Points *points,
 	Octant *octant = create_internal(bounds);
 	if (!octant) return NULL;
 
-	double center[3] = {
+	data_t center[3] = {
 		(bounds->min[0] + bounds->max[0]) / 2,
 		(bounds->min[1] + bounds->max[1]) / 2,
 		(bounds->min[2] + bounds->max[2]) / 2

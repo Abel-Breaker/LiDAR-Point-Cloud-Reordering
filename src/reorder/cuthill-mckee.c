@@ -71,7 +71,7 @@ static bool create_degree_index(RcmWorkspaceCommonData *di, index_t num_points)
 static void setup_degree_index(RcmWorkspaceCommonData *di, const Octree *octree)
 {
 	di->num_points = octree->points->num_points;
-	const double radius = get_args()->radius_search;
+	const data_t radius = get_args()->radius_search;
 
 #pragma omp parallel for schedule(static) // TODO: Test with schedule(dynamic)
 	for (index_t i = 0; i < di->num_points; ++i) {
@@ -197,8 +197,8 @@ static inline index_t get_next_point_index_lowest_degree(RcmWorkspace *ws)
 static void get_candidates(const Points *points, index_t *candidates, RcmWorkspaceCommonData *ws)
 {
 	srand((unsigned int)time(NULL));
-	double min[DIMENSIONS] = {DBL_MAX, DBL_MAX, DBL_MAX};
-	double max[DIMENSIONS] = {-DBL_MAX, -DBL_MAX, -DBL_MAX};
+	data_t min[DIMENSIONS] = {DATA_MAX, DATA_MAX, DATA_MAX};
+	data_t max[DIMENSIONS] = {-DATA_MAX, -DATA_MAX, -DATA_MAX};
 	index_t candidates_aux[6];
 
 	for (index_t i = 0; i < points->num_points; i++) {
@@ -286,7 +286,7 @@ static void update_max_bandwith(RcmWorkspace *ws)
  */
 static void run_rcm_thread(const Octree *octree, RcmWorkspace *ws, index_t start_index)
 {
-	const double radius = get_args()->radius_search;
+	const data_t radius = get_args()->radius_search;
 	RadiusResultOctree result = {};
 
 	ws->visited[start_index] = true;
