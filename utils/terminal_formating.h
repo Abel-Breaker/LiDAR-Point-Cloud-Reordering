@@ -1,6 +1,5 @@
 #pragma once
 
-/* Reset */
 #define COLOR_RESET   "\x1b[0m"
 
 // Styles

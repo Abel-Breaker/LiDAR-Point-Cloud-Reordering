@@ -3,8 +3,8 @@
 #include "../../utils/auxiliar_structures/queue.h"
 #include "../../utils/error_handler.h"
 #include "../../utils/parse_args.h"
-#include "../../utils/types.h"
 #include "../../utils/terminal_formating.h"
+#include "../../utils/types.h"
 #include "../octree/octree.h"
 #include <float.h>
 #include <stdio.h>
@@ -36,6 +36,26 @@ typedef struct {
 	index_t cursor;
 	index_t max_bw;
 } RcmWorkspace;
+
+/**
+ * @brief Sort function. It uses degrees to order indices of struct RcmWorkspaceCommonData
+ * 
+ * @note It is faster for small amount of indices to order
+ */
+void insertion_sort_by_degree(index_t *restrict arr, int n, const index_t *restrict degrees)
+{
+	for (int i = 1; i < n; i++) {
+		index_t key = arr[i];
+		int j = i - 1;
+
+		while (j >= 0 && degrees[arr[j]] > degrees[key]) {
+			arr[j + 1] = arr[j];
+			j--;
+		}
+
+		arr[j + 1] = key;
+	}
+}
 
 /**
  * @brief Compare function for qsort_r. It uses degrees to order indices of struct RcmWorkspaceCommonData
@@ -94,7 +114,7 @@ static Solution *create_solution(index_t num_points)
 	solution->bandwith_right = calloc(num_points, sizeof(*(solution->bandwith_right)));
 	solution->total_neighours = 0;
 
-	if(!solution || !solution->permutations || !solution->bandwith_left || !solution->bandwith_right){
+	if (!solution || !solution->permutations || !solution->bandwith_left || !solution->bandwith_right) {
 		return NULL;
 	}
 
@@ -311,7 +331,11 @@ static void run_rcm_thread(const Octree *octree, RcmWorkspace *ws, index_t start
 		ws->solution->permutations[ws->points_visited] = index;
 
 		octree_radius_search(octree, index, radius, &result);
-		qsort_r(result.indices, result.count, sizeof(*(result.indices)), compare, ws->di->degrees);
+		if (result.count > 128) {
+			qsort_r(result.indices, result.count, sizeof(*(result.indices)), compare, ws->di->degrees);
+		} else {
+			insertion_sort_by_degree(result.indices, result.count, ws->di->degrees);
+		}
 
 		process_result(&result, ws);
 
@@ -335,7 +359,7 @@ static int get_best_permutation(const RcmWorkspace *ws)
 	index_t aprox_bw_best_result = INDEX_MAX;
 
 	for (int i = 0; i < NUM_PARALLEL_RUNS; i++) {
-		printf("Max Bandwith Aproximation of thread %d: %zu\n", i, (size_t) ws[i].max_bw);
+		printf("Max Bandwith Aproximation of thread %d: %zu\n", i, (size_t)ws[i].max_bw);
 		if (ws[i].max_bw < aprox_bw_best_result) {
 			aprox_bw_best_result = ws[i].max_bw;
 			tid_best_result = i;
@@ -385,8 +409,8 @@ Solution *reorder_cuthill_mckee(const Octree *octree)
 	return sol;
 }
 
-
-void print_solution_stats(const Solution *solution, index_t num_points){
+void print_solution_stats(const Solution *solution, index_t num_points)
+{
 	index_t max_one_side = 0;
 	index_t max_total = 0;
 	double avg_total = 0.0;
@@ -407,9 +431,9 @@ void print_solution_stats(const Solution *solution, index_t num_points){
 	avg_total /= (double)num_points;
 
 	printf(BOLD_YELLOW "\nSTATS\n" COLOR_RESET);
-	printf("\tTotal neighbours:  %zu\n", (size_t) solution->total_neighours);
-	printf("\tAvg neighbours:    %.2f\n", (double)solution->total_neighours/(double)num_points);
-	printf("\tMax bandwidth:     %zu\n", (size_t) max_total);
-	printf("\tMax one side:      %zu\n", (size_t) max_one_side);
+	printf("\tTotal neighbours:  %zu\n", (size_t)solution->total_neighours);
+	printf("\tAvg neighbours:    %.2f\n", (double)solution->total_neighours / (double)num_points);
+	printf("\tMax bandwidth:     %zu\n", (size_t)max_total);
+	printf("\tMax one side:      %zu\n", (size_t)max_one_side);
 	printf("\tAverage bandwidth: %.2f\n", avg_total);
 }
