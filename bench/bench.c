@@ -5,6 +5,7 @@
 #include "../utils/error_handler.h"
 #include "../utils/parse_args.h"
 #include "../utils/timer.h"
+#include "../utils/terminal_formating.h"
 #include "neighborhood_bench.h"
 #include "points_structures_bench.h"
 #include <stdio.h>
@@ -18,12 +19,12 @@ void bench(const Points *points)
 	create_octree(&octree, points);
 
 	{
-		printf("\n\033[1;34mOCTREE\033[0m\n");
+		printf(BOLD_BLUE "\nOCTREE\n" COLOR_RESET);
 		neighborhoods_octree_radius_bench(&octree);
 	}
 
 	{
-		printf("\n\033[1;34mTFG\033[0m\n");
+		printf(BOLD_BLUE "\nTFG\n" COLOR_RESET);
 
 		timer_start();
 		Solution *sol = reorder_cuthill_mckee(&octree);

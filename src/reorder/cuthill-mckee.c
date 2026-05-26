@@ -4,6 +4,7 @@
 #include "../../utils/error_handler.h"
 #include "../../utils/parse_args.h"
 #include "../../utils/types.h"
+#include "../../utils/terminal_formating.h"
 #include "../octree/octree.h"
 #include <float.h>
 #include <stdio.h>
@@ -91,8 +92,11 @@ static Solution *create_solution(index_t num_points)
 	solution->permutations = malloc(sizeof(*(solution->permutations)) * num_points);
 	solution->bandwith_left = calloc(num_points, sizeof(*(solution->bandwith_left)));
 	solution->bandwith_right = calloc(num_points, sizeof(*(solution->bandwith_right)));
-	solution->avg_neighbours = 0;
 	solution->total_neighours = 0;
+
+	if(!solution || !solution->permutations || !solution->bandwith_left || !solution->bandwith_right){
+		return NULL;
+	}
 
 	return solution;
 }
@@ -116,16 +120,13 @@ static bool create_rcm_workspace(RcmWorkspace *ws, const RcmWorkspaceCommonData 
 	ws->queue = create_queue();
 	ws->visited = calloc(di_ref->num_points, sizeof(*(ws->visited)));
 	ws->positions = malloc(sizeof(*(ws->positions)) * di_ref->num_points);
-	for (index_t i = 0; i < di_ref->num_points; ++i) {
-		ws->positions[i] = INDEX_MAX;
-	}
 	ws->solution = create_solution(di_ref->num_points);
 	ws->di = di_ref;
 	ws->cursor = 0;
 	ws->max_bw = 0;
 	ws->points_visited = 0;
 
-	return ws->queue && ws->visited && ws->positions;
+	return ws->queue && ws->visited && ws->positions && ws->solution;
 }
 
 /**
@@ -322,9 +323,6 @@ static void run_rcm_thread(const Octree *octree, RcmWorkspace *ws, index_t start
 		++(ws->points_visited);
 	}
 
-	// DEBUG: for stats
-	ws->solution->avg_neighbours = ws->solution->avg_neighbours / ws->points_visited;
-
 	radius_result_destroy(&result);
 }
 
@@ -408,10 +406,10 @@ void print_solution_stats(const Solution *solution, index_t num_points){
 
 	avg_total /= (double)num_points;
 
-	printf("\n\033[1;33mSTATS\033[0m\n");
-	printf("\tTotal neighbours: %zu\n", (size_t) solution->total_neighours);
-	printf("\tAvg neighbours: %f\n", (double)solution->total_neighours/(double)num_points);
-	printf("\tMax bandwidth   : %zu\n", (size_t) max_total);
-	printf("\tMax one side        : %zu\n", (size_t) max_one_side);
-	printf("\tAverage bandwidth   : %.2f\n", avg_total);
+	printf(BOLD_YELLOW "\nSTATS\n" COLOR_RESET);
+	printf("\tTotal neighbours:  %zu\n", (size_t) solution->total_neighours);
+	printf("\tAvg neighbours:    %.2f\n", (double)solution->total_neighours/(double)num_points);
+	printf("\tMax bandwidth:     %zu\n", (size_t) max_total);
+	printf("\tMax one side:      %zu\n", (size_t) max_one_side);
+	printf("\tAverage bandwidth: %.2f\n", avg_total);
 }

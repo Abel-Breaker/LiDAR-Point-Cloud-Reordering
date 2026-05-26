@@ -12,7 +12,6 @@ typedef struct {
 	index_t *bandwith_left;
 	index_t *bandwith_right;
 	index_t total_neighours;
-	index_t avg_neighbours;
 } Solution;
 
 /**
