@@ -74,7 +74,6 @@ $(LASLIB):
 
 # ── Wrapper parse_lidar_points: compilar solo si no existe la librería ────────
 $(LASPARSE):
-	@echo "[LASparse] Building libparse_lidar_points.a & lidar_points_writer.a..."
 	$(Q)$(CXX) -std=c++23 -O2 \
 		-I./third_party/LAStools/LASlib/inc \
 		-I./src/points \
@@ -87,7 +86,6 @@ $(LASPARSE):
 
 # ── Wrapper parse_lidar_points: compilar solo si no existe la librería ────────
 $(LASWRITER):
-	@echo "[LASwriter] Building lidar_points_writer.a..."
 	$(Q)$(CXX) -std=c++23 -O2 \
 		-I./third_party/LAStools/LASlib/inc \
 		-I./src/points \
@@ -109,7 +107,7 @@ $(TARGET): $(C_OBJS)
 
 # Limpieza de objetos y ejecutable (no toca las .a)
 clean:
-	$(Q)rm -f $(C_OBJS) $(TARGET)
+	$(Q)rm -f $(C_OBJS) $(TARGET) utils/io/lidar/points_reader.a utils/io/lidar/points_writer.a
 
 # Limpieza total incluyendo las librerías estáticas generadas
 distclean: clean

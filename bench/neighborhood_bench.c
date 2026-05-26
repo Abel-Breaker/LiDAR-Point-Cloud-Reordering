@@ -36,7 +36,7 @@ void neighborhoods_tfg_bench(const Points_TFG *points)
 #pragma omp parallel for
 	for (index_t i = 0; i < points->points->num_points; ++i) {
 		RadiusResult res = {};
-		tfg_radius_search(points, i, &res);
+		tfg_radius_search_avx512_double(points, i, &res);
 
 		// Force use to avoid code elimination
 		__asm__ volatile("" : : "r"(res.count) : "memory");

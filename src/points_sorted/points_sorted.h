@@ -35,3 +35,7 @@ void build_sorted_points(Points_TFG *points, const Points *old_points, const Sol
 void destroy_points_sorted(Points_TFG *points);
 
 void tfg_radius_search(const Points_TFG *points, index_t index, RadiusResult *result);
+
+void tfg_radius_search_avx512_double(const Points_TFG *points, index_t index, RadiusResult *result);
+
+void tfg_radius_search_avx512_float(const Points_TFG *points, index_t index, RadiusResult *result);

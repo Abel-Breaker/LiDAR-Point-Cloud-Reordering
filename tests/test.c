@@ -79,7 +79,7 @@ static void test_points_for_tfg(const Points_TFG *points, index_t indices[NUM_OF
 	for (index_t i = 0; i < NUM_OF_TESTS; ++i) {
 		RadiusResult res_2 = {};
 
-		tfg_radius_search(points, indices[i], &res_2);
+		tfg_radius_search_avx512_float(points, indices[i], &res_2);
 		sort_neighbors(res_2.indices, res_2.distances, res_2.count);
 
 		// Check for same num of neighbours
