@@ -12,6 +12,7 @@ typedef struct{
     Points *points;
     index_t *bandwith_left;
 	index_t *bandwith_right;
+    index_t max_bandwith;
 } Points_TFG;
 
 

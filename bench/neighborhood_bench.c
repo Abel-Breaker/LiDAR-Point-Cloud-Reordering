@@ -33,13 +33,19 @@ void neighborhoods_tfg_bench(const Points_TFG *points)
 {
 	// Test neighborhood
 	timer_start();
-#pragma omp parallel for
-	for (index_t i = 0; i < points->points->num_points; ++i) {
+#pragma omp parallel
+	{
 		RadiusResult res = {};
-		tfg_radius_search(points, i, &res);
+		reserves_memory_radius_result(&res, points->max_bandwith);
 
-		// Force use to avoid code elimination
-		__asm__ volatile("" : : "r"(res.count) : "memory");
+#pragma omp for
+		for (index_t i = 0; i < points->points->num_points; ++i) {
+
+			tfg_radius_search(points, i, &res);
+
+			// Force use to avoid code elimination
+			__asm__ volatile("" : : "r"(res.count) : "memory");
+		}
 		destroy_radius_result(&res);
 	}
 	timer_stop_and_print("Neighborhood radius");

@@ -61,7 +61,8 @@ static void test_points_for_octree(const Points *points, index_t indices[NUM_OF_
 					if (diff > epsilon) {
 						printf(RED "%zu (%f) - %zu (%f) | diff = %f\n" COLOR_RESET,
 						       (size_t)res_1[i].indices[j], (double)res_1[i].distances[j],
-						       (size_t)res_2.indices[j], (double)res_2.distances[j], (double)diff);
+						       (size_t)res_2.indices[j], (double)res_2.distances[j],
+						       (double)diff);
 						exit(-1);
 					}
 				}
@@ -73,38 +74,43 @@ static void test_points_for_octree(const Points *points, index_t indices[NUM_OF_
 }
 
 static void test_points_for_tfg(const Points_TFG *points, index_t indices[NUM_OF_TESTS],
-				   RadiusResult res_1[NUM_OF_TESTS])
+				RadiusResult res_1[NUM_OF_TESTS])
 {
-#pragma omp parallel for
-	for (index_t i = 0; i < NUM_OF_TESTS; ++i) {
+#pragma omp parallel
+	{
 		RadiusResult res_2 = {};
+		reserves_memory_radius_result(&res_2, points->max_bandwith);
 
-		tfg_radius_search(points, indices[i], &res_2);
-		sort_neighbors(res_2.indices, res_2.distances, res_2.count);
+#pragma omp for
+		for (index_t i = 0; i < NUM_OF_TESTS; ++i) {
 
-		// Check for same num of neighbours
-		if (res_1[i].count != res_2.count) {
-			printf(RED "Not the same number of neighbours for iteration %zu (point %zu): %zu - "
-				   "%zu\n" COLOR_RESET,
-			       (size_t)i, (size_t)indices[i], (size_t)res_1[i].count, (size_t)res_2.count);
-		}
+			tfg_radius_search(points, indices[i], &res_2);
+			sort_neighbors(res_2.indices, res_2.distances, res_2.count);
 
-		// Check for same neighbours
-		for (index_t j = 0; j < res_2.count; j++) {
-			if (res_1[i].indices[j] != res_2.indices[j]) {
+			// Check for same num of neighbours
+			if (res_1[i].count != res_2.count) {
+				printf(RED "Not the same number of neighbours for iteration %zu (point %zu): %zu - "
+					   "%zu\n" COLOR_RESET,
+				       (size_t)i, (size_t)indices[i], (size_t)res_1[i].count, (size_t)res_2.count);
+			}
 
-				const data_t epsilon = (data_t)1e-5;
-				data_t diff = (data_t)fabs(res_1[i].distances[j] - res_2.distances[j]);
+			// Check for same neighbours
+			for (index_t j = 0; j < res_2.count; j++) {
+				if (res_1[i].indices[j] != res_2.indices[j]) {
 
-				if (diff > epsilon) {
-					printf(RED "%zu (%f) - %zu (%f) | diff = %f\n" COLOR_RESET,
-					       (size_t)res_1[i].indices[j], (double)res_1[i].distances[j],
-					       (size_t)res_2.indices[j], (double)res_2.distances[j], (double)diff);
-					exit(-1);
+					const data_t epsilon = (data_t)1e-5;
+					data_t diff = (data_t)fabs(res_1[i].distances[j] - res_2.distances[j]);
+
+					if (diff > epsilon) {
+						printf(RED "%zu (%f) - %zu (%f) | diff = %f\n" COLOR_RESET,
+						       (size_t)res_1[i].indices[j], (double)res_1[i].distances[j],
+						       (size_t)res_2.indices[j], (double)res_2.distances[j],
+						       (double)diff);
+						exit(-1);
+					}
 				}
 			}
 		}
-
 		destroy_radius_result(&res_2);
 	}
 }

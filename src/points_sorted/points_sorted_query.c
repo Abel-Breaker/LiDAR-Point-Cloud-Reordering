@@ -29,8 +29,6 @@ void tfg_radius_search(const Points_TFG *points, index_t index, RadiusResult *re
 	// Número total de puntos incluyendo ambos extremos
 	const index_t window = search_end_index - search_start_index + 1;
 
-	reserves_memory_radius_result(result, window);
-
 	index_t *restrict indices = result->indices;
 	data_t *restrict distances = result->distances;
 	const data_t *restrict xs = points->points->x + search_start_index;

@@ -27,6 +27,7 @@ static bool reserve_memory_points_sorted(Points_TFG *points, index_t number_of_p
 
 	points->bandwith_left = calloc(get_args()->number_of_blocks, sizeof(*(points->bandwith_left)));
 	points->bandwith_right = calloc(get_args()->number_of_blocks, sizeof(*(points->bandwith_right)));
+	points->max_bandwith = 0;
 
 	return true;
 }
@@ -51,6 +52,10 @@ void build_sorted_points(Points_TFG *points, const Points *old_points, const Sol
 			points->bandwith_left[block] = solution->bandwith_right[rcm_i];
 		if (solution->bandwith_left[rcm_i] > points->bandwith_right[block])
 			points->bandwith_right[block] = solution->bandwith_left[rcm_i];
+		
+		if((solution->bandwith_right[rcm_i] + solution->bandwith_left[rcm_i]) > points->max_bandwith){
+			points->max_bandwith = solution->bandwith_right[rcm_i] + solution->bandwith_left[rcm_i];
+		}
 	}
 }
 
