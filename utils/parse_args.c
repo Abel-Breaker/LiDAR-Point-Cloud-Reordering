@@ -12,6 +12,7 @@ static Args args;
 static struct option long_options[] = {{"filename", required_argument, NULL, 'f'},
 				       {"benchmark", no_argument, NULL, 'b'},
 				       {"test", no_argument, NULL, 't'},
+					   {"radius_reorder", required_argument, NULL, 'R'},
 				       {"radius_search", required_argument, NULL, 'r'},
 				       {"max_num_of_points", required_argument, NULL, 'n'},
 					   {"number_of_blocks", required_argument, NULL, 'm'},
@@ -27,7 +28,7 @@ void parse_args(int argc, char **argv)
 	unsigned long long val;
 
 	int option;
-	while ((option = getopt_long(argc, argv, "f:btr:n:m:h", long_options, NULL)) != -1) {
+	while ((option = getopt_long(argc, argv, "f:btR:r:n:m:h", long_options, NULL)) != -1) {
 		switch (option) {
 		case 'f':
 			args.cloud_points_file_name = optarg;
@@ -37,6 +38,10 @@ void parse_args(int argc, char **argv)
 			break;
 		case 't':
 			args.do_test = true;
+			break;
+		case 'R':
+			args.radius_reorder = (data_t)atof(optarg);
+			args.radius_reorder = args.radius_reorder * args.radius_reorder; // Square
 			break;
 		case 'r':
 			args.radius_search = (data_t)atof(optarg);
