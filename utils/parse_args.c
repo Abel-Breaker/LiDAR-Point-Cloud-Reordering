@@ -65,6 +65,7 @@ void parse_args(int argc, char **argv)
 			}
 
 			args.max_num_of_points = (index_t)val;
+			printf("%zu\n", args.max_num_of_points);
 			break;
 		case 'h':
 			printf("Use: %s --filename archivo.las\n", argv[0]);

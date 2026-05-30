@@ -62,6 +62,7 @@ endif
 DATA_TYPE ?= double
 ifeq ($(DATA_TYPE),float)
 	CFLAGS += -DUSE_FLOAT
+	CXXFLAGS += -DUSE_FLOAT
 endif
 
 CC  = gcc
@@ -80,7 +81,7 @@ $(LASLIB):
 
 # ── Wrapper parse_lidar_points: compilar solo si no existe la librería ────────
 $(LASPARSE):
-	$(Q)$(CXX) -std=c++23 -O2 \
+	$(Q)$(CXX) -std=c++23 -O2 $(CXXFLAGS)\
 		-I./third_party/LAStools/LASlib/inc \
 		-I./src/points \
 		-I./third_party/LAStools/LASzip/src \
@@ -92,7 +93,7 @@ $(LASPARSE):
 
 # ── Wrapper parse_lidar_points: compilar solo si no existe la librería ────────
 $(LASWRITER):
-	$(Q)$(CXX) -std=c++23 -O2 \
+	$(Q)$(CXX) -std=c++23 -O2 $(CXXFLAGS)\
 		-I./third_party/LAStools/LASlib/inc \
 		-I./src/points \
 		-I./third_party/LAStools/LASzip/src \

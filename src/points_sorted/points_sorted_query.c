@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 199309L
 #include "../../utils/parse_args.h"
 #include "avx512_query/avx512.h"
+#include "avx2_query/avx2.h"
 #include "points_sorted.h"
 #include <math.h>
 #include <stdio.h>
@@ -73,6 +74,13 @@ void tfg_radius_search(const Points_TFG *points, index_t index, RadiusResult *re
 	i = (search_bound.window / 8) * 8;
 #endif
 #elif __AVX2__
+	elements_count = tfg_radius_search_avx2(xs, ys, zs, search_bound.window, search_bound.search_start_index, x,
+						  y, z, radius_search, indices, distances);
+#ifdef USE_FLOAT
+	i = (search_bound.window / 8) * 8;
+#else
+	i = (search_bound.window / 4) * 4;
+#endif
 #endif
 
 	// Scalar fallback (always available)
