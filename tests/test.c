@@ -1,6 +1,5 @@
 #include "test.h"
 #include "../src/octree/octree.h"
-#include "../src/points_sorted/opt/points_sorted_opt.h"
 #include "../src/points_sorted/points_sorted.h"
 #include "../src/reorder/cuthill-mckee.h"
 #include "../utils/terminal_formating.h"
@@ -76,10 +75,15 @@ static void test_points_for_octree(const Points *points, index_t indices[NUM_OF_
 static void test_points_for_tfg(const Points_TFG *points, index_t indices[NUM_OF_TESTS],
 				RadiusResult res_1[NUM_OF_TESTS])
 {
+	// Obtain radius and the search amplification factor as a function of the radius
+	const data_t radius_search = get_args()->radius_search;
+	const data_t radius_reorder = get_args()->radius_reorder;
+	const index_t factor = (index_t)ceil(radius_search / radius_reorder); // Dangerous
+
 #pragma omp parallel
 	{
 		RadiusResult res_2 = {};
-		reserves_memory_radius_result(&res_2, points->max_bandwith);
+		reserves_memory_radius_result(&res_2, points->max_bandwith*factor+100);
 
 #pragma omp for
 		for (index_t i = 0; i < NUM_OF_TESTS; ++i) {
