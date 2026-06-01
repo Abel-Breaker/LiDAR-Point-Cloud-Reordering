@@ -10,10 +10,9 @@
 
 ## Description
 
-The main objective of this project is to **reorder a point cloud** based on the neighborhood relationships between its points, generating a **sparse symmetric neighborhood matrix** on which Reverse Cuthill-Mckee algorithm is applied.
+The main objective of this project, developed as part of my **Final Degree Project (TFG)**, is to **reorder a point cloud** based on the neighborhood relationships between its points, generating a **sparse symmetric neighborhood matrix** on which Reverse Cuthill-Mckee algorithm is applied.
 
 These techniques allow us to **reduce the matrix bandwidth**, which improves the **spatial locality of the data** and it allows to perform narrowed neighbor searches.
-
 
 
 ## Main project structure
@@ -47,7 +46,7 @@ CODE/
 
 Brief explanation:
 - **.github/workflows/** → GitHub Actions Tests (CI) for compilation, clang-tidy, and valgrind.
-- **cloud_points/cloud_point_test.laz** → Little example of a random 1K points - LiDAR point cloud for test and debug.
+- **cloud_points/cloud_point_test.laz** → Example of a random 1K points - LiDAR point cloud for test and debug.
 - **bench/** → All functions related with benchmarking.
 - **src/** → Main folder with the core code.
 - **src/octree/** → Octree structure, implementation and query for search neighbours.
@@ -79,7 +78,7 @@ The project includes a Makefile that allows compilation in different modes:
 Once the program is compiled, it can be run as follows:
 
 ```bash
-./program -f cloud_points/cloud_point_test.laz -b -t
+./program -f cloud_points/cloud_point_test.laz -b -t -m 2 -R 100 -r 100
 ```
 
 For more information on using the program:
