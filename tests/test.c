@@ -3,6 +3,7 @@
 #include "../src/points_sorted/points_sorted.h"
 #include "../src/reorder/cuthill-mckee.h"
 #include "../utils/terminal_formating.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -48,21 +49,19 @@ static void test_points_for_octree(const Points *points, index_t indices[NUM_OF_
 				printf(RED "Not the same number of neighbours for iteration %zu (point %zu): %zu - "
 					   "%zu\n" COLOR_RESET,
 				       (size_t)i, (size_t)indices[i], (size_t)res_1[i].count, (size_t)res_2.count);
-			}
+				for (index_t j = 0; j < res_2.count; j++) {
+					if (res_1[i].indices[j] != res_2.indices[j]) {
 
-			// Comparar
-			for (index_t j = 0; j < res_2.count; j++) {
-				if (res_1[i].indices[j] != res_2.indices[j]) {
+						const data_t epsilon = (data_t)1e-5;
+						data_t diff = (data_t)fabs(res_1[i].distances[j] - res_2.distances[j]);
 
-					const data_t epsilon = (data_t)1e-5;
-					data_t diff = (data_t)fabs(res_1[i].distances[j] - res_2.distances[j]);
-
-					if (diff > epsilon) {
-						printf(RED "%zu (%f) - %zu (%f) | diff = %f\n" COLOR_RESET,
-						       (size_t)res_1[i].indices[j], (double)res_1[i].distances[j],
-						       (size_t)res_2.indices[j], (double)res_2.distances[j],
-						       (double)diff);
-						exit(-1);
+						if (diff > epsilon) {
+							printf(RED "%zu (%f) - %zu (%f) | diff = %f\n" COLOR_RESET,
+							       (size_t)res_1[i].indices[j],
+							       (double)res_1[i].distances[j], (size_t)res_2.indices[j],
+							       (double)res_2.distances[j], (double)diff);
+							exit(-1);
+						}
 					}
 				}
 			}
@@ -72,18 +71,18 @@ static void test_points_for_octree(const Points *points, index_t indices[NUM_OF_
 	destroy_octree(&octree);
 }
 
-static void test_points_for_tfg(const Points_TFG *points, index_t indices[NUM_OF_TESTS],
+static void test_points_for_tfg(const Points_sorted *points, index_t indices[NUM_OF_TESTS],
 				RadiusResult res_1[NUM_OF_TESTS])
 {
 	// Obtain radius and the search amplification factor as a function of the radius
 	const data_t radius_search = get_args()->radius_search;
 	const data_t radius_reorder = get_args()->radius_reorder;
-	const index_t factor = (index_t)ceil(radius_search / radius_reorder); // Dangerous
+	const index_t factor = (index_t)(ceil(radius_search / radius_reorder) + 1.0);
 
 #pragma omp parallel
 	{
 		RadiusResult res_2 = {};
-		reserves_memory_radius_result(&res_2, points->max_bandwith*factor+100);
+		reserves_memory_radius_result(&res_2, points->max_bandwith * factor + 100);
 
 #pragma omp for
 		for (index_t i = 0; i < NUM_OF_TESTS; ++i) {
@@ -96,21 +95,20 @@ static void test_points_for_tfg(const Points_TFG *points, index_t indices[NUM_OF
 				printf(RED "Not the same number of neighbours for iteration %zu (point %zu): %zu - "
 					   "%zu\n" COLOR_RESET,
 				       (size_t)i, (size_t)indices[i], (size_t)res_1[i].count, (size_t)res_2.count);
-			}
+				// Check for same neighbours
+				for (index_t j = 0; j < res_2.count; j++) {
+					if (res_1[i].indices[j] != res_2.indices[j]) {
 
-			// Check for same neighbours
-			for (index_t j = 0; j < res_2.count; j++) {
-				if (res_1[i].indices[j] != res_2.indices[j]) {
+						const data_t epsilon = (data_t)1e-5;
+						data_t diff = (data_t)fabs(res_1[i].distances[j] - res_2.distances[j]);
 
-					const data_t epsilon = (data_t)1e-5;
-					data_t diff = (data_t)fabs(res_1[i].distances[j] - res_2.distances[j]);
-
-					if (diff > epsilon) {
-						printf(RED "%zu (%f) - %zu (%f) | diff = %f\n" COLOR_RESET,
-						       (size_t)res_1[i].indices[j], (double)res_1[i].distances[j],
-						       (size_t)res_2.indices[j], (double)res_2.distances[j],
-						       (double)diff);
-						exit(-1);
+						if (diff > epsilon) {
+							printf(RED "%zu (%f) - %zu (%f) | diff = %f\n" COLOR_RESET,
+							       (size_t)res_1[i].indices[j],
+							       (double)res_1[i].distances[j], (size_t)res_2.indices[j],
+							       (double)res_2.distances[j], (double)diff);
+							exit(-1);
+						}
 					}
 				}
 			}
@@ -126,7 +124,7 @@ void test(const Points *points)
 	// Reorder points
 	Octree octree = {};
 	create_octree(&octree, points);
-	Points_TFG points_sorted = {};
+	Points_sorted points_sorted = {};
 	Solution *sol = reorder_cuthill_mckee(&octree);
 	build_sorted_points(&points_sorted, octree.points, sol);
 	destroy_solution(sol);

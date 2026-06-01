@@ -15,12 +15,13 @@ typedef struct {
 } Solution;
 
 /**
- * @brief Reorder points and search the best solution with the lowest bandwith
+ * @brief Reorder points and search the best solution with the lowest bandwith.
  *
- * @param[in] octree
- * @return Pointer to solution
+ * @param[in] octree Pointer to Octree to search neighbours.
+ * 
+ * @return Pointer to solution.
  *
- * @note Caller must free memory of solution with destroy_solution()
+ * @note Caller must free memory of solution with destroy_solution().
  */
 Solution *reorder_cuthill_mckee(const Octree *octree);
 
@@ -33,11 +34,8 @@ Solution *reorder_cuthill_mckee(const Octree *octree);
 void print_solution_stats(const Solution *solution, index_t num_points);
 
 /**
- * @brief Free memory for solution
+ * @brief Free memory for solution.
  *
- * @param[in] octree
- * @return Pointer to solution
- *
- * @note Caller must free memory of solution with destroy_solution()
+ * @param[in] octree Pointer to Octree.
  */
 void destroy_solution(Solution *solution);

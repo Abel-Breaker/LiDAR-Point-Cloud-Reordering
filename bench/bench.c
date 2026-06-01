@@ -7,7 +7,6 @@
 #include "../utils/timer.h"
 #include "../utils/terminal_formating.h"
 #include "neighborhood_bench.h"
-#include "points_structures_bench.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -15,8 +14,10 @@ void bench(const Points *points)
 {
 
 	// Create base structure
+	timer_start();
 	Octree octree = {};
 	create_octree(&octree, points);
+	timer_stop_and_print("Build octree");
 
 	{
 		printf(BOLD_BLUE "\nOCTREE\n" COLOR_RESET);
@@ -31,7 +32,7 @@ void bench(const Points *points)
 		timer_stop_and_print("Reorder");
 
 		timer_start();
-		Points_TFG points_sorted = {};
+		Points_sorted points_sorted = {};
 		build_sorted_points(&points_sorted, octree.points, sol);
 		timer_stop_and_print("Build sorted points");
 

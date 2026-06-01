@@ -2,7 +2,6 @@
 #include "../../utils/parse_args.h"
 #include "../../utils/types.h"
 #include "../points/points.h"
-#include <stddef.h>
 
 // Maximum number of points per sheet before subdividing
 #define OCTREE_BUCKET_SIZE 128
@@ -12,7 +11,6 @@
 
 // Bounding box aligned with the axes
 typedef struct {
-	// x y z
 	data_t min[DIMENSIONS];
 	data_t max[DIMENSIONS];
 } AABB;
@@ -30,7 +28,7 @@ typedef struct Octree {
 } Octree;
 
 /**
- * Creates an octree from a given collection of points.
+ * @brief Creates an octree from a given collection of points.
  *
  * @param[out] octree Pointer to the Octree structure to initialize.
  * @param[in] points Pointer to the Points structure used to build the octree.
@@ -40,20 +38,19 @@ typedef struct Octree {
 void create_octree(Octree *octree, const Points *points);
 
 /**
- * Destroys an octree, releasing all associated resources.
+ * @brief Destroys an octree, releasing all associated resources.
  *
  * @param[in,out] octree Pointer to the Octree structure to destroy.
  */
 void destroy_octree(Octree *octree);
 
 /**
- * Prints statistical information about the octree.
+ * @brief Prints statistical information about the octree.
  *
  * @param[in] octree Pointer to the Octree structure.
  */
 void octree_print_stats(const Octree *octree);
 
-/* Resultados de búsqueda por radio: array dinámico de índices y distancias. */
 typedef struct {
 	index_t *indices;
 	data_t *distances;
@@ -61,11 +58,32 @@ typedef struct {
 	index_t capacity;
 } RadiusResultOctree;
 
-/* Rellena 'result' con todos los puntos a distancia <= radius del punto dado.
- * Si  RadiusResultOctree es la primera vez que se usa tiene que estar correctamente inicializado a 0 (={})
- * Las siguientes llamadas puede reutilizar RadiusResultOctree sin problema para evitar malloc/free*/
+ /**
+ * @brief Search neighbours of a point in a radius.
+ * 
+ * @param[in] octree Pointer to the Octree structure.
+ * @param[in] point_index Index of the point on which to search for neighbors.
+ * @param[out] result Pointer to RadiusResultOctree where solution will be saved.
+ * 
+ * @note Argument `result` has to be initialized. It can be reused.
+ * @note Argument `result` has to be destroyed when it is no longer going to be used.
+ */
 void octree_radius_search(const Octree *octree, index_t point_index, data_t radius, RadiusResultOctree *result);
 
+/**
+ * @brief Counts the number of neighbours that a point has in a radius.
+ * 
+ * @param[in] octree Pointer to the Octree structure.
+ * @param[in] point_index Index of the point on which to search for neighbors.
+ * @param[in] radius Radius to search points.
+ * 
+ * @return Number of neighbours for the point in the radius.
+ */
 index_t octree_radius_neighbor_count(const Octree *octree, index_t point_index, data_t radius);
 
+/**
+ * @brief Free memory for RadiusResultOctree.
+ * 
+ * @param[in] result Pointer to a RadiusResultOctree to free.
+ */
 void radius_result_destroy(RadiusResultOctree *result);

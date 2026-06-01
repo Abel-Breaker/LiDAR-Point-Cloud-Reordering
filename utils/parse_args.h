@@ -1,9 +1,8 @@
 #pragma once
 #include <getopt.h>
-#include <stddef.h>
 #include "types.h"
 
-typedef struct {
+struct Args{
     char *cloud_points_file_name;
     bool do_benchmark;
     bool do_test;
@@ -11,14 +10,19 @@ typedef struct {
     data_t radius_search;
     index_t max_num_of_points;
     index_t number_of_blocks;
-} Args;
+};
 
 /**
- * Parses command-line arguments into an singleton Args structure.
+ * @brief Parses command-line arguments into an singleton Args structure.
  *
  * @param[in] argc Number of command-line arguments.
  * @param[in] argv Array of command-line argument strings.
+ * 
+ * @return True if everything was correctly parsed, false if not.
  */
-void parse_args(int argc, char **argv);
+bool parse_args(int argc, char **argv);
 
-const Args *get_args();
+/**
+ * @return A const pointer to singleton Args structure to read args.
+ */
+const struct Args *get_args();

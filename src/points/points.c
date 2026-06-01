@@ -1,24 +1,24 @@
 #include "points.h"
 #include <stddef.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 bool reserve_memory_points(Points *points, index_t number_of_points)
 {
-    // Convert number_of_points to a multple of 64
-    index_t size = number_of_points * sizeof(data_t);
-   index_t aligned_size = (size + (index_t)63) & ~(index_t)63; //
+	// Convert number_of_points to a multple of 64
+	index_t size = number_of_points * sizeof(data_t);
+	index_t aligned_size = (size + (index_t)63) & ~(index_t)63; //
 
-    points->x = aligned_alloc(64, aligned_size);
-    points->y = aligned_alloc(64, aligned_size);
-    points->z = aligned_alloc(64, aligned_size);
+	points->num_points = number_of_points;
+	points->x = aligned_alloc(64, aligned_size);
+	points->y = aligned_alloc(64, aligned_size);
+	points->z = aligned_alloc(64, aligned_size);
 
-    if (!points->x || !points->y || !points->z) {
-        return false;
-    }
+	if (!points->x || !points->y || !points->z) {
+		return false;
+	}
 
-    points->num_points = number_of_points;
-    return true;
+	return true;
 }
 
 void add_point(Points *points, index_t index, data_t x, data_t y, data_t z)
@@ -30,12 +30,13 @@ void add_point(Points *points, index_t index, data_t x, data_t y, data_t z)
 
 void destroy_points(Points *points)
 {
-    if(!points) return;
-    
+	if (!points)
+		return;
+
 	free(points->x);
-    free(points->y);
-    free(points->z);
-	
+	free(points->y);
+	free(points->z);
+
 	points->x = points->y = points->z = NULL;
 	points->num_points = 0;
 }

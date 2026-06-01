@@ -13,7 +13,6 @@ struct Queue {
 	index_t capacity;
 };
 
-// Crear cola
 Queue *create_queue(void)
 {
 	Queue *q = calloc(1, sizeof(*q));

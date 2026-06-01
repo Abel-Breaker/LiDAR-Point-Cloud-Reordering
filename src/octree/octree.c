@@ -5,7 +5,7 @@
 #include <float.h>
 
 /** 
- * Calculate the bounding box that encompasses all the points
+ * @brief Calculate the bounding box that encompasses all the points
 */
 static AABB compute_global_aabb(const Points *points)
 {
@@ -27,7 +27,7 @@ static AABB compute_global_aabb(const Points *points)
 }
 
 /**
- * Determines the octant in which a point falls relative to the center of the AABB.
+ * @brief Determines the octant in which a point falls relative to the center of the AABB.
  * 
  * Octant encoded in bits:
  * 	bit 0 → X (0 = left, 1 = right)
@@ -44,7 +44,7 @@ static int get_octant(const Points *points, index_t idx, const data_t center[3])
 }
 
 /**
- * Calculate the AABB of the son given the AABB of the father and the octant
+ * @brief Calculate the AABB of the son given the AABB of the father and the octant
 */
 static AABB child_bounds(const AABB *parent, int octant)
 {
@@ -64,7 +64,7 @@ static AABB child_bounds(const AABB *parent, int octant)
 }
 
 /**
- * Create a leaf node with the provided indices
+ * @brief Create a leaf node with the provided indices
 */
 static Octant *create_leaf(const AABB *bounds, const index_t *indices, index_t n)
 {
@@ -86,7 +86,7 @@ static Octant *create_leaf(const AABB *bounds, const index_t *indices, index_t n
 }
 
 /**
- * Create an internal node (without its own points)
+ * @brief Create an internal node (without its own points)
 */
 static Octant *create_internal(const AABB *bounds)
 {
@@ -102,7 +102,7 @@ static Octant *create_internal(const AABB *bounds)
 }
 
 /**
- * Recursive construction of the octree
+ * @brief Recursive construction of the octree
 */
 static Octant *octree_build(const Points *points,
                                 const AABB *bounds,
@@ -190,7 +190,7 @@ void create_octree(Octree *octree, const Points *points)
 }
 
 /**
- * Recursive node release
+ * @brief Recursive node release
  */
 static void octree_free_octant(Octant *octant)
 {
@@ -213,7 +213,7 @@ void destroy_octree(Octree *octree)
 
 
 /**
- * Get stadistics
+ * @brief Get stadistics
  */
 static void collect_stats(const Octant *octant, int depth,
                           index_t *internal_count, index_t *leaf_count,
@@ -244,34 +244,33 @@ static void collect_stats(const Octant *octant, int depth,
 
 void octree_print_stats(const Octree *octree)
 {
-	if(!octree) return;
-	
+	if (!octree)
+		return;
+
 	if (!octree->root) {
-		printf("Octree vacío\n");
+		printf("Empty octree\n");
 		return;
 	}
 
 	index_t internal_count = 0;
-	index_t leaf_count     = 0;
-	index_t total_points   = 0;
-	int    max_depth      = 0;
-	index_t min_leaf_pts   = (index_t)-1;
-	index_t max_leaf_pts   = 0;
+	index_t leaf_count = 0;
+	index_t total_points = 0;
+	int max_depth = 0;
+	index_t min_leaf_pts = (index_t)-1;
+	index_t max_leaf_pts = 0;
 
-	collect_stats(octree->root, 0,
-	              &internal_count, &leaf_count,
-	              &total_points, &max_depth,
-	              &min_leaf_pts, &max_leaf_pts);
+	collect_stats(octree->root, 0, &internal_count, &leaf_count, &total_points, &max_depth, &min_leaf_pts,
+		      &max_leaf_pts);
 
-	printf("=== Estadísticas del Octree ===\n");
-	printf("  Nodos internos : %zu\n", (size_t) internal_count);
-	printf("  Hojas          : %zu\n", (size_t) leaf_count);
-	printf("  Puntos totales : %zu\n", (size_t) total_points);
-	printf("  Profundidad max: %d\n",  max_depth);
+	printf("=== Octree Statistics ===\n");
+	printf("  Internal nodes : %zu\n", (size_t)internal_count);
+	printf("  Leaf nodes     : %zu\n", (size_t)leaf_count);
+	printf("  Total points   : %zu\n", (size_t)total_points);
+	printf("  Maximum depth  : %d\n", max_depth);
+
 	if (leaf_count > 0) {
-		printf("  Puntos/hoja min: %zu\n", (size_t) min_leaf_pts);
-		printf("  Puntos/hoja max: %zu\n", (size_t) max_leaf_pts);
-		printf("  Puntos/hoja avg: %.1f\n",
-		       (double)total_points / (double)leaf_count);
+		printf("  Min points/leaf: %zu\n", (size_t)min_leaf_pts);
+		printf("  Max points/leaf: %zu\n", (size_t)max_leaf_pts);
+		printf("  Avg points/leaf: %.1f\n", (double)total_points / (double)leaf_count);
 	}
 }

@@ -21,7 +21,6 @@ bool read_las_points(const char *filename, Points *pts)
 	// Get the number of points from the header
 	index_t point_count = static_cast<index_t>(lasReader->header.number_of_point_records);
 
-	printf("%zu\n", (size_t)get_args()->max_num_of_points);
 	if (get_args()->max_num_of_points != 0) {
 		if (get_args()->max_num_of_points < point_count) {
 			point_count = get_args()->max_num_of_points;

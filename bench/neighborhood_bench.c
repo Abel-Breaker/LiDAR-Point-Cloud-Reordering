@@ -7,6 +7,7 @@
 #include "../utils/types.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 void neighborhoods_octree_radius_bench(const Octree *structure)
 {
@@ -28,14 +29,13 @@ void neighborhoods_octree_radius_bench(const Octree *structure)
 	timer_stop_and_print("Neighborhood radius");
 }
 
-void neighborhoods_tfg_bench(const Points_TFG *points)
+void neighborhoods_tfg_bench(const Points_sorted *points)
 {
 	// Obtain radius and the search amplification factor as a function of the radius
 	const data_t radius_search = get_args()->radius_search;
 	const data_t radius_reorder = get_args()->radius_reorder;
-	const index_t factor = (index_t)ceil(radius_search / radius_reorder); // Dangerous
+	const index_t factor = (index_t)(ceil(radius_search / radius_reorder) + 1.0);
 
-	// Test neighborhood
 	timer_start();
 #pragma omp parallel
 	{
@@ -44,7 +44,6 @@ void neighborhoods_tfg_bench(const Points_TFG *points)
 
 #pragma omp for
 		for (index_t i = 0; i < points->points->num_points; ++i) {
-
 			tfg_radius_search(points, i, &res);
 
 			// Force use to avoid code elimination

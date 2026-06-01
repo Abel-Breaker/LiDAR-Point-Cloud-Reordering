@@ -38,15 +38,15 @@ typedef struct {
 } RcmWorkspace;
 
 /**
- * @brief Sort function. It uses degrees to order indices of struct RcmWorkspaceCommonData
+ * @brief Sort function. It uses degrees to order indices of struct RcmWorkspaceCommonData.
  * 
- * @note It is faster for small amount of indices to order
+ * @note It is faster for small amount of indices to order.
  */
-void insertion_sort_by_degree(index_t *restrict arr, int n, const index_t *restrict degrees)
+void insertion_sort_by_degree(index_t *restrict arr, index_t n, const index_t *restrict degrees)
 {
-	for (int i = 1; i < n; i++) {
+	for (index_t i = 1; i < n; i++) {
 		index_t key = arr[i];
-		int j = i - 1;
+		int j = (int)i - 1;
 
 		while (j >= 0 && degrees[arr[j]] > degrees[key]) {
 			arr[j + 1] = arr[j];
@@ -75,7 +75,7 @@ static int compare(const void *a, const void *b, void *context)
 }
 
 /**
- * @brief Reserves memory for struct RcmWorkspaceCommonData
+ * @brief Reserves memory for struct RcmWorkspaceCommonData.
  */
 static bool create_degree_index(RcmWorkspaceCommonData *di, index_t num_points)
 {
@@ -86,14 +86,14 @@ static bool create_degree_index(RcmWorkspaceCommonData *di, index_t num_points)
 }
 
 /**
- * @brief Precalculate all points degrees and inicializate an ordered by degree index array
+ * @brief Precalculate all points degrees and inicializate an ordered by degree index array.
  */
 static void setup_degree_index(RcmWorkspaceCommonData *di, const Octree *octree)
 {
 	di->num_points = octree->points->num_points;
 	const data_t radius = get_args()->radius_reorder;
 
-#pragma omp parallel for schedule(static) // TODO: Test with schedule(dynamic)
+#pragma omp parallel for schedule(static)
 	for (index_t i = 0; i < di->num_points; ++i) {
 		di->degrees[i] = octree_radius_neighbor_count(octree, i, radius);
 		di->indices[i] = i;
@@ -103,18 +103,25 @@ static void setup_degree_index(RcmWorkspaceCommonData *di, const Octree *octree)
 }
 
 /**
- * @brief Reserves memory for struct Solution
+ * @brief Reserves memory for struct Solution.
  */
 static Solution *create_solution(index_t num_points)
 {
-	Solution *solution = malloc(sizeof(*solution) * num_points);
+	Solution *solution = malloc(sizeof(*solution));
+	if (!solution)
+		return NULL;
 
 	solution->permutations = malloc(sizeof(*(solution->permutations)) * num_points);
 	solution->bandwith_left = calloc(num_points, sizeof(*(solution->bandwith_left)));
 	solution->bandwith_right = calloc(num_points, sizeof(*(solution->bandwith_right)));
+
 	solution->total_neighours = 0;
 
-	if (!solution || !solution->permutations || !solution->bandwith_left || !solution->bandwith_right) {
+	if (!solution->permutations || !solution->bandwith_left || !solution->bandwith_right) {
+		free(solution->permutations);
+		free(solution->bandwith_left);
+		free(solution->bandwith_right);
+		free(solution);
 		return NULL;
 	}
 
@@ -122,7 +129,7 @@ static Solution *create_solution(index_t num_points)
 }
 
 /**
- * @brief Free memory for struct RcmWorkspaceCommonData and clean values
+ * @brief Free memory for struct RcmWorkspaceCommonData and clean values.
  */
 void destroy_solution(Solution *solution)
 {
@@ -133,7 +140,7 @@ void destroy_solution(Solution *solution)
 }
 
 /**
- * @brief Reserves memory for struct RcmWorkspace and clean values
+ * @brief Reserves memory for struct RcmWorkspace and clean values.
  */
 static bool create_rcm_workspace(RcmWorkspace *ws, const RcmWorkspaceCommonData *di_ref)
 {
@@ -150,7 +157,7 @@ static bool create_rcm_workspace(RcmWorkspace *ws, const RcmWorkspaceCommonData 
 }
 
 /**
- * @brief Free memory for struct RcmWorkspaceCommonData and clean values
+ * @brief Free memory for struct RcmWorkspaceCommonData and clean values.
  */
 static void destroy_degree_index(RcmWorkspaceCommonData *di)
 {
@@ -160,7 +167,7 @@ static void destroy_degree_index(RcmWorkspaceCommonData *di)
 }
 
 /**
- * @brief Free memory for struct RcmWorkspace and clean values
+ * @brief Free memory for struct RcmWorkspace and clean values.
  */
 static void destroy_rcm_workspace(RcmWorkspace *ws)
 {
@@ -174,7 +181,7 @@ static void destroy_rcm_workspace(RcmWorkspace *ws)
 }
 
 /**
- * @brief Free memory for struct RcmWorkspace except Solution
+ * @brief Free memory for struct RcmWorkspace except Solution.
  */
 static Solution *destroy_rcm_workspace_except_solution(RcmWorkspace *ws)
 {
@@ -191,7 +198,7 @@ static Solution *destroy_rcm_workspace_except_solution(RcmWorkspace *ws)
 }
 
 /**
- * @brief Return the next point with lowest degree. If there isn't any left return INDEX_MAX
+ * @brief Return the next point with lowest degree. If there isn't any left return INDEX_MAX.
  */
 static inline index_t get_next_point_index_lowest_degree(RcmWorkspace *ws)
 {
@@ -208,11 +215,11 @@ static inline index_t get_next_point_index_lowest_degree(RcmWorkspace *ws)
 /**
  * @brief Get num_candidates candidates for start RCM.
  *
- * TODO: 8 candidates, edges of the bounding box that envolves the cloud points?
+ * @todo 8 candidates, edges of the bounding box that envolves the cloud points?
  *
- * @note - The first candidate is the point with lowest degree
- * @note - The next 6 are the points with the min and max values for each dimesion
- * @note - The rest of candidates are random points of the cloud
+ * @note - The first candidate is the point with lowest degree.
+ * @note - The next 6 are the points with the min and max values for each dimesion.
+ * @note - The rest of candidates are random points of the cloud.
  */
 static void get_candidates(const Points *points, index_t *candidates, RcmWorkspaceCommonData *ws)
 {
@@ -266,10 +273,10 @@ static void get_candidates(const Points *points, index_t *candidates, RcmWorkspa
 }
 
 /**
- * @brief Enqueue points that weren't visited and set bandwith right and left
+ * @brief Enqueue points that weren't visited and set bandwith right and left.
  *
- * Bandwith left corresponds always to visited points
- * Bandwith right corresponds always to the
+ * Bandwith left corresponds always to the farthest visited points.
+ * Bandwith right corresponds always to queue.
  */
 static void process_result(RadiusResultOctree *result, RcmWorkspace *ws)
 {
@@ -281,9 +288,8 @@ static void process_result(RadiusResultOctree *result, RcmWorkspace *ws)
 			ws->positions[nb] = ws->points_visited + get_num_elements(ws->queue);
 
 		} else {
-			// Bandwidth izquierdo: distancia al vecino ya visitado más lejano
 			if (ws->positions[nb] <
-			    ws->points_visited) { // Evita underflow por vecinos encolados pero no procesados
+			    ws->points_visited) { // Neighbours enqueue but not processed
 				index_t bw_l = ws->points_visited - ws->positions[nb];
 				if (bw_l > ws->solution->bandwith_left[ws->points_visited])
 					ws->solution->bandwith_left[ws->points_visited] = bw_l;
@@ -351,7 +357,7 @@ static void run_rcm_thread(const Octree *octree, RcmWorkspace *ws, index_t start
 }
 
 /**
- * @brief returns the Thread ID of best permutations array between all the thread's solutions
+ * @brief returns the Thread ID of best permutations array between all the thread's solutions.
  */
 static int get_best_permutation(const RcmWorkspace *ws)
 {

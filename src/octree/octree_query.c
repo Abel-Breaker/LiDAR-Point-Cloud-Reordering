@@ -5,17 +5,21 @@
 #include <string.h>
 #include "../../utils/types.h"
 
-/* Comprueba si el punto está dentro del bounding box (inclusivo). */
+/**
+ * @brief Checks whether the point is inside the bounding box (inclusive).
+ */
 static inline bool aabb_contains(const AABB *box,
-                                  data_t px, data_t py, data_t pz)
+								  data_t px, data_t py, data_t pz)
 {
 	return px >= box->min[0] && px <= box->max[0]
 	    && py >= box->min[1] && py <= box->max[1]
 	    && pz >= box->min[2] && pz <= box->max[2];
 }
 
-/* Distancia mínima desde el punto (px,py,pz) al bounding box.
- * Si el punto está dentro, devuelve 0. */
+/** 
+ * @brief Minimum distance from the point (px,py,pz) to the bounding box.
+ * If the point is inside, returns 0. 
+ */
 static inline data_t aabb_min_dist(const AABB *box,
                                    data_t px, data_t py, data_t pz)
 {
@@ -34,7 +38,9 @@ static inline data_t aabb_min_dist(const AABB *box,
 	return (dx * dx + dy * dy + dz * dz);
 }
 
-/* Añade un punto al resultado, redoblando capacidad si es necesario. */
+/** 
+ * @brief Adds a point to the result, doubling capacity if necessary. 
+ */
 static bool radius_result_push(RadiusResultOctree *res, index_t idx, data_t dist)
 {
 	if (res->count == res->capacity) {
@@ -70,11 +76,11 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 {
 	if (!octant) return;
 
-	/* Poda: si la esquina más cercana del AABB ya supera el radio, no hay
-	 * ningún punto de este subárbol que pueda estar dentro. */
+	/* Pruning: if the closest corner of the AABB already exceeds the radius,
+	 * there is no point in this subtree that can be inside. */
 	if (aabb_min_dist(&octant->bounds, px, py, pz) > radius) return;
 
-	/* Nodo hoja: evaluar todos los puntos del bucket. */
+	/* Leaf node: evaluate all points in the bucket. */
 	if (octant->point_indices) {
 		for (index_t i = 0; i < octant->num_points; ++i) {
 			index_t idx = octant->point_indices[i];
@@ -87,7 +93,7 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 		return;
 	}
 
-	/* Nodo interno: visitar primero el hijo que contiene la consulta. */
+	/* Internal node: visit first the child that contains the query. */
 	int containing_child = -1;
 	for (int c = 0; c < 8; ++c) {
 		if (!octant->children[c]) continue;
@@ -106,10 +112,7 @@ static void radius_traverse(const Octree *octree, const Octant *octant,
 void octree_radius_search(const Octree *octree, index_t point_index, data_t radius,
                           RadiusResultOctree *result)
 {
-	//result->indices   = nullptr;
-	//result->distances = nullptr;
 	result->count     = 0;
-	//result->capacity  = 0;
 
 	data_t px = octree->points->x[point_index];
 	data_t py = octree->points->y[point_index];
@@ -124,11 +127,11 @@ static void radius_traverse_neighbor_count(const Octree *octree, const Octant *o
 {
 	if (!octant) return;
 
-	/* Poda: si la esquina más cercana del AABB ya supera el radio, no hay
-	 * ningún punto de este subárbol que pueda estar dentro. */
+	/* Pruning: if the closest corner of the AABB already exceeds the radius,
+	 * there is no point in this subtree that can be inside. */
 	if (aabb_min_dist(&octant->bounds, px, py, pz) > radius) return;
 
-	/* Nodo hoja: evaluar todos los puntos del bucket. */
+	/* Leaf node: evaluate all points in the bucket. */
 	if (octant->point_indices) {
 		for (index_t i = 0; i < octant->num_points; ++i) {
 			index_t idx = octant->point_indices[i];
@@ -141,7 +144,7 @@ static void radius_traverse_neighbor_count(const Octree *octree, const Octant *o
 		return;
 	}
 
-	/* Nodo interno: visitar primero el hijo que contiene la consulta. */
+	/* Internal node: visit first the child that contains the query. */
 	int containing_child = -1;
 	for (int c = 0; c < 8; ++c) {
 		if (!octant->children[c]) continue;

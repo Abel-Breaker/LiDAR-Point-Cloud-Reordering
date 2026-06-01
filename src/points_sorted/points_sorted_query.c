@@ -13,11 +13,11 @@ typedef struct {
 	index_t window;
 } Search_bound;
 
-static inline void set_search_bound(const Points_TFG *points, index_t index, Search_bound *sb)
+static inline void set_search_bound(const Points_sorted *points, index_t index, Search_bound *sb)
 {
     const data_t radius_search  = get_args()->radius_search;
     const data_t radius_reorder = get_args()->radius_reorder;
-    const index_t factor        = (index_t)ceil(radius_search / radius_reorder) + 1;
+    const index_t factor        = (index_t)(ceil(radius_search / radius_reorder) + 1.0);
     const index_t num_points    = points->points->num_points;
     const index_t num_blocks    = get_args()->number_of_blocks;
     const index_t block_index   = get_block_index(index, num_points);
@@ -44,7 +44,7 @@ static inline void set_search_bound(const Points_TFG *points, index_t index, Sea
     sb->window = sb->search_end_index - sb->search_start_index + 1;
 }
 
-void tfg_radius_search(const Points_TFG *points, index_t index, RadiusResult *result)
+void tfg_radius_search(const Points_sorted *points, index_t index, RadiusResult *result)
 {
 	const data_t radius_search = get_args()->radius_search;
 
@@ -73,7 +73,7 @@ void tfg_radius_search(const Points_TFG *points, index_t index, RadiusResult *re
 #else
 	i = (search_bound.window / 8) * 8;
 #endif
-#elif __AVX2__
+#elif defined(__AVX2__)
 	elements_count = tfg_radius_search_avx2(xs, ys, zs, search_bound.window, search_bound.search_start_index, x,
 						  y, z, radius_search, indices, distances);
 #ifdef USE_FLOAT

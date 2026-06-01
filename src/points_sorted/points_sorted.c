@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 index_t get_block_index(index_t i, index_t num_points)
 {
@@ -17,7 +18,7 @@ index_t get_block_index(index_t i, index_t num_points)
 	return (block >= number_of_blocks) ? number_of_blocks - 1 : block;
 }
 
-static bool reserve_memory_points_sorted(Points_TFG *points, index_t number_of_points)
+static bool reserve_memory_points_sorted(Points_sorted *points, index_t number_of_points)
 {
 	points->points = malloc(sizeof(*(points->points)));
 
@@ -32,7 +33,7 @@ static bool reserve_memory_points_sorted(Points_TFG *points, index_t number_of_p
 	return true;
 }
 
-void build_sorted_points(Points_TFG *points, const Points *old_points, const Solution *solution)
+void build_sorted_points(Points_sorted *points, const Points *old_points, const Solution *solution)
 {
 	const index_t num_points = old_points->num_points;
 
@@ -59,7 +60,7 @@ void build_sorted_points(Points_TFG *points, const Points *old_points, const Sol
 	}
 }
 
-void destroy_points_sorted(Points_TFG *points)
+void destroy_points_sorted(Points_sorted *points)
 {
 	if (!points)
 		return;

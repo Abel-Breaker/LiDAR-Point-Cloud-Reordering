@@ -9,14 +9,12 @@ typedef enum {
     ERROR_MALLOC,
     ERROR_PARSE_ARG,
     ERROR_PARSE_POINTS,
-    ERROR_TREE_NOT_INITIALIZED,
-    ERROR_TREE_INTEGRITY,
     ERROR_POINT_CLOUD_TOO_BIG,
     ERROR_REORDER_RCM
 } ErrorCode;
 
 /**
- * Handle an error if it happens
+ * @brief Handle an error if it happens
  *
  * @param[in] error      ErrorCode
  * @param[in] severity   Severity of the error
