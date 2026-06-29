@@ -26,4 +26,4 @@ tidy:
 	$(Q)find ./src ./bench ./tests ./utils \( -name "*.c" -o -name "*.h" \) -print0 | \
 	    xargs -0 -P$(NPROC) -I{} clang-tidy {} \
 	        -checks="$(TIDY_CHECKS)" \
-	        -- -std=c2x
+	        -- -std=c2x -fopenmp

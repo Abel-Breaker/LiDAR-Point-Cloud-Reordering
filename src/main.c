@@ -1,4 +1,3 @@
-#define _POSIX_C_SOURCE 199309L
 #include "../bench/bench.h"
 #include "../tests/test.h"
 #include "../utils/error_handler.h"
@@ -10,12 +9,8 @@
 #include "points/points.h"
 #include "points_sorted/points_sorted.h"
 #include "reorder/cuthill-mckee.h"
-#include <math.h>
-#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
 
 
 int main(int argc, char **argv)

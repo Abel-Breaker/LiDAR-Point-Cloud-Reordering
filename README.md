@@ -10,7 +10,7 @@
 
 ## Description
 
-The main objective of this project, developed as part of my **Final Degree Project (TFG)**, is to **reorder a point cloud** based on the neighborhood relationships between its points, generating a **sparse symmetric neighborhood matrix** on which Reverse Cuthill-Mckee algorithm is applied.
+The main objective of this project, developed as part of my **Final Degree Project (TFG)**, is to **order a point cloud** based on the neighborhood relationships between its points, generating a **sparse symmetric neighborhood matrix** on which Reverse Cuthill-Mckee algorithm is applied.
 
 These techniques allow us to **reduce the matrix bandwidth**, which improves the **spatial locality of the data** and it allows to perform narrowed neighbor searches.
 
@@ -78,17 +78,17 @@ The project includes a Makefile that allows compilation in different modes:
 Once the program is compiled, it can be run as follows:
 
 ```bash
-./program -f cloud_points/cloud_point_test.laz -b -t -m 2 -R 100 -r 100
+./build/program -f cloud_points/cloud_point_test.laz -b -t -m 2 -R 100 -r 100
 ```
 
 For more information on using the program:
 
 ```bash
-./program --help
+./build/program --help
 ```
 
 ## Notes
-Although this project is **developed and compiled in C**, LAStools (written in C++) is used for reading points via a small .cpp file (*src/utils/parse_lidar_points.cpp*) that acts as a wrapper for C.
+Although this project is **developed and compiled in C**, LAStools (written in C++) is used for reading and writing LiDAR points through small .cpp files in *utils/io/lidar/* that act as wrappers for C.
 
 ## Minimum Dependencies
 - **gcc** (recommended gcc 14)
