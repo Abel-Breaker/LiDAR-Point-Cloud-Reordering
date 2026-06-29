@@ -4,7 +4,7 @@ extern "C" {
 #include "../../third_party/LAStools/LASlib/inc/laswriter.hpp" // For writing points
 #include <cstdlib>
 
-void write_las_points(const char *filename, const Points *pts)
+void write_las_points(const char *filename, const Points_sorted *pts)
 {
 	LASwriteOpener lasWriteOpener;
 	lasWriteOpener.set_file_name(filename);
@@ -20,14 +20,37 @@ void write_las_points(const char *filename, const Points *pts)
 	lasHeader.point_data_format = 2;
 	lasHeader.point_data_record_length = 26;
 
-	// Add attribute
-	LASattribute attribute(4, "index", NULL); // unsigned long (4 bytes), as per LAS spec
-	attribute.set_scale(1);
-	attribute.set_offset(0);
-	I32 index = lasHeader.add_attribute(attribute);
+	// Add order radius to header
+	double radius = get_args()->radius_reorder;
+	U8 *radius_vlr_data = new U8[sizeof(double)];
+	memcpy(radius_vlr_data, &radius, sizeof(double));
+	lasHeader.add_vlr("ordered", 1, sizeof(double), radius_vlr_data, FALSE, "radius");
+	
+	// index
+	LASattribute attr_index(4, "index", NULL);
+	attr_index.set_scale(1);
+	attr_index.set_offset(0);
+	I32 index_attr = lasHeader.add_attribute(attr_index);
+
+	// bw_left
+	LASattribute attr_bw_left(4, "bw_left", NULL);
+	attr_bw_left.set_scale(1);
+	attr_bw_left.set_offset(0);
+	I32 bw_left_attr = lasHeader.add_attribute(attr_bw_left);
+
+	// bw_right
+	LASattribute attr_bw_right(4, "bw_right", NULL);
+	attr_bw_right.set_scale(1);
+	attr_bw_right.set_offset(0);
+	I32 bw_right_attr = lasHeader.add_attribute(attr_bw_right);
+
 	lasHeader.update_extra_bytes_vlr();
 	lasHeader.point_data_record_length += lasHeader.get_attributes_size();
-	I32 att_start = lasHeader.get_attribute_start(index);
+
+	// Offsets de cada atributo dentro del punto
+	I32 att_start_index = lasHeader.get_attribute_start(index_attr);
+	I32 att_start_bw_left = lasHeader.get_attribute_start(bw_left_attr);
+	I32 att_start_bw_right = lasHeader.get_attribute_start(bw_right_attr);
 
 	// Init point
 	LASpoint lasPoint;
@@ -41,12 +64,19 @@ void write_las_points(const char *filename, const Points *pts)
 	}
 
 	// Write points
-	for (index_t i = 0; i < pts->num_points; ++i) {
-		lasPoint.set_X(pts->x[i] * 100);
-		lasPoint.set_Y(pts->y[i] * 100);
-		lasPoint.set_Z(pts->z[i] * 100);
+	for (index_t i = 0; i < pts->points->num_points; ++i) {
+		lasPoint.set_X(pts->points->x[i] * 100);
+		lasPoint.set_Y(pts->points->y[i] * 100);
+		lasPoint.set_Z(pts->points->z[i] * 100);
 
-		lasPoint.set_attribute(att_start, U32_QUANTIZE(i));
+		// Only to ease cloud compare management for TFG, this index it is not necessary since points are
+		// ordered
+		lasPoint.set_attribute(att_start_index, U32_QUANTIZE(i));
+
+		lasPoint.set_attribute(att_start_bw_left,
+				       U32_QUANTIZE(pts->bandwith_left[get_block_index(i, pts->points->num_points)]));
+		lasPoint.set_attribute(att_start_bw_right,
+				       U32_QUANTIZE(pts->bandwith_right[get_block_index(i, pts->points->num_points)]));
 
 		lasWriter->write_point(&lasPoint);
 		lasWriter->update_inventory(&lasPoint);

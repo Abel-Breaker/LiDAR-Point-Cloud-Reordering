@@ -1,7 +1,7 @@
 #pragma once
 #include "../src/points/points.h"
 
-#define NUM_OF_TESTS 100
+#define NUM_OF_TESTS 200
 
 /**
  * @brief Executes a neighbour search test routine on a set of points.

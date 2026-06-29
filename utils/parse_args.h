@@ -6,6 +6,7 @@ struct Args{
     char *cloud_points_file_name;
     bool do_benchmark;
     bool do_test;
+    char *save_ordered_cloud;
     data_t radius_reorder;
     data_t radius_search;
     index_t max_num_of_points;

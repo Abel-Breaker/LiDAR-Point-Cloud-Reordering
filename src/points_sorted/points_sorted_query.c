@@ -69,9 +69,9 @@ void tfg_radius_search(const Points_sorted *points, index_t index, RadiusResult 
 	elements_count = tfg_radius_search_avx512(xs, ys, zs, search_bound.window, search_bound.search_start_index, x,
 						  y, z, radius_search, indices, distances);
 #ifdef USE_FLOAT
-	i = (search_bound.window / 16) * 16;
+	i = (search_bound.window / 32) * 32;
 #else
-	i = (search_bound.window / 8) * 8;
+	i = (search_bound.window / 16) * 16;
 #endif
 #elif defined(__AVX2__)
 	elements_count = tfg_radius_search_avx2(xs, ys, zs, search_bound.window, search_bound.search_start_index, x,

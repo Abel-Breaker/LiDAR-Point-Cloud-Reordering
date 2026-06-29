@@ -1,7 +1,7 @@
 #ifndef LIDAR_POINTS_WRITER_H
 #define LIDAR_POINTS_WRITER_H
 
-#include "../../../src/points/points.h"
+#include "../../../src/points_sorted/points_sorted.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,7 +13,7 @@ extern "C" {
  * @param[in] filename Path to the LAS file to create.
  * @param[in] pts Pointer to the Points structure where the points are stored.
  */
-void write_las_points(const char *filename, const Points *pts);
+void write_las_points(const char *filename, const Points_sorted *pts);
 
 #ifdef __cplusplus
 }

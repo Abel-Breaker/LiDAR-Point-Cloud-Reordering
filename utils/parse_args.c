@@ -13,6 +13,7 @@ static struct Args args;
 static struct option long_options[] = {{"filename", required_argument, NULL, 'f'},
 				       {"benchmark", no_argument, NULL, 'b'},
 				       {"test", no_argument, NULL, 't'},
+					   {"save_ordered_cloud", required_argument, NULL, 's'},
 					   {"radius_reorder", required_argument, NULL, 'R'},
 				       {"radius_search", required_argument, NULL, 'r'},
 				       {"max_num_of_points", required_argument, NULL, 'n'},
@@ -34,6 +35,7 @@ static inline void init_args()
 static inline void print_help(const char *program_name)
 {
 	printf(BOLD "Usage: %s [OPTIONS]\n" COLOR_RESET, program_name);
+
 	printf(BOLD "\nRequired options:\n" COLOR_RESET);
 	printf("  -f, --filename <file>            Input cloud points file\n");
 	printf("  -m, --number_of_blocks <value>   Number of blocks (must be > 0)\n");
@@ -43,6 +45,7 @@ static inline void print_help(const char *program_name)
 	printf(BOLD "\nOptional flags:\n" COLOR_RESET);
 	printf("  -b, --benchmark                  Enable benchmarks\n");
 	printf("  -t, --test                       Enable tests\n");
+	printf("  -s, --save_ordered_cloud         Order the cloud points in the specified file and save it\n");
 	printf("  -n, --max_num_of_points <value>  Set maximum number of points to process\n");
 
 	printf(BOLD "\nOther:\n" COLOR_RESET);
@@ -88,7 +91,7 @@ bool parse_args(int argc, char **argv)
 	unsigned long long val;
 
 	int option;
-	while ((option = getopt_long(argc, argv, "f:btR:r:n:m:h", long_options, NULL)) != -1) {
+	while ((option = getopt_long(argc, argv, "f:bts:R:r:n:m:h", long_options, NULL)) != -1) {
 		switch (option) {
 		case 'f':
 			args.cloud_points_file_name = optarg;
@@ -98,6 +101,9 @@ bool parse_args(int argc, char **argv)
 			break;
 		case 't':
 			args.do_test = true;
+			break;
+		case 's':
+			args.save_ordered_cloud = optarg;
 			break;
 		case 'R':
 			args.radius_reorder = (data_t)atof(optarg);

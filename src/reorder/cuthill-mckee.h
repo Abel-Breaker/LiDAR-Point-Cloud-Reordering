@@ -11,7 +11,7 @@ typedef struct {
 	index_t *permutations;
 	index_t *bandwith_left;
 	index_t *bandwith_right;
-	index_t total_neighours;
+	size_t total_neighours;
 } Solution;
 
 /**
